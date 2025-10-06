@@ -1,3 +1,29 @@
 {
-  "pages": {}
+  "pages": {
+    "/page": [
+      "static/chunks/a4e11_next_dist_9595eb64._.js",
+      "static/chunks/Documents_Projects_contractguard-ai_app_favicon_ico_mjs_d8c62342._.js",
+      "static/chunks/[root-of-the-server]__89a60b16._.css",
+      "static/chunks/a4e11_next-themes_dist_index_mjs_ed716b84._.js",
+      "static/chunks/Documents_Projects_contractguard-ai_app_layout_tsx_12d98bff._.js",
+      "static/chunks/a4e11_next_dist_9ba3acff._.js",
+      "static/chunks/Documents_Projects_contractguard-ai_app_not-found_tsx_d4bc0394._.js",
+      "static/chunks/a4e11_next_dist_client_components_builtin_global-error_d4bc0394.js",
+      "static/chunks/[next]_internal_font_google_geist_ba9cb858_module_e7504fc5.css",
+      "static/chunks/Documents_Projects_contractguard-ai_fb3aa2d2._.js",
+      "static/chunks/a4e11_tailwind-merge_dist_bundle-mjs_mjs_d81fb9ee._.js",
+      "static/chunks/a4e11_motion_dist_es_14c5e9e2._.js",
+      "static/chunks/a4e11_f77cfa2c._.js",
+      "static/chunks/Documents_Projects_contractguard-ai_app_page_tsx_d4bc0394._.js",
+      "static/chunks/[turbopack]_browser_dev_hmr-client_hmr-client_ts_a12c60b7._.js",
+      "static/chunks/a4e11_next_dist_compiled_react-dom_ce9c0c81._.js",
+      "static/chunks/a4e11_next_dist_compiled_next-devtools_index_062b6d25.js",
+      "static/chunks/a4e11_next_dist_compiled_28c96f68._.js",
+      "static/chunks/a4e11_next_dist_client_d7f77d96._.js",
+      "static/chunks/a4e11_next_dist_0753d2d7._.js",
+      "static/chunks/a4e11_@swc_helpers_cjs_0ea07c5d._.js",
+      "static/chunks/Documents_Projects_contractguard-ai_a0ff3932._.js",
+      "static/chunks/turbopack-Documents_Projects_contractguard-ai_615fcf8f._.js"
+    ]
+  }
 }
