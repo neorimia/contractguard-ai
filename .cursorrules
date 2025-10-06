@@ -1,0 +1,228 @@
+# ContractGuard AI - Project Intelligence
+
+## Project Overview
+
+ContractGuard AI is an AI-powered smart contract security scanner that detects scams, honeypots, and rug pulls in seconds. Built with Next.js 15, TypeScript, and AI integration for the crypto bull market window.
+
+## Core Architecture Patterns
+
+### Service Layer Pattern
+
+- **ContractService**: Handles blockchain data fetching from Etherscan/Alchemy
+- **AIAnalysisService**: Manages AI analysis with OpenAI/Caffeine.ai
+- **BaseService**: Common functionality for all services
+- **Pattern**: Always extend BaseService, implement clear interfaces
+
+### API Design Pattern
+
+- **Route Handlers**: Use Next.js 15 App Router API routes
+- **Error Handling**: Comprehensive try-catch with structured responses
+- **Caching**: Multi-layer (Redis 5min + DB 24hr) caching strategy
+- **Rate Limiting**: User/IP-based rate limiting (implement when needed)
+
+### Database Pattern
+
+- **Drizzle ORM**: Type-safe database operations
+- **Schema-First**: Define schema in db/schema.ts, generate migrations
+- **Connection**: Single db instance exported from db/index.ts
+- **Pattern**: Always use type inference, avoid raw SQL
+
+### Frontend Pattern
+
+- **Component Composition**: Reusable UI components with clear props
+- **State Management**: React hooks for local state, Zustand if needed globally
+- **Loading States**: Comprehensive loading states for better UX
+- **Error Boundaries**: Graceful error handling in UI
+
+## Key Implementation Details
+
+### AI Analysis Flow
+
+1. Fetch contract from Etherscan API
+2. Validate contract is verified
+3. Get enrichment data (holders, liquidity)
+4. Send to AI service with structured prompt
+5. Parse JSON response and validate
+6. Add pattern-based detection as backup
+7. Cache results in Redis + Database
+8. Return structured response
+
+### Caching Strategy
+
+- **Redis**: 5-minute TTL for hot cache
+- **Database**: 24-hour TTL for warm cache
+- **Cache Keys**: `audit:${chain}:${address}` format
+- **Fallback**: Graceful degradation without cache
+
+### Error Handling Philosophy
+
+- **User Errors**: 400 status with clear messages
+- **Rate Limits**: 429 status with retry info
+- **External Errors**: 503 status for API failures
+- **System Errors**: 500 status with logging
+- **Always Log**: Console.error for debugging
+
+## Code Style Preferences
+
+### TypeScript
+
+- **Strict Mode**: Always use strict TypeScript
+- **No Any**: Avoid any types, use proper interfaces
+- **Type Inference**: Use Drizzle's type inference for database
+- **Interfaces**: Define clear interfaces for all data structures
+
+### React Components
+
+- **Functional Components**: Use function components with hooks
+- **Props Interface**: Define clear prop interfaces
+- **Error Boundaries**: Wrap components that might fail
+- **Loading States**: Always show loading states for async operations
+
+### API Routes
+
+- **Method Validation**: Check HTTP method in route handlers
+- **Input Validation**: Validate all inputs with proper schemas
+- **Response Consistency**: Use consistent response formats
+- **Error Logging**: Log all errors with context
+
+## Database Schema Knowledge
+
+### Audits Table
+
+- Primary key: `id` (serial)
+- Unique key: `contractAddress` (text)
+- Analysis data: `riskScore`, `summary`, `issues` (jsonb)
+- Metadata: `views`, `shares`, `createdAt`, `updatedAt`
+
+### Users Table (To Be Added)
+
+- Primary key: `id` (serial)
+- Unique key: `email` (text)
+- Tier management: `tier`, `scansToday`, `scansResetAt`
+- Payment: `stripeCustomerId`
+
+### API Keys Table (To Be Added)
+
+- Primary key: `id` (serial)
+- User reference: `userId` (foreign key)
+- Key management: `key`, `name`, `requestsCount`
+- Status: `isActive`, `lastUsedAt`
+
+## Environment Variables Required
+
+- `DATABASE_URL`: Neon PostgreSQL connection string
+- `UPSTASH_REDIS_URL`: Redis connection URL
+- `UPSTASH_REDIS_TOKEN`: Redis authentication token
+- `OPENAI_API_KEY`: OpenAI API key for AI analysis
+- `CAFFEINE_API_KEY`: Alternative AI provider (optional)
+- `ETHERSCAN_API_KEY`: Etherscan API key for contract data
+- `ALCHEMY_API_KEY`: Alchemy API key for blockchain data
+- `STRIPE_SECRET_KEY`: Stripe secret key (for payments)
+- `NEXT_PUBLIC_SITE_URL`: Public site URL
+
+## Current Development Priorities
+
+### Critical (Fix Now)
+
+1. **AI Service Error Handling**: Add comprehensive try-catch blocks
+2. **Contract Enrichment**: Complete holder count and liquidity data
+3. **Rate Limiting**: Implement to control API costs
+4. **User Authentication**: Add basic email-based auth
+
+### High Priority (This Week)
+
+1. **Stripe Integration**: Enable monetization
+2. **Analytics**: PostHog integration for user tracking
+3. **Error Monitoring**: Sentry for production debugging
+4. **Production Deployment**: Deploy to Vercel
+
+### Medium Priority (Next Week)
+
+1. **Performance Optimization**: Database indexing, code splitting
+2. **Testing**: Add unit and integration tests
+3. **Documentation**: API documentation and user guides
+4. **Marketing**: Launch materials and social media
+
+## Common Patterns to Follow
+
+### API Response Format
+
+```typescript
+// Success response
+{ data: T, status: 'success' }
+
+// Error response
+{ error: string, details?: string, status: 'error' }
+```
+
+### Service Method Pattern
+
+```typescript
+async methodName(params: Params): Promise<Result> {
+  try {
+    // Implementation
+    return result;
+  } catch (error) {
+    console.error('Service error:', error);
+    throw new Error('User-friendly message');
+  }
+}
+```
+
+### Component Pattern
+
+```typescript
+interface ComponentProps {
+  // Define props clearly
+}
+
+export function Component({ prop1, prop2 }: ComponentProps) {
+  const [state, setState] = useState<StateType>();
+
+  // Implementation
+  return <div>...</div>;
+}
+```
+
+## Performance Considerations
+
+- **AI API Costs**: Cache aggressively to reduce calls by 80%
+- **Database Queries**: Use indexes for common queries
+- **Frontend**: Lazy load heavy components
+- **Images**: Optimize images with Next.js Image component
+
+## Security Best Practices
+
+- **Input Validation**: Validate all user inputs
+- **Rate Limiting**: Prevent abuse and high costs
+- **API Keys**: Never expose API keys in frontend
+- **Error Messages**: Don't leak sensitive information
+
+## Deployment Knowledge
+
+- **Platform**: Vercel for hosting
+- **Database**: Neon PostgreSQL
+- **Cache**: Upstash Redis
+- **Domain**: Custom domain configuration
+- **Environment**: Production environment variables
+
+## Business Context
+
+- **Market**: Crypto bull market window (3-6 months)
+- **Users**: Crypto traders who can't read Solidity
+- **Revenue**: $29/month Pro tier, freemium model
+- **Goal**: $5-10k MRR in 3 months
+- **Timeline**: 14-day MVP, launch in 2 weeks
+
+## Common Issues & Solutions
+
+1. **AI API Failures**: Implement fallback providers
+2. **High API Costs**: Aggressive caching strategy
+3. **Slow Performance**: Database indexing and query optimization
+4. **User Adoption**: Focus on viral sharing features
+
+---
+
+**Last Updated**: 2024-12-19
+**Version**: 1.0
+**Status**: Active Development
