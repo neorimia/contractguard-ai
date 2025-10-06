@@ -5,11 +5,13 @@ import { Button } from "@/components/ui/button";
 import { useState, useEffect } from "react";
 import { Menu, X, Sun, Moon } from "lucide-react";
 import { useTheme } from "next-themes";
+import { useRouter } from "next/navigation";
 
 export function Header() {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const { theme, setTheme } = useTheme();
+  const router = useRouter();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -26,6 +28,14 @@ export function Header() {
 
   const handleToggleTheme = () => {
     setTheme(theme === "dark" ? "light" : "dark");
+  };
+
+  const handleLogin = () => {
+    router.push("/login");
+  };
+
+  const handleScanContract = () => {
+    router.push("/chat");
   };
 
   return (
@@ -54,7 +64,7 @@ export function Header() {
                 {["Features", "Pricing", "FAQ"].map((item) => (
                   <Link
                     key={item}
-                    href={`#${item.toLowerCase()}`}
+                    href={`/#${item.toLowerCase()}`}
                     className="text-sm font-medium text-black dark:text-white hover:text-blue-400 dark:hover:text-blue-600 transition-colors"
                     aria-label={item}
                   >
@@ -83,12 +93,14 @@ export function Header() {
                 variant="ghost"
                 size="lg"
                 className="h-8 sm:h-10 px-5 sm:px-6 text-black dark:text-white transition-colors hover:bg-black/15 dark:hover:bg-white/15 rounded-lg"
+                onClick={() => handleLogin()}
               >
                 Login
               </Button>
               <Button
                 size="lg"
                 className="h-7 sm:h-9 px-3 sm:px-4 text-white dark:text-black tracking-tight group dark:bg-white/95 bg-black rounded-lg dark:hover:bg-white dark:hover:text-black transition-all duration-300"
+                onClick={() => handleScanContract()}
               >
                 Scan Contract
               </Button>
@@ -144,12 +156,14 @@ export function Header() {
                     variant="ghost"
                     size="sm"
                     className="flex-1 text-black dark:text-white hover:text-blue-400 dark:hover:text-blue-600 transition-colors"
+                    onClick={() => handleLogin()}
                   >
                     Login
                   </Button>
                   <Button
                     size="sm"
                     className="flex-1 bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600 text-white"
+                    onClick={() => handleScanContract()}
                   >
                     Scan Contract
                   </Button>
