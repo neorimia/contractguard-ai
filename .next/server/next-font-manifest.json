@@ -3,13 +3,10 @@
     "[project]/Documents/Projects/contractguard-ai/app/_not-found/page": [
       "static/media/caa3a2e1cccd8315-s.p.853070df.woff2"
     ],
-    "[project]/Documents/Projects/contractguard-ai/app/chat/page": [
+    "[project]/Documents/Projects/contractguard-ai/app/email-verification/page": [
       "static/media/caa3a2e1cccd8315-s.p.853070df.woff2"
     ],
-    "[project]/Documents/Projects/contractguard-ai/app/login/page": [
-      "static/media/caa3a2e1cccd8315-s.p.853070df.woff2"
-    ],
-    "[project]/Documents/Projects/contractguard-ai/app/page": [
+    "[project]/Documents/Projects/contractguard-ai/app/handler/email-verification/page": [
       "static/media/caa3a2e1cccd8315-s.p.853070df.woff2"
     ]
   },

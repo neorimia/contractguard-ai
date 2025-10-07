@@ -3,13 +3,184 @@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Github, Eye, EyeOff } from "lucide-react";
+import { Github, Eye, EyeOff, Loader2 } from "lucide-react";
 import Image from "next/image";
-import { useState } from "react";
+import { useState, FormEvent } from "react";
 import Link from "next/link";
+import { useStackApp } from "@stackframe/stack";
+import { useRouter } from "next/navigation";
+
+interface FormData {
+  firstName: string;
+  lastName: string;
+  email: string;
+  password: string;
+}
+
+interface FormErrors {
+  firstName?: string;
+  lastName?: string;
+  email?: string;
+  password?: string;
+  general?: string;
+}
 
 export default function SignupPage() {
+  const stackApp = useStackApp();
+  const router = useRouter();
+
+  // Check if Stack Auth is configured
+  const isStackConfigured = !!stackApp;
+
   const [showPassword, setShowPassword] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [errors, setErrors] = useState<FormErrors>({});
+  const [formData, setFormData] = useState<FormData>({
+    firstName: "",
+    lastName: "",
+    email: "",
+    password: "",
+  });
+
+  const validateForm = (): boolean => {
+    const newErrors: FormErrors = {};
+
+    if (!formData.firstName.trim()) {
+      newErrors.firstName = "First name is required";
+    }
+
+    if (!formData.lastName.trim()) {
+      newErrors.lastName = "Last name is required";
+    }
+
+    if (!formData.email.trim()) {
+      newErrors.email = "Email is required";
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
+      newErrors.email = "Please enter a valid email address";
+    }
+
+    if (!formData.password) {
+      newErrors.password = "Password is required";
+    } else if (formData.password.length < 8) {
+      newErrors.password = "Password must be at least 8 characters";
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const handleInputChange = (field: keyof FormData) => (
+    e: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    setFormData((prev) => ({ ...prev, [field]: e.target.value }));
+    // Clear error for this field when user starts typing
+    if (errors[field]) {
+      setErrors((prev) => ({ ...prev, [field]: undefined }));
+    }
+  };
+
+  const handleEmailSignup = async (e: FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+
+    if (!validateForm()) {
+      return;
+    }
+
+    if (!stackApp) {
+      setErrors({
+        general: "Authentication not configured. Please contact support.",
+      });
+      return;
+    }
+
+    setLoading(true);
+    setErrors({});
+
+    try {
+      // Sign up with Stack Auth
+      const result = await stackApp.signUpWithCredential({
+        email: formData.email,
+        password: formData.password,
+      });
+
+      // Update user profile with first/last name after signup
+      if (result) {
+        try {
+          await fetch('/api/user/profile', {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              firstName: formData.firstName,
+              lastName: formData.lastName,
+            }),
+          });
+        } catch (profileErr) {
+          console.error("Failed to update profile:", profileErr);
+          // Don't block signup if profile update fails
+        }
+      }
+
+      // Redirect to email verification page
+      router.push("/verify-email-sent");
+    } catch (err: unknown) {
+      console.error("Signup error:", err);
+      setErrors({
+        general: err instanceof Error
+          ? err.message
+          : "Signup failed. Please try again.",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleGoogleSignup = async () => {
+    if (!stackApp) {
+      setErrors({
+        general: "Authentication not configured. Please contact support.",
+      });
+      return;
+    }
+
+    setLoading(true);
+    setErrors({});
+
+    try {
+      await stackApp.signInWithOAuth("google");
+    } catch (err: unknown) {
+      console.error("Google signup error:", err);
+      setErrors({
+        general: err instanceof Error
+          ? err.message
+          : "Google signup failed. Please try again.",
+      });
+      setLoading(false);
+    }
+  };
+
+  const handleGithubSignup = async () => {
+    if (!stackApp) {
+      setErrors({
+        general: "Authentication not configured. Please contact support.",
+      });
+      return;
+    }
+
+    setLoading(true);
+    setErrors({});
+
+    try {
+      await stackApp.signInWithOAuth("github");
+    } catch (err: unknown) {
+      console.error("GitHub signup error:", err);
+      setErrors({
+        general: err instanceof Error
+          ? err.message
+          : "GitHub signup failed. Please try again.",
+      });
+      setLoading(false);
+    }
+  };
 
   return (
     <div className="min-h-screen grid lg:grid-cols-[3fr_2.5fr] bg-gray-50 dark:bg-black/30">
@@ -62,17 +233,42 @@ export default function SignupPage() {
           </div>
 
           <div className="space-y-6">
+            {/* Stack Auth configuration warning */}
+            {!isStackConfigured && (
+              <div className="p-4 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg">
+                <p className="text-sm text-yellow-800 dark:text-yellow-400 tracking-tighter font-medium mb-1">
+                  ⚠️ Authentication Not Configured
+                </p>
+                <p className="text-xs text-yellow-700 dark:text-yellow-500 tracking-tighter">
+                  Stack Auth credentials are missing. Please add <code className="px-1 py-0.5 bg-yellow-100 dark:bg-yellow-900/40 rounded">NEXT_PUBLIC_STACK_PROJECT_ID</code> and <code className="px-1 py-0.5 bg-yellow-100 dark:bg-yellow-900/40 rounded">NEXT_PUBLIC_STACK_PUBLISHABLE_CLIENT_KEY</code> to your <code className="px-1 py-0.5 bg-yellow-100 dark:bg-yellow-900/40 rounded">.env.local</code> file.
+                </p>
+              </div>
+            )}
+
+            {/* Error message */}
+            {errors.general && (
+              <div className="p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
+                <p className="text-sm text-red-600 dark:text-red-400 tracking-tighter">
+                  {errors.general}
+                </p>
+              </div>
+            )}
+
             {/* Social buttons row */}
             <div className="grid grid-cols-2 gap-3">
               <Button
+                type="button"
                 variant="outline"
+                onClick={handleGoogleSignup}
+                disabled={loading}
                 className="h-12 relative group
                             bg-zinc-50 dark:bg-[#1a1a1a]
                             hover:bg-white dark:hover:bg-[#222222]
                             border-zinc-200 dark:border-zinc-800/50
                             hover:border-zinc-300 dark:hover:border-zinc-700
                             ring-1 ring-zinc-100 dark:ring-zinc-800/50
-                            transition duration-200"
+                            transition duration-200
+                            disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <svg className="mr-2 h-5 w-5" viewBox="0 0 24 24">
                   <path
@@ -98,14 +294,18 @@ export default function SignupPage() {
               </Button>
 
               <Button
+                type="button"
                 variant="outline"
+                onClick={handleGithubSignup}
+                disabled={loading}
                 className="h-12 relative group
                             bg-zinc-50 dark:bg-[#1a1a1a]
                             hover:bg-white dark:hover:bg-[#222222]
                             border-zinc-200 dark:border-zinc-800/50
                             hover:border-zinc-300 dark:hover:border-zinc-700
                             ring-1 ring-zinc-100 dark:ring-zinc-800/50
-                            transition duration-200"
+                            transition duration-200
+                            disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <Github className="mr-2 h-5 w-5 text-zinc-700 dark:text-zinc-300" />
                 <span className="font-medium text-zinc-700 dark:text-zinc-300 tracking-tighter">
@@ -127,7 +327,7 @@ export default function SignupPage() {
             </div>
 
             {/* Form inputs */}
-            <div className="space-y-4">
+            <form onSubmit={handleEmailSignup} className="space-y-4">
               {/* First name and Last name row */}
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-2">
@@ -137,12 +337,25 @@ export default function SignupPage() {
                   >
                     First name
                   </Label>
-                  <Input 
+                  <Input
                     id="firstName"
+                    name="firstName"
                     type="text"
                     placeholder="John"
-                    className="h-12 bg-zinc-50 dark:bg-[#1a1a1a] border-zinc-200 dark:border-zinc-800/50"
+                    value={formData.firstName}
+                    onChange={handleInputChange("firstName")}
+                    disabled={loading}
+                    className={`h-12 bg-zinc-50 dark:bg-[#1a1a1a] border-zinc-200 dark:border-zinc-800/50 ${
+                      errors.firstName ? "border-red-500 dark:border-red-500" : ""
+                    }`}
+                    aria-invalid={!!errors.firstName}
+                    aria-describedby={errors.firstName ? "firstName-error" : undefined}
                   />
+                  {errors.firstName && (
+                    <p id="firstName-error" className="text-sm text-red-600 dark:text-red-400 tracking-tighter">
+                      {errors.firstName}
+                    </p>
+                  )}
                 </div>
                 <div className="space-y-2">
                   <Label
@@ -153,10 +366,23 @@ export default function SignupPage() {
                   </Label>
                   <Input
                     id="lastName"
+                    name="lastName"
                     type="text"
                     placeholder="Doe"
-                    className="h-12 bg-zinc-50 dark:bg-[#1a1a1a] border-zinc-200 dark:border-zinc-800/50"
+                    value={formData.lastName}
+                    onChange={handleInputChange("lastName")}
+                    disabled={loading}
+                    className={`h-12 bg-zinc-50 dark:bg-[#1a1a1a] border-zinc-200 dark:border-zinc-800/50 ${
+                      errors.lastName ? "border-red-500 dark:border-red-500" : ""
+                    }`}
+                    aria-invalid={!!errors.lastName}
+                    aria-describedby={errors.lastName ? "lastName-error" : undefined}
                   />
+                  {errors.lastName && (
+                    <p id="lastName-error" className="text-sm text-red-600 dark:text-red-400 tracking-tighter">
+                      {errors.lastName}
+                    </p>
+                  )}
                 </div>
               </div>
 
@@ -170,10 +396,23 @@ export default function SignupPage() {
                 </Label>
                 <Input
                   id="email"
+                  name="email"
                   type="email"
                   placeholder="john.doe@example.com"
-                  className="h-12 bg-zinc-50 dark:bg-[#1a1a1a] border-zinc-200 dark:border-zinc-800/50"
+                  value={formData.email}
+                  onChange={handleInputChange("email")}
+                  disabled={loading}
+                  className={`h-12 bg-zinc-50 dark:bg-[#1a1a1a] border-zinc-200 dark:border-zinc-800/50 ${
+                    errors.email ? "border-red-500 dark:border-red-500" : ""
+                  }`}
+                  aria-invalid={!!errors.email}
+                  aria-describedby={errors.email ? "email-error" : undefined}
                 />
+                {errors.email && (
+                  <p id="email-error" className="text-sm text-red-600 dark:text-red-400 tracking-tighter">
+                    {errors.email}
+                  </p>
+                )}
               </div>
 
               {/* Password full row */}
@@ -187,14 +426,24 @@ export default function SignupPage() {
                 <div className="relative">
                   <Input
                     id="password"
+                    name="password"
                     type={showPassword ? "text" : "password"}
                     placeholder="Choose your password"
-                    className="h-12 bg-zinc-50 dark:bg-[#1a1a1a] border-zinc-200 dark:border-zinc-800/50 pr-12"
+                    value={formData.password}
+                    onChange={handleInputChange("password")}
+                    disabled={loading}
+                    className={`h-12 bg-zinc-50 dark:bg-[#1a1a1a] border-zinc-200 dark:border-zinc-800/50 pr-12 ${
+                      errors.password ? "border-red-500 dark:border-red-500" : ""
+                    }`}
+                    aria-invalid={!!errors.password}
+                    aria-describedby={errors.password ? "password-error" : undefined}
                   />
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-zinc-600 dark:text-zinc-500 dark:hover:text-zinc-300 transition-colors"
+                    disabled={loading}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-zinc-600 dark:text-zinc-500 dark:hover:text-zinc-300 transition-colors disabled:opacity-50"
+                    aria-label={showPassword ? "Hide password" : "Show password"}
                   >
                     {showPassword ? (
                       <EyeOff className="h-5 w-5" />
@@ -203,10 +452,17 @@ export default function SignupPage() {
                     )}
                   </button>
                 </div>
+                {errors.password && (
+                  <p id="password-error" className="text-sm text-red-600 dark:text-red-400 tracking-tighter">
+                    {errors.password}
+                  </p>
+                )}
               </div>
 
               {/* Submit button */}
               <Button
+                type="submit"
+                disabled={loading}
                 className="w-full h-12 relative group overflow-hidden
                             bg-linear-to-r from-zinc-900 to-zinc-800 dark:from-white dark:to-zinc-200
                             text-white dark:text-[#121212] font-medium
@@ -216,12 +472,21 @@ export default function SignupPage() {
                             transition-all duration-300"
               >
                 <div className="relative flex items-center justify-center gap-2">
-                  <span className="font-medium tracking-tighter">
-                    Create account
-                  </span>
+                  {loading ? (
+                    <>
+                      <Loader2 className="h-5 w-5 animate-spin" />
+                      <span className="font-medium tracking-tighter">
+                        Creating account...
+                      </span>
+                    </>
+                  ) : (
+                    <span className="font-medium tracking-tighter">
+                      Create account
+                    </span>
+                  )}
                 </div>
               </Button>
-            </div>
+            </form>
 
             {/* Sign in link */}
             <div className="text-center text-sm text-zinc-500 dark:text-zinc-400 tracking-tighter">

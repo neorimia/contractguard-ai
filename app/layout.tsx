@@ -5,6 +5,7 @@ import { siteConfig } from "@/config/site";
 import { ThemeProvider } from "next-themes";
 import JsonLd from "@/components/seo/json-ld";
 import { organizationLd, websiteLd } from "@/lib/seo/jsonld";
+import { StackAuthProvider } from "@/lib/stack";
 const geistSans = Geist({
   variable: "--font-geist-sans",
   subsets: ["latin"],
@@ -98,14 +99,16 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistSans.className} antialiased`}
       >
-        <ThemeProvider
-          attribute="class"
-          defaultTheme="system"
-          enableSystem
-          disableTransitionOnChange
-        >
-          {children}
-        </ThemeProvider>
+        <StackAuthProvider>
+          <ThemeProvider
+            attribute="class"
+            defaultTheme="system"
+            enableSystem
+            disableTransitionOnChange
+          >
+            {children}
+          </ThemeProvider>
+        </StackAuthProvider>
       </body>
     </html>
   );

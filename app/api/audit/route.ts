@@ -5,6 +5,8 @@ import { audits } from '@/db/schema';
 import { eq } from 'drizzle-orm';
 import { ContractService } from '@/lib/services/contract.service';
 import { AIAnalysisService } from '@/lib/services/ai.service';
+import { getUserFromRequest } from '@/lib/middleware/auth.middleware';
+import { AuthService } from '@/lib/services/auth.service';
 import { Redis } from '@upstash/redis';
 
 const redis = new Redis({
@@ -14,9 +16,48 @@ const redis = new Redis({
 
 const contractService = new ContractService();
 const aiService = new AIAnalysisService();
+const authService = new AuthService();
 
 export async function POST(req: NextRequest) {
     try {
+        // 1. Authentication check
+        let user;
+        try {
+            user = getUserFromRequest(req);
+        } catch (error) {
+            return NextResponse.json(
+                {
+                    error: 'Unauthorized',
+                    message: 'You must be logged in to scan contracts',
+                    status: 'error'
+                },
+                { status: 401 }
+            );
+        }
+
+        // 2. Rate limit check
+        const { allowed, scansRemaining, resetAt } = await authService.checkScanLimit(user.id);
+
+        if (!allowed) {
+            return NextResponse.json(
+                {
+                    error: 'Scan limit exceeded',
+                    message: `You've used all your scans for today. ${user.tier === 'free' ? 'Upgrade to Pro for 100 scans per day!' : 'Your limit will reset soon.'}`,
+                    scansRemaining: 0,
+                    resetAt: resetAt.toISOString(),
+                    upgradeUrl: '/pricing',
+                    status: 'error'
+                },
+                {
+                    status: 429,
+                    headers: {
+                        'X-RateLimit-Remaining': '0',
+                        'X-RateLimit-Reset': resetAt.toISOString(),
+                    }
+                }
+            );
+        }
+
         const { contractAddress, chain = 'ethereum' } = await req.json();
 
         // Validate address
@@ -127,7 +168,16 @@ export async function POST(req: NextRequest) {
         // 8. Cache in Redis
         await redis.set(cacheKey, result, { ex: 300 });
 
-        return NextResponse.json(result);
+        // 9. Increment user scan count
+        await authService.incrementScanCount(user.id);
+
+        // Return with rate limit headers
+        return NextResponse.json(result, {
+            headers: {
+                'X-RateLimit-Remaining': Math.max(0, scansRemaining - 1).toString(),
+                'X-RateLimit-Reset': resetAt.toISOString(),
+            }
+        });
 
     } catch (error: any) {
         console.error('Audit API error:', error);
