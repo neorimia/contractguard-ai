@@ -43,7 +43,7 @@ export default async function EmailVerificationHandler({ searchParams }: PagePro
             return (
                 <VerificationSuccess
                     email={result.email!}
-                    redirectUrl="/dashboard"
+                    redirectUrl="/chat"
                     redirectDelay={3000}
                 />
             );

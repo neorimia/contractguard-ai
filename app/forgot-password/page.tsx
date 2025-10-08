@@ -14,8 +14,7 @@ export default function ForgotPasswordPage() {
             <div className="relative flex flex-col items-center justify-center p-8">
                 {/* Background Image */}
                 <div className="absolute inset-4 z-0 rounded-xl overflow-hidden">
-                    <Image
-                        src="/bg-glass-3.png"
+                    <Image src="/auth-bg.webp"
                         alt="Background"
                         fill
                         className="object-cover object-bottom"
