@@ -17,6 +17,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { trackEvent, AnalyticsEvents } from "@/lib/analytics/posthog";
 
 // Task sequences for the loading animation
 const TASK_SEQUENCES = [
@@ -288,6 +289,13 @@ export default function Home() {
       return;
     }
 
+    // Track scan initiated
+    trackEvent(AnalyticsEvents.SCAN_INITIATED, {
+      contractAddress: address,
+      chain: "ethereum",
+      userId: user.id,
+    });
+
     setLoading(true);
     setError("");
     setResult(null);
@@ -312,12 +320,34 @@ export default function Home() {
           data.error === "Scan limit exceeded" ||
           (data.status === "error" && data.scansRemaining !== undefined)
         ) {
+          // Track scan limit reached
+          trackEvent(AnalyticsEvents.SCAN_LIMIT_REACHED, {
+            contractAddress: address,
+            scansRemaining: data.scansRemaining,
+            tier: data.tier || "free",
+          });
+
           setLimitError(data);
           setShowLimitDrawer(true);
           return;
         }
+
+        // Track scan failed
+        trackEvent(AnalyticsEvents.SCAN_FAILED, {
+          contractAddress: address,
+          error: data.error || data.message,
+        });
+
         throw new Error(data.message || "Analysis failed");
       }
+
+      // Track scan completed
+      trackEvent(AnalyticsEvents.SCAN_COMPLETED, {
+        contractAddress: address,
+        riskScore: data.riskScore,
+        recommendation: data.recommendation,
+        issuesFound: data.issues?.length || 0,
+      });
 
       setResult(data);
     } catch (err: any) {

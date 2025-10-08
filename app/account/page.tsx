@@ -15,6 +15,8 @@ import {
   Crown,
   Zap,
 } from "lucide-react";
+import { AnalyticsEvents, trackConversion } from "@/lib/analytics/posthog";
+import { trackEvent } from "@/lib/analytics/posthog";
 
 export default function AccountPage() {
   const user = useUser();
@@ -32,6 +34,17 @@ export default function AccountPage() {
   // Check for success/cancel messages from Stripe redirect
   useEffect(() => {
     if (searchParams.get("success")) {
+      // Track successful checkout completion
+      trackEvent(AnalyticsEvents.CHECKOUT_COMPLETED, {
+        sessionId: searchParams.get("session_id"),
+        source: "account_redirect",
+      });
+
+      // Track conversion
+      trackConversion("subscription_purchase", 29, {
+        tier: "pro",
+      });
+
       setMessage({
         type: "success",
         text: "🎉 Subscription successful! Welcome to Pro! Your unlimited scans are now active.",
@@ -41,6 +54,11 @@ export default function AccountPage() {
         router.replace("/account");
       }, 5000);
     } else if (searchParams.get("canceled")) {
+      // Track checkout cancellation
+      trackEvent(AnalyticsEvents.CHECKOUT_CANCELED, {
+        source: "stripe_checkout",
+      });
+
       setMessage({
         type: "error",
         text: "Checkout canceled. You can upgrade anytime from the pricing page.",
@@ -82,6 +100,12 @@ export default function AccountPage() {
 
   // Handle subscription management
   const handleManageSubscription = async () => {
+    // Track portal opened
+    trackEvent(AnalyticsEvents.PORTAL_OPENED, {
+      tier: userTier,
+      userId: user?.id,
+    });
+
     try {
       setLoadingPortal(true);
 

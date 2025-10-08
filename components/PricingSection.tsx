@@ -7,6 +7,7 @@ import { useState } from "react";
 import NumberFlow from "@number-flow/react";
 import { useUser } from "@stackframe/stack";
 import { useRouter } from "next/navigation";
+import { trackEvent, AnalyticsEvents } from "@/lib/analytics/posthog";
 
 // Price tier type definition
 type PriceTier = {
@@ -98,6 +99,13 @@ export default function PricingSection() {
 
   // Handle upgrade to Pro or Enterprise
   const handleUpgrade = async (tier: "pro" | "enterprise") => {
+    // Track checkout initiated
+    trackEvent(AnalyticsEvents.CHECKOUT_INITIATED, {
+      tier,
+      userId: user?.id,
+      source: "pricing_page",
+    });
+
     // Check if user is logged in
     if (!user) {
       router.push("/sign-in?redirect=/pricing");
@@ -121,6 +129,13 @@ export default function PricingSection() {
 
       if (data.status === "error") {
         console.error("Checkout error:", data.error);
+
+        // Track checkout failed
+        trackEvent(AnalyticsEvents.CHECKOUT_CANCELED, {
+          tier,
+          reason: data.error || "checkout_error",
+        });
+
         if (typeof window !== "undefined") {
           window.alert(data.error || "Failed to create checkout session");
         }
@@ -140,6 +155,14 @@ export default function PricingSection() {
       }
     } catch (error) {
       console.error("Checkout error:", error);
+
+      // Track checkout error
+      trackEvent(AnalyticsEvents.CHECKOUT_CANCELED, {
+        tier,
+        reason: "exception",
+        error: error instanceof Error ? error.message : "Unknown error",
+      });
+
       if (typeof window !== "undefined") {
         window.alert("An error occurred. Please try again.");
       }

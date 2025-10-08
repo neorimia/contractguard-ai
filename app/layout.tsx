@@ -9,6 +9,8 @@ import JsonLd from "@/components/seo/json-ld";
 import { organizationLd, websiteLd } from "@/lib/seo/jsonld";
 import { StackAuthProvider } from "@/lib/stack";
 import { AuthErrorBoundary } from "@/components/auth/AuthErrorBoundary";
+import { PostHogProvider } from "@/components/analytics/PostHogProvider";
+import { UserIdentifier } from "@/components/analytics/UserIdentifier";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -106,14 +108,17 @@ export default function RootLayout({
         <StackProvider app={stackClientApp}>
           <StackTheme>
             <StackAuthProvider>
-              <ThemeProvider
-                attribute="class"
-                defaultTheme="system"
-                enableSystem
-                disableTransitionOnChange
-              >
-                <AuthErrorBoundary>{children}</AuthErrorBoundary>
-              </ThemeProvider>
+              <PostHogProvider>
+                <UserIdentifier />
+                <ThemeProvider
+                  attribute="class"
+                  defaultTheme="system"
+                  enableSystem
+                  disableTransitionOnChange
+                >
+                  <AuthErrorBoundary>{children}</AuthErrorBoundary>
+                </ThemeProvider>
+              </PostHogProvider>
             </StackAuthProvider>
           </StackTheme>
         </StackProvider>

@@ -2,6 +2,7 @@
 
 import { cn } from "@/lib/utils";
 import { Audit } from "@/db/schema";
+import { trackEvent, AnalyticsEvents } from "@/lib/analytics/posthog";
 
 interface ShareOnXProps {
   result: Audit;
@@ -33,11 +34,22 @@ Scan your contracts at`;
 
   const tweetUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(tweetText)}&url=${encodeURIComponent("https://contractguard.ai")}`;
 
+  const handleShare = () => {
+    // Track share event
+    trackEvent(AnalyticsEvents.RESULT_SHARED, {
+      contractAddress: contractAddress || result.contractAddress,
+      riskScore: result.riskScore,
+      recommendation: result.recommendation,
+      platform: "twitter",
+    });
+  };
+
   return (
     <a
       href={tweetUrl}
       target="_blank"
       rel="noopener noreferrer"
+      onClick={handleShare}
       className="inline-block"
     >
       <div
