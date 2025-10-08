@@ -213,14 +213,15 @@ async function handleSubscriptionDeleted(subscription: Stripe.Subscription) {
 async function handleInvoicePaymentSucceeded(invoice: Stripe.Invoice) {
   console.log("Invoice payment succeeded:", invoice.id);
 
-  if (!invoice.subscription) {
+  // Access subscription property safely
+  const subscription = (invoice as any).subscription;
+
+  if (!subscription) {
     return;
   }
 
   const subscriptionId =
-    typeof invoice.subscription === "string"
-      ? invoice.subscription
-      : invoice.subscription.id;
+    typeof subscription === "string" ? subscription : subscription.id;
 
   // Find user by subscription ID
   const user = await authService.getUserBySubscriptionId(subscriptionId);
@@ -244,14 +245,15 @@ async function handleInvoicePaymentSucceeded(invoice: Stripe.Invoice) {
 async function handleInvoicePaymentFailed(invoice: Stripe.Invoice) {
   console.log("Invoice payment failed:", invoice.id);
 
-  if (!invoice.subscription) {
+  // Access subscription property safely
+  const subscription = (invoice as any).subscription;
+
+  if (!subscription) {
     return;
   }
 
   const subscriptionId =
-    typeof invoice.subscription === "string"
-      ? invoice.subscription
-      : invoice.subscription.id;
+    typeof subscription === "string" ? subscription : subscription.id;
 
   // Find user by subscription ID
   const user = await authService.getUserBySubscriptionId(subscriptionId);
