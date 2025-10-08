@@ -1,43 +1,42 @@
 import Link from "next/link";
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, Home } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 export default function NotFound() {
-    return (
-        <div className="flex flex-col items-center justify-center min-h-screen gap-6 p-4">
-            <div className="flex flex-col items-center gap-2">
-                <h1 className="text-4xl font-bold tracking-tight bg-clip-text text-transparent bg-linear-to-r from-zinc-800 to-zinc-600 dark:from-zinc-100 dark:to-zinc-400">
-                    404 Not Found
-                </h1>
-                <div className="h-[0.5px] w-full bg-linear-to-r from-zinc-400 to-zinc-200 dark:from-zinc-600 dark:to-zinc-800 mt-2 rounded-full" />
-            </div>
-
-            <p className="text-lg text-zinc-600 dark:text-zinc-400 max-w-md text-center leading-relaxed">
-                The page you are looking for doesn't exist or has been moved.
-            </p>
-
-            <Link
-                href="/"
-                className={`
-                    relative z-10
-                    cursor-pointer
-                    flex items-center gap-2
-                    rounded-full
-                    bg-linear-to-b from-zinc-800 via-zinc-900 to-zinc-800
-                    hover:from-zinc-900 hover:via-zinc-800 hover:to-zinc-900
-                    dark:from-gray-50 dark:via-white dark:to-gray-50
-                    dark:hover:from-white dark:hover:via-gray-50 dark:hover:to-white
-                    text-white dark:text-zinc-900
-                    px-4 py-2
-                    transition-all duration-300
-                    shadow-[0_2px_8px_-2px_rgba(0,0,0,0.12),inset_0_1px_0.5px_0.5px_rgba(255,255,255,0.15)]
-                    dark:shadow-[0_2px_8px_-2px_rgba(0,0,0,0.08),inset_0_1px_0.5px_0.5px_rgba(255,255,255,0.6)]
-                    hover:shadow-[0_2px_12px_-2px_rgba(0,0,0,0.2),inset_0_1px_0.5px_0.5px_rgba(255,255,255,0.15)]
-                    group
-                `}
-            >
-                <span className="text-sm font-medium">Back to Home</span>
-                <ArrowRight className="w-4 h-4 transition-transform duration-300 group-hover:translate-x-0.5" />
-            </Link>
+  return (
+    <div className="flex flex-col items-center justify-center min-h-screen gap-8 p-4 bg-white dark:bg-black">
+      <div className="flex flex-col items-center gap-4">
+        <div className="p-4 rounded-lg bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10">
+          <Home className="w-12 h-12 text-black dark:text-white" />
         </div>
-    );
+
+        <h1 className="text-5xl sm:text-6xl font-semibold tracking-tight text-black dark:text-white">
+          404
+        </h1>
+
+        <div className="h-px w-32 bg-black/10 dark:bg-white/10" />
+      </div>
+
+      <div className="flex flex-col items-center gap-4 max-w-md">
+        <h2 className="text-xl sm:text-2xl font-semibold tracking-tight text-black dark:text-white text-center">
+          Page Not Found
+        </h2>
+        <p className="text-sm sm:text-base tracking-tight text-black/60 dark:text-white/60 text-center">
+          The page you're looking for doesn't exist or has been moved.
+        </p>
+      </div>
+
+      <Link href="/">
+        <Button
+          size="lg"
+          className="h-11 px-6 rounded-lg bg-black dark:bg-white text-white dark:text-black hover:bg-black/90 dark:hover:bg-white/90 text-sm font-medium tracking-tight transition-all duration-300 group"
+        >
+          <span className="flex items-center gap-2">
+            Back to Home
+            <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-0.5" />
+          </span>
+        </Button>
+      </Link>
+    </div>
+  );
 }
