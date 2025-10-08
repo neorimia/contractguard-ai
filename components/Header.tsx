@@ -59,7 +59,7 @@ export function Header() {
   };
 
   const handleScanContract = () => {
-    router.push("/chat");
+    router.push("/");
   };
 
   const handleSignOut = async () => {
@@ -68,6 +68,21 @@ export function Header() {
       router.push("/");
     } catch (error) {
       console.error("Sign out error:", error);
+      // If sign out fails (e.g., due to refresh token error), force clear session
+      try {
+        // Clear Stack cookies
+        document.cookie.split(";").forEach((c) => {
+          document.cookie = c
+            .replace(/^ +/, "")
+            .replace(/=.*/, `=;expires=${new Date().toUTCString()};path=/`);
+        });
+        // Force reload to clear any cached state
+        window.location.href = "/";
+      } catch (clearError) {
+        console.error("Error clearing session:", clearError);
+        // Last resort - just redirect
+        window.location.href = "/";
+      }
     }
   };
 
@@ -89,7 +104,7 @@ export function Header() {
                 className="text-lg font-bold text-black dark:text-white hover:text-blue-400 dark:hover:text-blue-600 transition-colors"
                 aria-label="ContractGuard AI Home"
               >
-                🛡️ContractGuard AI
+                ContractGuard.AI
               </Link>
               <span>/</span>
               {/* Desktop Navigation */}
@@ -97,7 +112,7 @@ export function Header() {
                 {["Features", "Pricing", "FAQ"].map((item) => (
                   <Link
                     key={item}
-                    href={`/#${item.toLowerCase()}`}
+                    href={`/${item.toLowerCase()}`}
                     className="text-sm font-medium text-black dark:text-white hover:text-blue-400 dark:hover:text-blue-600 transition-colors"
                     aria-label={item}
                   >
@@ -169,11 +184,12 @@ export function Header() {
                           <button
                             onClick={() => {
                               setShowUserMenu(false);
-                              router.push("/chat");
+                              router.push("/account");
                             }}
-                            className="w-full text-left px-4 py-2 text-sm text-black dark:text-white hover:bg-black/5 dark:hover:bg-white/5 rounded-md transition-colors"
+                            className="w-full text-left px-4 py-2 text-sm text-black dark:text-white hover:bg-black/5 dark:hover:bg-white/5 rounded-md transition-colors flex items-center gap-2"
                           >
-                            Dashboard
+                            <User className="h-4 w-4" />
+                            Account Settings
                           </button>
                           <button
                             onClick={() => {
@@ -250,7 +266,7 @@ export function Header() {
                 {["Features", "Pricing", "FAQ"].map((item) => (
                   <Link
                     key={item}
-                    href={`#${item.toLowerCase()}`}
+                    href={`/${item.toLowerCase()}`}
                     className="text-sm font-medium text-black dark:text-white hover:text-blue-400 dark:hover:text-blue-600 transition-colors px-2 py-1.5 rounded-md hover:bg-gray-800 dark:hover:bg-gray-100"
                     onClick={() => setIsMobileMenuOpen(false)}
                   >
@@ -278,6 +294,18 @@ export function Header() {
                       }}
                     >
                       Scan Contract
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="w-full text-black dark:text-white hover:bg-black/5 dark:hover:bg-white/5"
+                      onClick={() => {
+                        setIsMobileMenuOpen(false);
+                        router.push("/account");
+                      }}
+                    >
+                      <User className="h-4 w-4 mr-2" />
+                      Account Settings
                     </Button>
                     <Button
                       variant="ghost"

@@ -32,7 +32,7 @@ export class AuthService {
     profile?: UserProfile
   ): Promise<User> {
     try {
-      // Check if user already exists
+      // Check if user already exists by Stack ID
       const existingUser = await this.getUserByStackId(stackUserId);
 
       if (existingUser) {
@@ -54,6 +54,32 @@ export class AuthService {
         return existingUser;
       }
 
+      // Check if user exists with this email (Stack ID might have changed)
+      const userByEmail = await this.getUserByEmail(email);
+
+      if (userByEmail) {
+        // User exists but with different Stack ID - update it
+        console.log("Updating Stack User ID for existing email:", {
+          email,
+          oldStackId: userByEmail.stackUserId,
+          newStackId: stackUserId,
+        });
+
+        const [updatedUser] = await db
+          .update(users)
+          .set({
+            stackUserId, // Update to new Stack ID
+            firstName: profile?.firstName || userByEmail.firstName,
+            lastName: profile?.lastName || userByEmail.lastName,
+            avatarUrl: profile?.avatarUrl || userByEmail.avatarUrl,
+            updatedAt: new Date(),
+          })
+          .where(eq(users.email, email))
+          .returning();
+
+        return updatedUser;
+      }
+
       // Create new user
       const newUser: NewUser = {
         stackUserId,
@@ -68,10 +94,24 @@ export class AuthService {
 
       const [createdUser] = await db.insert(users).values(newUser).returning();
 
+      console.log("User created successfully:", {
+        userId: createdUser.id,
+        email: createdUser.email,
+      });
       return createdUser;
-    } catch (error) {
-      console.error("Error syncing user:", error);
-      throw new Error("Failed to sync user");
+    } catch (error: any) {
+      console.error("Error syncing user:", {
+        message: error.message,
+        code: error.code,
+        detail: error.detail,
+        stack: error.stack,
+        newUserData: {
+          stackUserId,
+          email,
+          tier: "free",
+        },
+      });
+      throw new Error(`Failed to sync user: ${error.message}`);
     }
   }
 

@@ -34,20 +34,61 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // 2. Get or create app user in our database
-    let appUser = await authService.getUserByStackId(stackUser.id);
-
-    if (!appUser) {
-      // First time user - create in our database
-      const nameParts = stackUser.displayName?.split(" ") || [];
-      appUser = await authService.syncUser(
-        stackUser.id,
-        stackUser.primaryEmail || "",
+    // Validate that user has an email
+    if (!stackUser.primaryEmail) {
+      return NextResponse.json(
         {
-          firstName: nameParts[0],
-          lastName: nameParts.slice(1).join(" "),
-          avatarUrl: stackUser.profileImageUrl || undefined,
-        }
+          error: "Invalid user account",
+          message:
+            "Your account is missing an email address. Please contact support.",
+          status: "error",
+        },
+        { status: 400 }
+      );
+    }
+
+    // 2. Get or create app user in our database
+    let appUser;
+    try {
+      appUser = await authService.getUserByStackId(stackUser.id);
+
+      if (!appUser) {
+        // First time user - create in our database
+        const nameParts = stackUser.displayName?.split(" ") || [];
+        console.log("Creating new user:", {
+          stackUserId: stackUser.id,
+          email: stackUser.primaryEmail,
+          displayName: stackUser.displayName,
+        });
+
+        appUser = await authService.syncUser(
+          stackUser.id,
+          stackUser.primaryEmail, // We've already validated this exists above
+          {
+            firstName: nameParts[0],
+            lastName: nameParts.slice(1).join(" "),
+            avatarUrl: stackUser.profileImageUrl || undefined,
+          }
+        );
+      }
+    } catch (syncError: any) {
+      console.error("Detailed sync error:", {
+        message: syncError.message,
+        stack: syncError.stack,
+        stackUser: {
+          id: stackUser.id,
+          email: stackUser.primaryEmail,
+          displayName: stackUser.displayName,
+        },
+      });
+
+      return NextResponse.json(
+        {
+          error: "Failed to sync user account",
+          details: syncError.message,
+          status: "error",
+        },
+        { status: 500 }
       );
     }
 

@@ -43,28 +43,25 @@ Scan your contracts at`;
       <div
         className={cn(
           "w-full min-w-[300px] max-w-md p-1.5 rounded-2xl relative isolate overflow-hidden",
-          "bg-white/5 dark:bg-black/90",
-          "backdrop-blur-xl backdrop-saturate-[180%]",
-          "border border-black/10 dark:border-white/10",
-          "shadow-[0_8px_16px_rgb(0_0_0_/_0.15)] dark:shadow-[0_8px_16px_rgb(0_0_0_/_0.25)]",
+          "bg-gradient-to-br from-gray-100 to-gray-50 dark:from-zinc-900 dark:to-black",
+          "border-2 border-gray-200 dark:border-zinc-800",
+          "shadow-lg hover:shadow-xl",
           "will-change-transform translate-z-0",
-          "hover:scale-[1.02] transition-transform duration-200"
+          "hover:scale-[1.02] transition-all duration-200"
         )}
       >
         <div
           className={cn(
             "w-full p-5 rounded-xl relative",
-            "bg-gradient-to-br from-black/[0.05] to-transparent dark:from-white/[0.08] dark:to-transparent",
-            "backdrop-blur-md backdrop-saturate-150",
-            "border border-black/[0.05] dark:border-white/[0.08]",
-            "text-black/90 dark:text-white",
-            "shadow-xs",
+            "bg-white dark:bg-zinc-950",
+            "border border-gray-100 dark:border-zinc-900",
+            "shadow-sm",
             "will-change-transform translate-z-0"
           )}
         >
           <div className="flex gap-3">
             <div className="shrink-0">
-              <div className="h-10 w-10 rounded-full overflow-hidden bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center">
+              <div className="h-10 w-10 rounded-full overflow-hidden bg-gradient-to-br from-blue-600 to-purple-600 dark:from-blue-500 dark:to-purple-500 flex items-center justify-center shadow-md">
                 <span className="text-white font-bold text-lg">🛡️</span>
               </div>
             </div>
@@ -73,24 +70,24 @@ Scan your contracts at`;
               <div className="flex justify-between items-start">
                 <div className="flex flex-col">
                   <div className="flex items-center gap-1">
-                    <span className="font-semibold text-black dark:text-white/90">
+                    <span className="font-semibold text-gray-900 dark:text-white">
                       ContractGuard AI
                     </span>
                     <svg
-                      className="h-4 w-4 text-blue-400"
+                      className="h-4 w-4 text-blue-500 dark:text-blue-400"
                       viewBox="0 0 24 24"
                       fill="currentColor"
                     >
                       <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
                   </div>
-                  <span className="text-black dark:text-white/60 text-sm">
+                  <span className="text-gray-600 dark:text-gray-400 text-sm">
                     @ContractGuardAI
                   </span>
                 </div>
                 <button
                   type="button"
-                  className="h-8 w-8 text-black dark:text-white/80 hover:text-black dark:hover:text-white hover:bg-black/5 dark:hover:bg-white/5 rounded-lg p-1 flex items-center justify-center"
+                  className="h-8 w-8 text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-zinc-800 rounded-lg p-1 flex items-center justify-center transition-colors"
                 >
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
@@ -112,32 +109,38 @@ Scan your contracts at`;
           </div>
 
           <div className="mt-3 space-y-2">
-            <p className="text-black dark:text-white/90 text-base font-medium">
+            <p className="text-gray-900 dark:text-white text-base font-medium">
               Security Scan Complete! {getRiskEmoji(result.riskScore || 0)}
             </p>
             <div className="flex items-center gap-3 text-sm">
-              <span className="text-black dark:text-white/70">
-                Risk Score: <strong>{result.riskScore}/100</strong>
+              <span className="text-gray-700 dark:text-gray-300">
+                Risk Score:{" "}
+                <strong className="text-gray-900 dark:text-white">
+                  {result.riskScore}/100
+                </strong>
               </span>
-              <span className="text-black dark:text-white/40">•</span>
-              <span className="text-black dark:text-white/70">
+              <span className="text-gray-400 dark:text-gray-600">•</span>
+              <span className="text-gray-700 dark:text-gray-300">
                 {getRiskLabel(result.riskScore || 0)}
               </span>
             </div>
-            <p className="text-black dark:text-white/80 text-sm">
-              Recommendation: <strong>{result.recommendation}</strong>
+            <p className="text-gray-700 dark:text-gray-300 text-sm">
+              Recommendation:{" "}
+              <strong className="text-gray-900 dark:text-white">
+                {result.recommendation}
+              </strong>
             </p>
             {contractAddress && (
-              <p className="text-black dark:text-white/60 text-xs font-mono truncate">
+              <p className="text-gray-600 dark:text-gray-400 text-xs font-mono truncate bg-gray-50 dark:bg-zinc-900 px-2 py-1 rounded">
                 {contractAddress.slice(0, 10)}...{contractAddress.slice(-8)}
               </p>
             )}
-            <div className="flex items-center gap-2 mt-3 pt-3 border-t border-black/[0.08] dark:border-white/[0.08]">
-              <span className="text-black dark:text-white/50 text-xs">
+            <div className="flex items-center gap-2 mt-3 pt-3 border-t border-gray-200 dark:border-zinc-800">
+              <span className="text-gray-600 dark:text-gray-400 text-xs font-medium">
                 Click to share on X
               </span>
               <svg
-                className="w-3 h-3 text-black dark:text-white/50"
+                className="w-3 h-3 text-gray-500 dark:text-gray-500"
                 fill="none"
                 viewBox="0 0 24 24"
                 stroke="currentColor"

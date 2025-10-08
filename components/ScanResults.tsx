@@ -66,7 +66,9 @@ export default function ScanResults({
       title: "Medium Severity Issues",
       count: mediumIssues.length,
     },
-    { id: "details", title: "Contract Details", count: 3 },
+    { id: "details", title: "Contract Details" },
+    { id: "code", title: "Source Code" },
+    { id: "metadata", title: "Audit Metadata" },
   ];
 
   return (
@@ -223,12 +225,38 @@ export default function ScanResults({
             expandedSection={expandedSection}
             setExpandedSection={setExpandedSection}
           >
-            <div className="pb-8">
+            <div className="pb-8 space-y-6">
+              {/* Main Stats */}
+              <div className="grid md:grid-cols-3 gap-6">
+                <DetailCard
+                  icon="📝"
+                  label="Contract Address"
+                  value={contractAddress || result.contractAddress || "N/A"}
+                  mono
+                />
+                <DetailCard
+                  icon="⛓️"
+                  label="Blockchain"
+                  value={
+                    result.chain
+                      ? result.chain.charAt(0).toUpperCase() +
+                        result.chain.slice(1)
+                      : "N/A"
+                  }
+                />
+                <DetailCard
+                  icon={result.isVerified ? "✅" : "❌"}
+                  label="Verified"
+                  value={result.isVerified ? "Yes" : "No"}
+                />
+              </div>
+
+              {/* Token Metrics */}
               <div className="grid md:grid-cols-3 gap-6">
                 <DetailCard
                   icon="👥"
                   label="Holders"
-                  value={result.holderCount || "N/A"}
+                  value={result.holderCount?.toLocaleString() || "N/A"}
                 />
                 <DetailCard
                   icon="💧"
@@ -236,9 +264,84 @@ export default function ScanResults({
                   value={result.liquidity || "N/A"}
                 />
                 <DetailCard
-                  icon={result.isVerified ? "✅" : "❌"}
-                  label="Verified"
-                  value={result.isVerified ? "Yes" : "No"}
+                  icon="💰"
+                  label="Owner Balance"
+                  value={result.ownerBalance || "N/A"}
+                />
+              </div>
+            </div>
+          </SectionItem>
+
+          {/* Source Code */}
+          {result.sourceCode && (
+            <SectionItem
+              section={{ id: "code", title: "Source Code" }}
+              expandedSection={expandedSection}
+              setExpandedSection={setExpandedSection}
+            >
+              <div className="pb-8 space-y-4">
+                <div className="rounded-xl bg-neutral-900 p-6 border border-neutral-800">
+                  <div className="flex items-center justify-between mb-4">
+                    <h4 className="text-lg font-semibold flex items-center gap-2">
+                      <Shield className="h-5 w-5" />
+                      Contract Source Code
+                    </h4>
+                    <span className="text-xs text-neutral-500">
+                      {result.isVerified ? "✅ Verified" : "❌ Not Verified"}
+                    </span>
+                  </div>
+                  <pre className="p-4 bg-black/40 rounded-lg text-xs text-neutral-300 overflow-x-auto border border-neutral-800 font-mono max-h-96 overflow-y-auto">
+                    {result.sourceCode}
+                  </pre>
+                </div>
+
+                {result.bytecode && (
+                  <div className="rounded-xl bg-neutral-900 p-6 border border-neutral-800">
+                    <h4 className="text-lg font-semibold mb-4 flex items-center gap-2">
+                      <Info className="h-5 w-5" />
+                      Bytecode
+                    </h4>
+                    <pre className="p-4 bg-black/40 rounded-lg text-xs text-neutral-300 overflow-x-auto border border-neutral-800 font-mono max-h-48 overflow-y-auto break-all">
+                      {result.bytecode}
+                    </pre>
+                  </div>
+                )}
+              </div>
+            </SectionItem>
+          )}
+
+          {/* Audit Metadata */}
+          <SectionItem
+            section={{ id: "metadata", title: "Audit Metadata" }}
+            expandedSection={expandedSection}
+            setExpandedSection={setExpandedSection}
+          >
+            <div className="pb-8">
+              <div className="grid md:grid-cols-3 gap-6">
+                <DetailCard
+                  icon="📅"
+                  label="Scanned At"
+                  value={
+                    result.createdAt
+                      ? new Date(result.createdAt).toLocaleDateString("en-US", {
+                          year: "numeric",
+                          month: "short",
+                          day: "numeric",
+                          hour: "2-digit",
+                          minute: "2-digit",
+                        })
+                      : "N/A"
+                  }
+                />
+                <DetailCard
+                  icon="👁️"
+                  label="Views"
+                  value={result.views?.toLocaleString() || "0"}
+                />
+                <DetailCard
+                  icon="🔄"
+                  label="Shares"
+                  value={result.shares?.toLocaleString() || "0"}
                 />
               </div>
             </div>
@@ -387,15 +490,14 @@ function IssuesContent({
 }
 
 // Detail Card Component
-function DetailCard({
-  icon,
-  label,
-  value,
-}: {
+interface DetailCardProps {
   icon: string;
   label: string;
   value: string | number;
-}) {
+  mono?: boolean;
+}
+
+function DetailCard({ icon, label, value, mono = false }: DetailCardProps) {
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -406,7 +508,12 @@ function DetailCard({
       <div className="relative space-y-3">
         <div className="text-3xl">{icon}</div>
         <div className="text-sm text-white/60">{label}</div>
-        <div className="text-xl font-semibold">{value}</div>
+        <div
+          className={`text-xl font-semibold ${mono ? "font-mono text-sm truncate" : ""}`}
+          title={mono ? String(value) : undefined}
+        >
+          {value}
+        </div>
       </div>
     </motion.div>
   );

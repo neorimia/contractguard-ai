@@ -9,21 +9,20 @@ const footerLinks = [
   {
     title: "Product",
     links: [
-      { name: "Features", href: "/#features" },
-      { name: "Pricing", href: "/#pricing" },
-      { name: "API", href: "/api" },
-      { name: "FAQ", href: "/#faq" },
+      { name: "Features", href: "/features" },
+      { name: "Pricing", href: "/pricing" },
+      { name: "FAQ", href: "/faq" },
     ],
   },
-  {
-    title: "Company",
-    links: [
-      { name: "About", href: "/about" },
-      { name: "Contact", href: "/contact" },
-      { name: "Privacy", href: "/privacy" },
-      { name: "Terms", href: "/terms" },
-    ],
-  },
+  // {
+  //   title: "Company",
+  //   links: [
+  //     { name: "About", href: "/about" },
+  //     { name: "Contact", href: "/contact" },
+  //     { name: "Privacy", href: "/privacy" },
+  //     { name: "Terms", href: "/terms" },
+  //   ],
+  // },
 ];
 
 export function Footer() {
@@ -38,20 +37,20 @@ export function Footer() {
               href="/"
               className="text-4xl font-bold tracking-tighter text-black dark:text-white hover:opacity-90 transition-opacity"
             >
-              🛡️ ContractGuard AI
+              ContractGuard.AI
             </Link>
             <p className="mt-2 text-sm text-black/60 dark:text-white/60">
               AI-powered smart contract security scanner.
             </p>
           </div>
 
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-8 md:gap-12 lg:gap-16">
+          <div className="grid grid-cols-1 sm:grid-cols-1 gap-8 md:gap-12 lg:gap-16">
             {footerLinks.map((section) => (
               <div key={section.title} className="space-y-3">
-                <h3 className="text-sm font-medium text-black dark:text-white">
+                <h3 className="text-sm font-medium md:text-right text-black dark:text-white">
                   {section.title}
                 </h3>
-                <ul className="space-y-2">
+                <ul className="space-y-2 flex flex-row gap-2">
                   {section.links.map((link) => (
                     <li key={link.name}>
                       <Link
@@ -67,7 +66,7 @@ export function Footer() {
             ))}
           </div>
 
-          <div className="flex-shrink-0 space-y-3 max-w-xs">
+          {/* <div className="flex-shrink-0 space-y-3 max-w-xs">
             <h3 className="text-sm font-medium text-black dark:text-white">
               Stay updated
             </h3>
@@ -88,7 +87,7 @@ export function Footer() {
                 <ArrowRight className="h-4 w-4" />
               </Button>
             </div>
-          </div>
+          </div> */}
         </div>
 
         <div className="flex flex-col sm:flex-row sm:items-center justify-between mt-8 pt-5 border-t border-black/5 dark:border-white/5 text-xs text-black/50 dark:text-white/50">
