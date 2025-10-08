@@ -48,7 +48,7 @@ export async function GET(request: Request) {
                 WebkitTextFillColor: "transparent",
               }}
             >
-              🛡️ ContractGuard AI
+              ContractGuard AI
             </div>
             <div
               style={{

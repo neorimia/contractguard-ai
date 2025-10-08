@@ -63,7 +63,7 @@ export default function HeroSection() {
   // Shared transition settings
   const sharedTransition = {
     duration: 0.3,
-    ease: [0.22, 1, 0.36, 1],
+    ease: [0.22, 1, 0.36, 1] as [number, number, number, number],
   };
 
   return (
@@ -84,6 +84,7 @@ export default function HeroSection() {
           <div className="rounded-xl p-1 border dark:border-black/30 border-white/30 dark:hover:border-black/50 hover:border-white/50 transition-all duration-300">
             <Button
               size="lg"
+              onClick={() => (window.location.href = "/")}
               className="h-10 sm:h-13 px-5 sm:px-6 dark:text-white text-black tracking-tight group bg-white/95 dark:bg-black rounded-lg hover:bg-white dark:hover:bg-black transition-all duration-300"
             >
               SCAN CONTRACT

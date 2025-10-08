@@ -1,10 +1,15 @@
 import type { Metadata } from "next";
+import { StackProvider, StackTheme } from "@stackframe/stack";
+import { stackClientApp } from "@/stack/client";
 import { Geist } from "next/font/google";
 import "./globals.css";
 import { siteConfig } from "@/config/site";
 import { ThemeProvider } from "next-themes";
 import JsonLd from "@/components/seo/json-ld";
 import { organizationLd, websiteLd } from "@/lib/seo/jsonld";
+import { StackAuthProvider } from "@/lib/stack";
+import { AuthErrorBoundary } from "@/components/auth/AuthErrorBoundary";
+
 const geistSans = Geist({
   variable: "--font-geist-sans",
   subsets: ["latin"],
@@ -98,14 +103,20 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistSans.className} antialiased`}
       >
-        <ThemeProvider
-          attribute="class"
-          defaultTheme="system"
-          enableSystem
-          disableTransitionOnChange
-        >
-          {children}
-        </ThemeProvider>
+        <StackProvider app={stackClientApp}>
+          <StackTheme>
+            <StackAuthProvider>
+              <ThemeProvider
+                attribute="class"
+                defaultTheme="system"
+                enableSystem
+                disableTransitionOnChange
+              >
+                <AuthErrorBoundary>{children}</AuthErrorBoundary>
+              </ThemeProvider>
+            </StackAuthProvider>
+          </StackTheme>
+        </StackProvider>
       </body>
     </html>
   );

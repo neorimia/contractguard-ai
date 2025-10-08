@@ -1,6 +1,8 @@
 // lib/middleware/rate-limit.ts
 import { Redis } from "@upstash/redis";
 import { NextRequest, NextResponse } from "next/server";
+import { getUserFromRequest } from './auth.middleware';
+import { AuthService } from '@/lib/services/auth.service';
 
 const redis = new Redis({
   url: process.env.UPSTASH_REDIS_URL!,
@@ -15,8 +17,8 @@ interface RateLimitConfig {
 
 const RATE_LIMITS: RateLimitConfig = {
   free: { limit: 3, window: 24 * 60 * 60 }, // 3 per day
-  pro: { limit: 1000, window: 24 * 60 * 60 }, // 1000 per day
-  enterprise: { limit: 10000, window: 24 * 60 * 60 }, // 10k per day
+  pro: { limit: 100, window: 24 * 60 * 60 }, // 100 per day
+  enterprise: { limit: -1, window: 24 * 60 * 60 }, // unlimited
 };
 
 export async function checkRateLimit(
@@ -66,47 +68,61 @@ export async function checkRateLimit(
   }
 }
 
-// Middleware function
-export async function rateLimitMiddleware(
-  req: NextRequest,
-  tier: "free" | "pro" | "enterprise" = "free"
-) {
-  // Get identifier (IP or user session)
-  const ip =
-    req.headers.get("x-forwarded-for") ||
-    req.headers.get("x-real-ip") ||
-    "unknown";
-  const identifier = ip.split(",")[0].trim();
+// Middleware function with user authentication integration
+export async function rateLimitMiddleware(req: NextRequest) {
+  try {
+    // Get authenticated user from request headers
+    const user = getUserFromRequest(req);
 
-  const result = await checkRateLimit(identifier, tier);
+    if (!user || !user.id) {
+      return NextResponse.json(
+        { error: 'Unauthorized', status: 'error' },
+        { status: 401 }
+      );
+    }
 
-  if (!result.allowed) {
-    return NextResponse.json(
-      {
-        error: "Rate limit exceeded",
-        message: `You've reached your ${tier} tier limit. Upgrade for unlimited scans.`,
-        resetAt: result.resetAt,
-        upgradeUrl: "/pricing",
-      },
-      {
-        status: 429,
-        headers: {
-          "X-RateLimit-Limit": RATE_LIMITS[tier].limit.toString(),
-          "X-RateLimit-Remaining": "0",
-          "X-RateLimit-Reset": result.resetAt.toString(),
+    // Check scan limit using AuthService
+    const authService = new AuthService();
+    const { allowed, scansRemaining, resetAt } = await authService.checkScanLimit(user.id);
+
+    if (!allowed) {
+      return NextResponse.json(
+        {
+          error: 'Scan limit exceeded',
+          message: `You've used all your scans for today. ${user.tier === 'free' ? 'Upgrade to Pro for more scans!' : 'Your limit will reset soon.'}`,
+          scansRemaining: 0,
+          resetAt: resetAt.toISOString(),
+          upgradeUrl: '/pricing',
+          status: 'error'
         },
+        {
+          status: 429,
+          headers: {
+            'X-RateLimit-Remaining': '0',
+            'X-RateLimit-Reset': resetAt.toISOString(),
+          }
+        }
+      );
+    }
+
+    // Increment scan count
+    await authService.incrementScanCount(user.id);
+
+    // Return success response for Next.js middleware
+    return NextResponse.next({
+      headers: {
+        'X-RateLimit-Remaining': scansRemaining.toString(),
+        'X-RateLimit-Reset': resetAt.toISOString(),
       }
+    });
+
+  } catch (error) {
+    console.error('Rate limit middleware error:', error);
+    return NextResponse.json(
+      { error: 'Rate limit check failed', status: 'error' },
+      { status: 500 }
     );
   }
-
-  return {
-    allowed: true,
-    headers: {
-      "X-RateLimit-Limit": RATE_LIMITS[tier].limit.toString(),
-      "X-RateLimit-Remaining": result.remaining.toString(),
-      "X-RateLimit-Reset": result.resetAt.toString(),
-    },
-  };
 }
 
 // Usage in API route

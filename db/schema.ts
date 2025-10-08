@@ -31,12 +31,35 @@ export const audits = pgTable('audits', {
 
 export const users = pgTable('users', {
     id: serial('id').primaryKey(),
+
+    // Stack Auth Integration
+    stackUserId: text('stack_user_id').notNull().unique(),
     email: text('email').notNull().unique(),
+
+    // Email Verification
+    emailVerified: boolean('email_verified').notNull().default(false),
+    verificationToken: text('verification_token').unique(),
+    verificationTokenExpires: timestamp('verification_token_expires'),
+
+    // Profile (optional, can be pulled from Stack Auth)
+    firstName: text('first_name'),
+    lastName: text('last_name'),
+    avatarUrl: text('avatar_url'),
+
+    // ContractGuard Business Logic
     tier: text('tier').notNull().default('free'), // free, pro, enterprise
     scansToday: integer('scans_today').default(0),
     scansResetAt: timestamp('scans_reset_at').defaultNow(),
+
+    // Billing Integration
     stripeCustomerId: text('stripe_customer_id'),
+    stripeSubscriptionId: text('stripe_subscription_id'),
+    subscriptionStatus: text('subscription_status'), // active, cancelled, past_due
+
+    // Timestamps
     createdAt: timestamp('created_at').defaultNow(),
+    updatedAt: timestamp('updated_at').defaultNow(),
+    lastLoginAt: timestamp('last_login_at'),
 });
 
 export const apiKeys = pgTable('api_keys', {

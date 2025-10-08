@@ -14,10 +14,10 @@ private apiKey: string;
 private baseUrl: string;
 
 constructor() {
-// Use Caffeine.ai or fallback to OpenAI
-this.apiKey = process.env.CAFFEINE_API_KEY || process.env.OPENAI_API_KEY!;
-this.baseUrl = process.env.CAFFEINE_API_KEY
-? 'https://api.caffeine.ai/v1'
+// Use Claude AI or fallback to OpenAI
+this.apiKey = process.env.CLAUDE_API_KEY || process.env.OPENAI_API_KEY!;
+this.baseUrl = process.env.CLAUDE_API_KEY
+? 'https://api.anthropic.com/v1'
 : 'https://api.openai.com/v1';
 }
 
@@ -61,34 +61,35 @@ enrichmentData?: any
       console.error('AI Analysis error:', error);
       throw new Error('Failed to analyze contract');
     }
+
 }
 
 private getSystemPrompt(): string {
 return `You are an expert Solidity smart contract security auditor. Analyze contracts for:
 
 1. CRITICAL ISSUES:
-    - Honeypot mechanisms (restricted selling)
-    - Hidden mint functions
-    - Blacklist capabilities
-    - Ownership risks
-    - Proxy vulnerabilities
+   - Honeypot mechanisms (restricted selling)
+   - Hidden mint functions
+   - Blacklist capabilities
+   - Ownership risks
+   - Proxy vulnerabilities
 
 2. HIGH SEVERITY:
-    - Excessive taxes (>20%)
-    - Centralization risks
-    - Reentrancy vulnerabilities
-    - Integer overflow/underflow
+   - Excessive taxes (>20%)
+   - Centralization risks
+   - Reentrancy vulnerabilities
+   - Integer overflow/underflow
 
 3. MEDIUM SEVERITY:
-    - Missing access controls
-    - Unoptimized gas usage
-    - Potential front-running
+   - Missing access controls
+   - Unoptimized gas usage
+   - Potential front-running
 
 4. POSITIVE INDICATORS:
-    - Renounced ownership
-    - Locked liquidity
-    - Time-locked functions
-    - Verified source code
+   - Renounced ownership
+   - Locked liquidity
+   - Time-locked functions
+   - Verified source code
 
 Respond ONLY with valid JSON in this exact format:
 {
@@ -120,6 +121,7 @@ CONTRACT NAME: ${contractName}
 
 ${enrichmentData ? `
 ADDITIONAL DATA:
+
 - Holder Count: ${enrichmentData.holderCount}
 - Liquidity: ${enrichmentData.liquidity}
 - Owner Balance: ${enrichmentData.ownerBalance}
@@ -154,7 +156,7 @@ detectKnownPatterns(sourceCode: string): Issue[] {
 const patterns: Issue[] = [];
 
     // Honeypot detection
-    if (sourceCode.includes('require(msg.sender == owner') && 
+    if (sourceCode.includes('require(msg.sender == owner') &&
         sourceCode.includes('transfer(')) {
       patterns.push({
         severity: 'CRITICAL',
@@ -175,7 +177,7 @@ const patterns: Issue[] = [];
     }
 
     // Blacklist
-    if (sourceCode.includes('mapping') && 
+    if (sourceCode.includes('mapping') &&
         sourceCode.match(/blacklist|blocked/i)) {
       patterns.push({
         severity: 'HIGH',
@@ -197,5 +199,6 @@ const patterns: Issue[] = [];
     }
 
     return patterns;
+
 }
 }
