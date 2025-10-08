@@ -11,6 +11,7 @@ import { StackAuthProvider } from "@/lib/stack";
 import { AuthErrorBoundary } from "@/components/auth/AuthErrorBoundary";
 import { PostHogProvider } from "@/components/analytics/PostHogProvider";
 import { UserIdentifier } from "@/components/analytics/UserIdentifier";
+import { Suspense } from "react";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -109,7 +110,9 @@ export default function RootLayout({
           <StackTheme>
             <StackAuthProvider>
               <PostHogProvider>
-                <UserIdentifier />
+                <Suspense fallback={null}>
+                  <UserIdentifier />
+                </Suspense>
                 <ThemeProvider
                   attribute="class"
                   defaultTheme="system"
