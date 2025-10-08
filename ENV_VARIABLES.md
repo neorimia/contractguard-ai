@@ -74,11 +74,11 @@ ALCHEMY_API_KEY=your_alchemy_api_key
 ### AI Fallback Provider
 
 ```bash
-CAFFEINE_API_KEY=your_caffeine_api_key_here
+CLAUDE_API_KEY=your_claude_api_key_here
 ```
 
 - **Purpose**: Fallback AI provider if OpenAI fails
-- **Get from**: https://caffeine.ai
+- **Get from**: https://console.anthropic.com
 - **Used by**: AIAnalysisService fallback logic
 - **Required**: No (improves reliability)
 
@@ -245,7 +245,7 @@ if (!process.env.DATABASE_URL) {
 
 - [ ] All minimum variables above
 - [ ] ALCHEMY_API_KEY
-- [ ] CAFFEINE_API_KEY (fallback)
+- [ ] CLAUDE_API_KEY (fallback)
 - [ ] RESEND_API_KEY (emails)
 
 ### Production Ready

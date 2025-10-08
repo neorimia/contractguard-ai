@@ -11,6 +11,7 @@ ContractGuard AI is an AI-powered smart contract security scanner that detects s
 ## Development Commands
 
 ### Core Workflow
+
 ```bash
 npm run dev              # Start dev server with Turbopack
 npm run build            # Production build
@@ -18,6 +19,7 @@ npm run lint             # ESLint checks
 ```
 
 ### Database Operations
+
 ```bash
 npm run db:push          # Push schema changes to database
 npm run db:generate      # Generate migrations
@@ -37,6 +39,7 @@ All external integrations use service classes in `lib/services/`:
 - **BaseService pattern**: Extend for common functionality, implement clear interfaces
 
 Service methods follow this structure:
+
 ```typescript
 async methodName(params: Params): Promise<Result> {
   try {
@@ -75,17 +78,20 @@ Located in `app/api/*/route.ts` using Next.js 15 App Router conventions:
 Three main tables using Drizzle ORM:
 
 **audits**: Contract analysis results
+
 - Unique key: `contractAddress` (indexed)
 - Analysis: `riskScore`, `summary`, `issues` (jsonb), `recommendation`
 - Enrichment: `holderCount`, `liquidity`, `ownerBalance`
 - Metadata: `views`, `shares`, timestamps
 
 **users**: User accounts and tier management
+
 - Unique key: `email`
 - Tier system: `free`, `pro`, `enterprise`
 - Rate limiting: `scansToday`, `scansResetAt`
 
 **apiKeys**: API key management for users
+
 - Foreign key: `userId` references `users.id`
 - Tracking: `requestsCount`, `lastUsedAt`, `isActive`
 
@@ -121,29 +127,34 @@ NEXT_PUBLIC_SITE_URL=     # For SEO/sharing
 ```
 
 Optional:
+
 ```bash
-CAFFEINE_API_KEY=         # Alternative AI provider
+CLAUDE_API_KEY=           # Alternative AI provider (Anthropic Claude)
 STRIPE_SECRET_KEY=        # Payment processing
 ```
 
 ## Component Structure
 
 **shadcn/ui components** in `components/ui/`: Built on Radix UI primitives with Tailwind styling
+
 - `button.tsx`, `input.tsx`, `label.tsx`: Form elements
 - `card.tsx`: Container component
 - `chart.tsx`: Recharts wrapper
 
 **Feature components** in `components/`: Landing page sections
+
 - `Header.tsx`: Navigation with responsive menu
 - `HeroSection.tsx`: Main CTA and value proposition
 - `FAQSection.tsx`, `PricingSection.tsx`, `Feature.tsx`
 
 **SEO components** in `components/seo/`:
+
 - `json-ld.tsx`: Structured data for Google
 
 ## Error Handling Philosophy
 
 Status code guidelines:
+
 - **400**: User input errors (invalid address, missing params)
 - **429**: Rate limit exceeded (include retry-after)
 - **503**: External API failures (Etherscan, OpenAI down)
@@ -154,11 +165,13 @@ Always log errors with `console.error()` including context for debugging.
 ## Performance Considerations
 
 **AI API Cost Control**: Single biggest cost factor
+
 - Aggressive caching (5min Redis + 24hr DB) targets 80% reduction
 - Fallback to pattern-based detection on AI failure
 - Consider rate limiting per user tier
 
 **Database Queries**: Add indexes for common lookups
+
 - `contractAddress` already unique indexed
 - Consider index on `createdAt` for analytics
 
@@ -167,12 +180,14 @@ Always log errors with `console.error()` including context for debugging.
 ## Current Development Priorities
 
 **Critical** (Active Development):
+
 1. AI service error handling improvements
 2. Contract enrichment (holder count, liquidity APIs)
 3. Rate limiting implementation
 4. User authentication system
 
 **High Priority** (This Week):
+
 1. Stripe integration for monetization
 2. Analytics integration (PostHog)
 3. Error monitoring (Sentry)
