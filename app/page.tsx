@@ -264,6 +264,20 @@ export default function Home() {
   const [limitError, setLimitError] = useState<ScanLimitError | null>(null);
   const [showLoginModal, setShowLoginModal] = useState(false);
   const user = useUser();
+  const resultsRef = useRef<HTMLDivElement>(null);
+
+  // Auto-scroll to results when they're available
+  useEffect(() => {
+    if (result && resultsRef.current) {
+      // Small delay to ensure results are rendered
+      setTimeout(() => {
+        resultsRef.current?.scrollIntoView({
+          behavior: "smooth",
+          block: "start",
+        });
+      }, 300);
+    }
+  }, [result]);
 
   const analyzeContract = async () => {
     if (!address) return;
@@ -383,7 +397,11 @@ export default function Home() {
         </section>
 
         {/* Results Section */}
-        {result && <ScanResults result={result} contractAddress={address} />}
+        {result && (
+          <div ref={resultsRef}>
+            <ScanResults result={result} contractAddress={address} />
+          </div>
+        )}
 
         {/* Scan Limit Drawer */}
         {limitError && (
