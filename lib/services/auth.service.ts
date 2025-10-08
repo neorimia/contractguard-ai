@@ -517,4 +517,75 @@ export class AuthService {
       return null;
     }
   }
+
+  /**
+   * Get user by Stripe customer ID
+   */
+  async getUserByStripeCustomerId(customerId: string): Promise<User | null> {
+    try {
+      const [user] = await db
+        .select()
+        .from(users)
+        .where(eq(users.stripeCustomerId, customerId))
+        .limit(1);
+
+      return user || null;
+    } catch (error) {
+      console.error("Error fetching user by Stripe customer ID:", error);
+      return null;
+    }
+  }
+
+  /**
+   * Get user by Stripe subscription ID
+   */
+  async getUserBySubscriptionId(subscriptionId: string): Promise<User | null> {
+    try {
+      const [user] = await db
+        .select()
+        .from(users)
+        .where(eq(users.stripeSubscriptionId, subscriptionId))
+        .limit(1);
+
+      return user || null;
+    } catch (error) {
+      console.error("Error fetching user by subscription ID:", error);
+      return null;
+    }
+  }
+
+  /**
+   * Update user data
+   */
+  async updateUser(
+    userId: number,
+    data: {
+      tier?: "free" | "pro" | "enterprise";
+      stripeCustomerId?: string | null;
+      stripeSubscriptionId?: string | null;
+      subscriptionStatus?: string | null;
+      scansToday?: number;
+      scansResetAt?: Date;
+      emailVerified?: boolean;
+      verificationToken?: string | null;
+      verificationTokenExpires?: Date | null;
+      lastLoginAt?: Date;
+    }
+  ): Promise<User> {
+    try {
+      const [updatedUser] = await db
+        .update(users)
+        .set({
+          ...data,
+          updatedAt: new Date(),
+        })
+        .where(eq(users.id, userId))
+        .returning();
+
+      return updatedUser;
+    } catch (error) {
+      console.error("Error updating user:", error);
+      throw error;
+    }
+  }
 }

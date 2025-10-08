@@ -17,6 +17,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { trackEvent, AnalyticsEvents } from "@/lib/analytics/posthog";
 
 // Task sequences for the loading animation
 const TASK_SEQUENCES = [
@@ -264,6 +265,20 @@ export default function Home() {
   const [limitError, setLimitError] = useState<ScanLimitError | null>(null);
   const [showLoginModal, setShowLoginModal] = useState(false);
   const user = useUser();
+  const resultsRef = useRef<HTMLDivElement>(null);
+
+  // Auto-scroll to results when they're available
+  useEffect(() => {
+    if (result && resultsRef.current) {
+      // Small delay to ensure results are rendered
+      setTimeout(() => {
+        resultsRef.current?.scrollIntoView({
+          behavior: "smooth",
+          block: "start",
+        });
+      }, 300);
+    }
+  }, [result]);
 
   const analyzeContract = async () => {
     if (!address) return;
@@ -273,6 +288,13 @@ export default function Home() {
       setShowLoginModal(true);
       return;
     }
+
+    // Track scan initiated
+    trackEvent(AnalyticsEvents.SCAN_INITIATED, {
+      contractAddress: address,
+      chain: "ethereum",
+      userId: user.id,
+    });
 
     setLoading(true);
     setError("");
@@ -298,12 +320,34 @@ export default function Home() {
           data.error === "Scan limit exceeded" ||
           (data.status === "error" && data.scansRemaining !== undefined)
         ) {
+          // Track scan limit reached
+          trackEvent(AnalyticsEvents.SCAN_LIMIT_REACHED, {
+            contractAddress: address,
+            scansRemaining: data.scansRemaining,
+            tier: data.tier || "free",
+          });
+
           setLimitError(data);
           setShowLimitDrawer(true);
           return;
         }
+
+        // Track scan failed
+        trackEvent(AnalyticsEvents.SCAN_FAILED, {
+          contractAddress: address,
+          error: data.error || data.message,
+        });
+
         throw new Error(data.message || "Analysis failed");
       }
+
+      // Track scan completed
+      trackEvent(AnalyticsEvents.SCAN_COMPLETED, {
+        contractAddress: address,
+        riskScore: data.riskScore,
+        recommendation: data.recommendation,
+        issuesFound: data.issues?.length || 0,
+      });
 
       setResult(data);
     } catch (err: any) {
@@ -383,7 +427,11 @@ export default function Home() {
         </section>
 
         {/* Results Section */}
-        {result && <ScanResults result={result} contractAddress={address} />}
+        {result && (
+          <div ref={resultsRef}>
+            <ScanResults result={result} contractAddress={address} />
+          </div>
+        )}
 
         {/* Scan Limit Drawer */}
         {limitError && (

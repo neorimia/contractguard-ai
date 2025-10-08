@@ -173,8 +173,10 @@ export async function POST(req: NextRequest) {
     }
 
     // 4. Get enrichment data
-    const enrichmentData =
-      await contractService.getEnrichmentData(normalizedAddress);
+    const enrichmentData = await contractService.getEnrichmentData(
+      normalizedAddress,
+      chain
+    );
 
     // 5. AI Analysis
     const analysis = await aiService.analyzeContract(

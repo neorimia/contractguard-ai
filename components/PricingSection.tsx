@@ -1,10 +1,13 @@
 "use client";
 
-import { Check, ArrowRight, ChevronDown } from "lucide-react";
+import { Check, ArrowRight, ChevronDown, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { motion } from "motion/react";
 import { useState } from "react";
 import NumberFlow from "@number-flow/react";
+import { useUser } from "@stackframe/stack";
+import { useRouter } from "next/navigation";
+import { trackEvent, AnalyticsEvents } from "@/lib/analytics/posthog";
 
 // Price tier type definition
 type PriceTier = {
@@ -20,6 +23,9 @@ export default function PricingSection() {
   const [billingPeriod, setBillingPeriod] = useState<"monthly" | "yearly">(
     "monthly"
   );
+  const [loadingTier, setLoadingTier] = useState<string | null>(null);
+  const user = useUser();
+  const router = useRouter();
 
   // Pricing data
   const priceTiers: PriceTier[] = [
@@ -89,6 +95,98 @@ export default function PricingSection() {
   const sharedTransition = {
     duration: 0.3,
     ease: [0.22, 1, 0.36, 1] as [number, number, number, number],
+  };
+
+  // Handle upgrade to Pro or Enterprise
+  const handleUpgrade = async (tier: "pro" | "enterprise") => {
+    // Track checkout initiated
+    trackEvent(AnalyticsEvents.CHECKOUT_INITIATED, {
+      tier,
+      userId: user?.id,
+      source: "pricing_page",
+    });
+
+    // Check if user is logged in
+    if (!user) {
+      router.push("/sign-in?redirect=/pricing");
+      return;
+    }
+
+    try {
+      setLoadingTier(tier);
+
+      const response = await fetch("/api/stripe/checkout", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ tier }),
+      });
+
+      const data = (await response.json()) as {
+        status?: string;
+        error?: string;
+        url?: string;
+      };
+
+      if (data.status === "error") {
+        console.error("Checkout error:", data.error);
+
+        // Track checkout failed
+        trackEvent(AnalyticsEvents.CHECKOUT_CANCELED, {
+          tier,
+          reason: data.error || "checkout_error",
+        });
+
+        if (typeof window !== "undefined") {
+          window.alert(data.error || "Failed to create checkout session");
+        }
+        return;
+      }
+
+      if (data.url) {
+        // Redirect to Stripe checkout
+        if (typeof window !== "undefined") {
+          window.location.href = data.url;
+        }
+      } else {
+        console.error("No checkout URL returned");
+        if (typeof window !== "undefined") {
+          window.alert("Failed to create checkout session");
+        }
+      }
+    } catch (error) {
+      console.error("Checkout error:", error);
+
+      // Track checkout error
+      trackEvent(AnalyticsEvents.CHECKOUT_CANCELED, {
+        tier,
+        reason: "exception",
+        error: error instanceof Error ? error.message : "Unknown error",
+      });
+
+      if (typeof window !== "undefined") {
+        window.alert("An error occurred. Please try again.");
+      }
+    } finally {
+      setLoadingTier(null);
+    }
+  };
+
+  // Handle free tier - redirect to sign up or homepage
+  const handleFreeTier = () => {
+    if (!user) {
+      router.push("/sign-up");
+    } else {
+      router.push("/");
+    }
+  };
+
+  // Handle enterprise contact
+  const handleEnterpriseContact = () => {
+    // TODO: Open contact form modal or redirect to contact page
+    if (typeof window !== "undefined") {
+      window.location.href =
+        "mailto:hello@contractguard.ai?subject=Enterprise Inquiry";
+    }
   };
 
   return (
@@ -228,7 +326,6 @@ export default function PricingSection() {
                           format={{
                             style: "currency",
                             currency: "USD",
-                            trailingZeroDisplay: "stripIfInteger",
                           }}
                         />
                       </span>
@@ -282,14 +379,33 @@ export default function PricingSection() {
                     transition={sharedTransition}
                   >
                     <Button
+                      onClick={() => {
+                        if (tier.name === "Free Tier") {
+                          handleFreeTier();
+                        } else if (tier.name === "Pro Tier") {
+                          handleUpgrade("pro");
+                        } else {
+                          handleEnterpriseContact();
+                        }
+                      }}
+                      disabled={loadingTier !== null}
                       className={`w-full h-8 text-sm group relative overflow-hidden ${
                         tier.popular
                           ? "bg-black dark:bg-white text-white dark:text-black hover:bg-black/90 dark:hover:bg-white/90"
                           : "bg-black/5 dark:bg-white/5 text-black dark:text-white hover:bg-black/10 dark:hover:bg-white/10 border border-black/10 dark:border-white/10"
-                      }`}
+                      } disabled:opacity-50 disabled:cursor-not-allowed`}
                     >
-                      {tier.cta}
-                      <ArrowRight className="ml-1 h-3 w-3 transition-transform group-hover:translate-x-1" />
+                      {loadingTier === tier.name.split(" ")[0].toLowerCase() ? (
+                        <>
+                          <Loader2 className="mr-1 h-3 w-3 animate-spin" />
+                          Processing...
+                        </>
+                      ) : (
+                        <>
+                          {tier.cta}
+                          <ArrowRight className="ml-1 h-3 w-3 transition-transform group-hover:translate-x-1" />
+                        </>
+                      )}
                     </Button>
                   </motion.div>
                 </div>
@@ -312,7 +428,10 @@ export default function PricingSection() {
                 </p>
               </div>
 
-              <Button className="relative group h-10 px-6 bg-black dark:bg-white text-white dark:text-black hover:bg-black/90 dark:hover:bg-white/90 rounded-xl overflow-hidden">
+              <Button
+                onClick={handleEnterpriseContact}
+                className="relative group h-10 px-6 bg-black dark:bg-white text-white dark:text-black hover:bg-black/90 dark:hover:bg-white/90 rounded-xl overflow-hidden"
+              >
                 <span className="relative z-10 flex items-center font-medium">
                   Contact our team
                   <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />

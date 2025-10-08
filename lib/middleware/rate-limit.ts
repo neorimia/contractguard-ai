@@ -1,8 +1,8 @@
 // lib/middleware/rate-limit.ts
 import { Redis } from "@upstash/redis";
 import { NextRequest, NextResponse } from "next/server";
-import { getUserFromRequest } from './auth.middleware';
-import { AuthService } from '@/lib/services/auth.service';
+import { getUserFromRequest } from "./auth.middleware";
+import { AuthService } from "@/lib/services/auth.service";
 
 const redis = new Redis({
   url: process.env.UPSTASH_REDIS_URL!,
@@ -76,31 +76,32 @@ export async function rateLimitMiddleware(req: NextRequest) {
 
     if (!user || !user.id) {
       return NextResponse.json(
-        { error: 'Unauthorized', status: 'error' },
+        { error: "Unauthorized", status: "error" },
         { status: 401 }
       );
     }
 
     // Check scan limit using AuthService
     const authService = new AuthService();
-    const { allowed, scansRemaining, resetAt } = await authService.checkScanLimit(user.id);
+    const { allowed, scansRemaining, resetAt } =
+      await authService.checkScanLimit(user.id);
 
     if (!allowed) {
       return NextResponse.json(
         {
-          error: 'Scan limit exceeded',
-          message: `You've used all your scans for today. ${user.tier === 'free' ? 'Upgrade to Pro for more scans!' : 'Your limit will reset soon.'}`,
+          error: "Scan limit exceeded",
+          message: `You've used all your scans for today. ${user.tier === "free" ? "Upgrade to Pro for more scans!" : "Your limit will reset soon."}`,
           scansRemaining: 0,
           resetAt: resetAt.toISOString(),
-          upgradeUrl: '/pricing',
-          status: 'error'
+          upgradeUrl: "/pricing",
+          status: "error",
         },
         {
           status: 429,
           headers: {
-            'X-RateLimit-Remaining': '0',
-            'X-RateLimit-Reset': resetAt.toISOString(),
-          }
+            "X-RateLimit-Remaining": "0",
+            "X-RateLimit-Reset": resetAt.toISOString(),
+          },
         }
       );
     }
@@ -111,15 +112,14 @@ export async function rateLimitMiddleware(req: NextRequest) {
     // Return success response for Next.js middleware
     return NextResponse.next({
       headers: {
-        'X-RateLimit-Remaining': scansRemaining.toString(),
-        'X-RateLimit-Reset': resetAt.toISOString(),
-      }
+        "X-RateLimit-Remaining": scansRemaining.toString(),
+        "X-RateLimit-Reset": resetAt.toISOString(),
+      },
     });
-
   } catch (error) {
-    console.error('Rate limit middleware error:', error);
+    console.error("Rate limit middleware error:", error);
     return NextResponse.json(
-      { error: 'Rate limit check failed', status: 'error' },
+      { error: "Rate limit check failed", status: "error" },
       { status: 500 }
     );
   }
