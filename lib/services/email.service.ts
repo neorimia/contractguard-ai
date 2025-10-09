@@ -1,52 +1,224 @@
 // lib/services/email.service.ts
-import { Resend } from 'resend';
+import { Resend } from "resend";
+import { render } from "@react-email/render";
+import { WelcomeEmail } from "@/emails/WelcomeEmail";
+import { PaymentConfirmationEmail } from "@/emails/PaymentConfirmationEmail";
+import { PaymentFailedEmail } from "@/emails/PaymentFailedEmail";
+import { CancellationEmail } from "@/emails/CancellationEmail";
+import { FeedbackNotificationEmail } from "@/emails/FeedbackNotificationEmail";
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
 interface EmailContext {
-    firstName?: string;
+  firstName?: string;
 }
 
 /**
  * EmailService - Handles sending transactional emails
  */
 export class EmailService {
-    /**
-     * Send email verification link
-     */
-    async sendVerificationEmail(
-        to: string,
-        token: string,
-        context: EmailContext = {}
-    ): Promise<void> {
-        try {
-            const verificationUrl = `${process.env.NEXT_PUBLIC_SITE_URL}/handler/email-verification?code=${token}`;
+  private serviceName = "EmailService";
 
-            await resend.emails.send({
-                from: 'ContractGuard AI <noreply@contractguard.ai>',
-                to,
-                subject: 'Verify your email - ContractGuard AI',
-                html: this.getVerificationEmailTemplate(verificationUrl, context),
-            });
+  /**
+   * Send email verification link
+   */
+  async sendVerificationEmail(
+    to: string,
+    token: string,
+    context: EmailContext = {}
+  ): Promise<void> {
+    try {
+      const verificationUrl = `${process.env.NEXT_PUBLIC_SITE_URL}/handler/email-verification?code=${token}`;
 
-            console.log(`Verification email sent to ${to}`);
+      await resend.emails.send({
+        from: "ContractGuard AI <noreply@contractguard.ai>",
+        to,
+        subject: "Verify your email - ContractGuard AI",
+        html: this.getVerificationEmailTemplate(verificationUrl, context),
+      });
 
-        } catch (error) {
-            console.error('Error sending verification email:', error);
-            throw new Error('Failed to send verification email');
-        }
+      console.log(`[${this.serviceName}] Verification email sent to ${to}`);
+    } catch (error) {
+      console.error(
+        `[${this.serviceName}] Error sending verification email:`,
+        error
+      );
+      throw new Error("Failed to send verification email");
     }
+  }
 
-    /**
-     * Email template for verification
-     */
-    private getVerificationEmailTemplate(
-        verificationUrl: string,
-        context: EmailContext
-    ): string {
-        const greeting = context.firstName ? `Hi ${context.firstName}` : 'Hello';
+  /**
+   * Send welcome email after email verification
+   */
+  async sendWelcomeEmail(
+    to: string,
+    context: {
+      displayName?: string;
+      scansRemaining: number;
+    }
+  ): Promise<void> {
+    try {
+      const html = await render(WelcomeEmail(context));
 
-        return `
+      await resend.emails.send({
+        from: "ContractGuard AI <noreply@contractguard.ai>",
+        to,
+        subject: "Welcome to ContractGuard AI! 🛡️",
+        html,
+      });
+
+      console.log(`[${this.serviceName}] Welcome email sent to ${to}`);
+    } catch (error) {
+      console.error(
+        `[${this.serviceName}] Failed to send welcome email:`,
+        error
+      );
+      // Don't throw - email failure shouldn't block main flow
+    }
+  }
+
+  /**
+   * Send payment confirmation email
+   */
+  async sendPaymentConfirmation(
+    to: string,
+    context: {
+      firstName?: string;
+      amount: number;
+      invoiceId: string;
+      tier: string;
+      nextPaymentDate: Date;
+      receiptUrl: string;
+    }
+  ): Promise<void> {
+    try {
+      const html = await render(PaymentConfirmationEmail(context));
+
+      await resend.emails.send({
+        from: "ContractGuard AI <billing@contractguard.ai>",
+        to,
+        subject: "Payment Received - Thank You! 💳",
+        html,
+      });
+
+      console.log(`[${this.serviceName}] Payment confirmation sent to ${to}`);
+    } catch (error) {
+      console.error(
+        `[${this.serviceName}] Failed to send payment confirmation:`,
+        error
+      );
+    }
+  }
+
+  /**
+   * Send payment failed notification
+   */
+  async sendPaymentFailedNotification(
+    to: string,
+    context: {
+      firstName?: string;
+      amount: number;
+      failureReason: string;
+      nextAttemptDate: Date;
+      updatePaymentUrl: string;
+    }
+  ): Promise<void> {
+    try {
+      const html = await render(PaymentFailedEmail(context));
+
+      await resend.emails.send({
+        from: "ContractGuard AI <billing@contractguard.ai>",
+        to,
+        subject: "Action Required: Payment Failed ⚠️",
+        html,
+      });
+
+      console.log(
+        `[${this.serviceName}] Payment failed notification sent to ${to}`
+      );
+    } catch (error) {
+      console.error(
+        `[${this.serviceName}] Failed to send payment failed notification:`,
+        error
+      );
+    }
+  }
+
+  /**
+   * Send subscription cancellation email
+   */
+  async sendCancellationEmail(
+    to: string,
+    context: {
+      firstName?: string;
+      tier: string;
+      accessEndDate: Date;
+      reactivateUrl: string;
+      feedbackUrl: string;
+    }
+  ): Promise<void> {
+    try {
+      const html = await render(CancellationEmail(context));
+
+      await resend.emails.send({
+        from: "ContractGuard AI <noreply@contractguard.ai>",
+        to,
+        subject: "We're Sorry to See You Go 😢",
+        html,
+      });
+
+      console.log(`[${this.serviceName}] Cancellation email sent to ${to}`);
+    } catch (error) {
+      console.error(
+        `[${this.serviceName}] Failed to send cancellation email:`,
+        error
+      );
+    }
+  }
+
+  /**
+   * Send feedback notification to team
+   */
+  async sendFeedbackNotification(context: {
+    reason: string;
+    feedback: string;
+    rating?: number;
+    userEmail?: string;
+    timestamp: string;
+  }): Promise<void> {
+    try {
+      const html = await render(FeedbackNotificationEmail(context));
+
+      const teamEmail =
+        process.env.TEAM_NOTIFICATION_EMAIL || "support@contractguard.ai";
+
+      await resend.emails.send({
+        from: "ContractGuard AI <notifications@contractguard.ai>",
+        to: teamEmail,
+        subject: `[Feedback] New ${context.reason} feedback received`,
+        html,
+      });
+
+      console.log(`[${this.serviceName}] Feedback notification sent to team`);
+    } catch (error) {
+      console.error(
+        `[${this.serviceName}] Failed to send feedback notification:`,
+        error
+      );
+      // Don't throw - email failure shouldn't block main flow
+    }
+  }
+
+  /**
+   * Email template for verification
+   */
+  private getVerificationEmailTemplate(
+    verificationUrl: string,
+    context: EmailContext
+  ): string {
+    const greeting = context.firstName ? `Hi ${context.firstName}` : "Hello";
+
+    return `
 <!DOCTYPE html>
 <html>
 <head>
@@ -185,5 +357,5 @@ export class EmailService {
 </body>
 </html>
         `.trim();
-    }
+  }
 }

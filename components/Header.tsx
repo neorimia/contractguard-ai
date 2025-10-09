@@ -3,10 +3,20 @@
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { useState, useEffect } from "react";
-import { Menu, X, Sun, Moon, User, LogOut } from "lucide-react";
+import {
+  Menu,
+  X,
+  Sun,
+  Moon,
+  User,
+  LogOut,
+  MessageCircle,
+  CreditCard,
+} from "lucide-react";
 import { useTheme } from "next-themes";
 import { useRouter } from "next/navigation";
 import { useUser } from "@stackframe/stack";
+import Image from "next/image";
 
 export function Header() {
   const [isScrolled, setIsScrolled] = useState(false);
@@ -59,7 +69,7 @@ export function Header() {
   };
 
   const handleScanContract = () => {
-    router.push("/");
+    router.push("/audit");
   };
 
   const handleSignOut = async () => {
@@ -101,19 +111,23 @@ export function Header() {
             <div className="flex items-center gap-6">
               <Link
                 href="/"
-                className="text-lg font-bold text-black dark:text-white hover:text-blue-400 dark:hover:text-blue-600 transition-colors"
+                className="text-lg font-bold text-black/60 dark:text-white/60 hover:text-black dark:hover:text-white transition-colors"
                 aria-label="ContractGuard AI Home"
               >
-                ContractGuard.AI
+                <Image
+                  src={theme === "dark" ? "/icon-white.svg" : "/icon.svg"}
+                  alt="ContractGuard AI"
+                  width={30}
+                  height={30}
+                />
               </Link>
-              <span>/</span>
               {/* Desktop Navigation */}
               <nav className="hidden md:flex items-center gap-6">
                 {["Features", "Pricing", "FAQ"].map((item) => (
                   <Link
                     key={item}
                     href={`/${item.toLowerCase()}`}
-                    className="text-sm font-medium text-black dark:text-white hover:text-blue-400 dark:hover:text-blue-600 transition-colors"
+                    className="text-sm font-medium text-black/80 dark:text-white/90 hover:text-black dark:hover:text-white transition-colors"
                     aria-label={item}
                   >
                     {item}
@@ -194,6 +208,26 @@ export function Header() {
                           <button
                             onClick={() => {
                               setShowUserMenu(false);
+                              router.push("/billing");
+                            }}
+                            className="w-full text-left px-4 py-2 text-sm text-black dark:text-white hover:bg-black/5 dark:hover:bg-white/5 rounded-md transition-colors flex items-center gap-2"
+                          >
+                            <CreditCard className="h-4 w-4" />
+                            Billing
+                          </button>
+                          <button
+                            onClick={() => {
+                              setShowUserMenu(false);
+                              router.push("/feedback");
+                            }}
+                            className="w-full text-left px-4 py-2 text-sm text-black dark:text-white hover:bg-black/5 dark:hover:bg-white/5 rounded-md transition-colors flex items-center gap-2"
+                          >
+                            <MessageCircle className="h-4 w-4" />
+                            Feedback
+                          </button>
+                          <button
+                            onClick={() => {
+                              setShowUserMenu(false);
                               handleSignOut();
                             }}
                             className="w-full text-left px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/20 rounded-md transition-colors flex items-center gap-2"
@@ -207,22 +241,14 @@ export function Header() {
                   </div>
                 </>
               ) : (
-                // Not logged in - Show login/signup buttons
+                // Not logged in - Show scan button
                 <>
-                  <Button
-                    variant="ghost"
-                    size="lg"
-                    className="h-8 sm:h-10 px-5 sm:px-6 text-black dark:text-white transition-colors hover:bg-black/15 dark:hover:bg-white/15 rounded-lg"
-                    onClick={() => handleLogin()}
-                  >
-                    Login
-                  </Button>
                   <Button
                     size="lg"
                     className="h-7 sm:h-9 px-3 sm:px-4 text-white dark:text-black tracking-tight group dark:bg-white/95 bg-black rounded-lg dark:hover:bg-white dark:hover:text-black transition-all duration-300"
-                    onClick={() => handleSignup()}
+                    onClick={() => handleScanContract()}
                   >
-                    Sign Up
+                    Scan Contract
                   </Button>
                 </>
               )}
@@ -287,7 +313,7 @@ export function Header() {
                     </div>
                     <Button
                       size="sm"
-                      className="w-full bg-black dark:bg-white text-white dark:text-black"
+                      className="w-full  bg-black dark:bg-white text-white dark:text-black"
                       onClick={() => {
                         setIsMobileMenuOpen(false);
                         handleScanContract();
@@ -298,7 +324,7 @@ export function Header() {
                     <Button
                       variant="ghost"
                       size="sm"
-                      className="w-full text-black dark:text-white hover:bg-black/5 dark:hover:bg-white/5"
+                      className="w-full justify-start px-0 text-black dark:text-white hover:bg-black/5 dark:hover:bg-white/5"
                       onClick={() => {
                         setIsMobileMenuOpen(false);
                         router.push("/account");
@@ -310,7 +336,31 @@ export function Header() {
                     <Button
                       variant="ghost"
                       size="sm"
-                      className="w-full text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/20"
+                      className="w-full justify-start px-0 text-black dark:text-white hover:bg-black/5 dark:hover:bg-white/5"
+                      onClick={() => {
+                        setIsMobileMenuOpen(false);
+                        router.push("/billing");
+                      }}
+                    >
+                      <CreditCard className="h-4 w-4 mr-2" />
+                      Billing
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="w-full justify-start px-0 text-black dark:text-white hover:bg-black/5 dark:hover:bg-white/5"
+                      onClick={() => {
+                        setIsMobileMenuOpen(false);
+                        router.push("/feedback");
+                      }}
+                    >
+                      <MessageCircle className="h-4 w-4 mr-2" />
+                      Feedback
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="w-full justify-start px-0 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/20"
                       onClick={() => {
                         setIsMobileMenuOpen(false);
                         handleSignOut();
@@ -324,25 +374,14 @@ export function Header() {
                   // Not logged in - Show auth buttons
                   <div className="flex gap-2 mt-2 px-2">
                     <Button
-                      variant="ghost"
-                      size="sm"
-                      className="flex-1 text-black dark:text-white hover:text-blue-400 dark:hover:text-blue-600 transition-colors"
-                      onClick={() => {
-                        setIsMobileMenuOpen(false);
-                        handleLogin();
-                      }}
-                    >
-                      Login
-                    </Button>
-                    <Button
                       size="sm"
                       className="flex-1 bg-black dark:bg-white text-white dark:text-black"
                       onClick={() => {
                         setIsMobileMenuOpen(false);
-                        handleSignup();
+                        handleScanContract();
                       }}
                     >
-                      Sign Up
+                      Scan Contract
                     </Button>
                   </div>
                 )}

@@ -2,12 +2,18 @@
 
 import { Button } from "@/components/ui/button";
 import { motion } from "motion/react";
+import { useRouter } from "next/navigation";
 
 export default function FeaturesSection() {
+  const router = useRouter();
   // Shared transition settings
   const sharedTransition = {
     duration: 0.3,
     ease: [0.22, 1, 0.36, 1] as [number, number, number, number],
+  };
+
+  const handleScanContract = () => {
+    router.push("/audit");
   };
 
   return (
@@ -88,12 +94,11 @@ export default function FeaturesSection() {
               className="pt-2"
             >
               <Button
-                size="sm"
-                onClick={() => (window.location.href = "/")}
-                className="h-6 group text-white dark:text-black bg-black dark:bg-white hover:bg-black/90 dark:hover:bg-white/90"
+                size="lg"
+                className="flex-1 bg-black dark:bg-white text-white dark:text-black"
+                onClick={() => handleScanContract()}
               >
                 Try it now
-                <span className="ml-2 transition-transform group-hover:translate-x-1 h-1 w-1 rounded-full bg-current" />
               </Button>
             </motion.div>
           </motion.div>

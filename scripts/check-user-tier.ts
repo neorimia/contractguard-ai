@@ -58,7 +58,7 @@ async function checkUserTier() {
 
     console.log(`👤 User ID: ${user.id}`);
     console.log(`📧 Email: ${user.email}`);
-    console.log(`📛 Name: ${user.firstName || "N/A"} ${user.lastName || ""}`);
+    console.log(`📛 Name: ${user.displayName || "N/A"}`);
     console.log();
 
     console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");

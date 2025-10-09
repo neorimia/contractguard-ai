@@ -65,8 +65,7 @@ export async function POST(req: NextRequest) {
           stackUser.id,
           stackUser.primaryEmail, // We've already validated this exists above
           {
-            firstName: nameParts[0],
-            lastName: nameParts.slice(1).join(" "),
+            displayName: stackUser.displayName || undefined,
             avatarUrl: stackUser.profileImageUrl || undefined,
           }
         );
