@@ -23,36 +23,39 @@ export default function SignupPage() {
         {/* Content overlay */}
         <div className="relative z-10 text-center text-white space-y-6 max-w-md">
           {/* Logo/Brand */}
-          <div className="mb-8">
-            <Link href="/">
-              <h1 className="text-4xl font-bold tracking-tighter cursor-pointer hover:opacity-90 transition-opacity">
-                🛡️ ContractGuard AI
-              </h1>
-            </Link>
-          </div>
+          {/*<div className="mb-8">*/}
+          {/*  <Link href="/">*/}
+          {/*    <h1 className="text-4xl font-bold tracking-tighter cursor-pointer hover:opacity-90 transition-opacity">*/}
+          {/*      🛡️ ContractGuard AI*/}
+          {/*    </h1>*/}
+          {/*  </Link>*/}
+          {/*</div>*/}
 
           {/* Main Title */}
-          <h2 className="text-3xl font-semibold leading-tight tracking-tighter">
-            Start protecting your crypto investments today.
-          </h2>
+          {/*<h2 className="text-3xl font-semibold leading-tight tracking-tighter">*/}
+          {/*  Start protecting your crypto investments today.*/}
+          {/*</h2>*/}
 
           {/* Subtitle */}
-          <p className="text-lg text-gray-200 leading-relaxed tracking-tighter">
-            Join 1000+ traders using AI to detect scams and secure their
-            investments in the bull market.
-          </p>
+          {/*<p className="text-lg text-gray-200 leading-relaxed tracking-tighter">*/}
+          {/*  Join 1000+ traders using AI to detect scams and secure their*/}
+          {/*  investments in the bull market.*/}
+          {/*</p>*/}
         </div>
       </div>
 
       {/* Right side - Stack Auth Sign Up */}
-      <div className="flex flex-col justify-center p-12">
-        <div className="w-full max-w-lg mx-auto">
-          <SignUp
-              automaticRedirect={true}
-              firstTab='password'
-              extraInfo={<>By signing up, you agree to our <a href="/terms">Terms</a></>}
-          />
-        </div>
+      <div className="flex flex-col justify-center items-center p-12">
+        <SignUp
+          automaticRedirect={true}
+          firstTab="password"
+          extraInfo={
+            <>
+              By signing up, you agree to our <a href="/terms">Terms</a> and{" "}
+              <a href="/privacy">Privacy Policy</a>.
+            </>
+          }
+        />
       </div>
     </div>
   );

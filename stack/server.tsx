@@ -7,8 +7,8 @@ export const stackServerApp = new StackServerApp({
   urls: {
     signIn: "/sign-in",
     signUp: "/sign-up",
-    afterSignIn: "/",
-    afterSignUp: "/",
-    afterSignOut: "/sign-in",
+    afterSignIn: "/audit",
+    afterSignUp: "/audit",
+    afterSignOut: "/",
   },
 });

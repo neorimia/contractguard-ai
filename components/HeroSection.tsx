@@ -11,11 +11,13 @@ import OpenAI from "@/components/icons/open-ai";
 import OpenAIDark from "./icons/open-ai-dark";
 import AnthropicDark from "./icons/anthropic-dark";
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 
 export default function HeroSection() {
   const [activeAgentIndex, setActiveAgentIndex] = useState(2); // Start with Research Assistant active
   const [direction, setDirection] = useState(0); // -1 for left, 1 for right
   const [autoRotate, setAutoRotate] = useState(true); // Track if automatic rotation should continue
+  const router = useRouter();
 
   useEffect(() => {
     if (!autoRotate) return; // Skip setting up interval if autoRotate is false
@@ -84,7 +86,7 @@ export default function HeroSection() {
           <div className="rounded-xl p-1 border dark:border-black/30 border-white/30 dark:hover:border-black/50 hover:border-white/50 transition-all duration-300">
             <Button
               size="lg"
-              onClick={() => (window.location.href = "/")}
+              onClick={() => router.push("/audit")}
               className="h-10 sm:h-13 px-5 sm:px-6 dark:text-white text-black tracking-tight group bg-white/95 dark:bg-black rounded-lg hover:bg-white dark:hover:bg-black transition-all duration-300"
             >
               SCAN CONTRACT
@@ -106,7 +108,7 @@ export default function HeroSection() {
             </h3>
 
             {/* Cards Container */}
-            <div className="flex flex-col sm:flex-row justify-center items-center sm:items-start gap-6 sm:gap-x-32">
+            <div className="flex flex-col sm:flex-row justify-center items-center  gap-6 sm:gap-x-32">
               {/* Card 1: Models Overview */}
               <div className="w-full sm:w-72 p-5 rounded-xl relative group/card backdrop-blur-sm border border-white/[0.05] dark:border-black/[0.05] bg-gradient-to-b from-white/[0.08] to-white/[0.02] dark:from-black/[0.08] dark:to-black/[0.02]">
                 <div className="absolute inset-x-0 -top-px h-px bg-gradient-to-r from-transparent via-white/20 dark:via-black/20 to-transparent" />
@@ -302,7 +304,7 @@ export default function HeroSection() {
                     AI Models
                   </h4>
                   <div className="text-[10px] px-2 py-0.5 rounded-md bg-white/10 dark:bg-black/10 text-white/80 dark:text-black/80 border border-white/10 dark:border-black/10">
-                    5 Models
+                    2 Models
                   </div>
                 </div>
                 <div className="grid grid-cols-2 gap-2">
@@ -314,30 +316,30 @@ export default function HeroSection() {
                     </span>
                   </div>
                   <div className="flex items-center gap-x-3 group cursor-pointer p-2 rounded-lg hover:bg-white/[0.02] dark:hover:bg-black/[0.02] transition-colors">
-                    <Deepseek className="h-5 w-5 text-white/80 dark:text-black/80 flex-shrink-0 group-hover:text-white dark:group-hover:text-black transition-colors" />
-                    <span className="text-sm text-white/80 dark:text-black/80 group-hover:text-white dark:group-hover:text-black transition-colors">
-                      Deepseek
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-x-3 group cursor-pointer p-2 rounded-lg hover:bg-white/[0.02] dark:hover:bg-black/[0.02] transition-colors">
-                    <Gemini className="h-5 w-5 text-white/80 dark:text-black/80 flex-shrink-0 group-hover:text-white dark:group-hover:text-black transition-colors" />
-                    <span className="text-sm text-white/80 dark:text-black/80 group-hover:text-white dark:group-hover:text-black transition-colors">
-                      Gemini
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-x-3 group cursor-pointer p-2 rounded-lg hover:bg-white/[0.02] dark:hover:bg-black/[0.02] transition-colors">
-                    <Mistral className="h-5 w-5 text-white/80 dark:text-black/80 flex-shrink-0 group-hover:text-white dark:group-hover:text-black transition-colors" />
-                    <span className="text-sm text-white/80 dark:text-black/80 group-hover:text-white dark:group-hover:text-black transition-colors">
-                      Mistral
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-x-3 group cursor-pointer p-2 rounded-lg hover:bg-white/[0.02] dark:hover:bg-black/[0.02] transition-colors col-span-2">
                     <OpenAI className="h-5 w-5 text-white/80 dark:text-black/80 flex-shrink-0 group-hover:text-white dark:group-hover:text-black transition-colors hidden dark:block" />
                     <OpenAIDark className="h-5 w-5 text-white/80 dark:text-black/80 flex-shrink-0 group-hover:text-white dark:group-hover:text-black transition-colors block dark:hidden" />
                     <span className="text-sm text-white/80 dark:text-black/80 group-hover:text-white dark:group-hover:text-black transition-colors">
                       OpenAI
                     </span>
                   </div>
+                  {/*<div className="flex items-center gap-x-3 group cursor-pointer p-2 rounded-lg hover:bg-white/[0.02] dark:hover:bg-black/[0.02] transition-colors">*/}
+                  {/*  <Deepseek className="h-5 w-5 text-white/80 dark:text-black/80 flex-shrink-0 group-hover:text-white dark:group-hover:text-black transition-colors" />*/}
+                  {/*  <span className="text-sm text-white/80 dark:text-black/80 group-hover:text-white dark:group-hover:text-black transition-colors">*/}
+                  {/*    Deepseek*/}
+                  {/*  </span>*/}
+                  {/*</div>*/}
+                  {/*<div className="flex items-center gap-x-3 group cursor-pointer p-2 rounded-lg hover:bg-white/[0.02] dark:hover:bg-black/[0.02] transition-colors">*/}
+                  {/*  <Gemini className="h-5 w-5 text-white/80 dark:text-black/80 flex-shrink-0 group-hover:text-white dark:group-hover:text-black transition-colors" />*/}
+                  {/*  <span className="text-sm text-white/80 dark:text-black/80 group-hover:text-white dark:group-hover:text-black transition-colors">*/}
+                  {/*    Gemini*/}
+                  {/*  </span>*/}
+                  {/*</div>*/}
+                  {/*<div className="flex items-center gap-x-3 group cursor-pointer p-2 rounded-lg hover:bg-white/[0.02] dark:hover:bg-black/[0.02] transition-colors">*/}
+                  {/*  <Mistral className="h-5 w-5 text-white/80 dark:text-black/80 flex-shrink-0 group-hover:text-white dark:group-hover:text-black transition-colors" />*/}
+                  {/*  <span className="text-sm text-white/80 dark:text-black/80 group-hover:text-white dark:group-hover:text-black transition-colors">*/}
+                  {/*    Mistral*/}
+                  {/*  </span>*/}
+                  {/*</div>*/}
                 </div>
               </div>
             </div>

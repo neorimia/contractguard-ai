@@ -16,6 +16,7 @@ import {
 } from "@/components/ui/dialog";
 import { trackEvent, AnalyticsEvents } from "@/lib/analytics/posthog";
 import { AILoadingState } from "./AILoadingState";
+import Link from "next/link";
 
 interface ScanLimitError {
   error: string;
@@ -221,6 +222,12 @@ export function ScanInterface() {
             <DialogDescription>
               Create an account or sign in to start scanning smart contracts.
               Free tier includes 3 scans per day.
+              <br />
+              By using the application, you agree to our{" "}
+              <Link href="/terms">Terms of Service</Link> and{" "}
+              <Link href="/privacy">Privacy Policy</Link>.
+              <br />
+              <Link href="/faq">Learn more about ContractGuard AI</Link>
             </DialogDescription>
           </DialogHeader>
           <div className="mt-4">

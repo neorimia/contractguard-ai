@@ -69,7 +69,7 @@ export function Header() {
   };
 
   const handleScanContract = () => {
-    router.push("/");
+    router.push("/audit");
   };
 
   const handleSignOut = async () => {
@@ -111,7 +111,7 @@ export function Header() {
             <div className="flex items-center gap-6">
               <Link
                 href="/"
-                className="text-lg font-bold text-black dark:text-white hover:text-blue-400 dark:hover:text-blue-600 transition-colors"
+                className="text-lg font-bold text-black/60 dark:text-white/60 hover:text-black dark:hover:text-white transition-colors"
                 aria-label="ContractGuard AI Home"
               >
                 <Image
@@ -127,7 +127,7 @@ export function Header() {
                   <Link
                     key={item}
                     href={`/${item.toLowerCase()}`}
-                    className="text-sm font-medium text-black dark:text-white hover:text-blue-400 dark:hover:text-blue-600 transition-colors"
+                    className="text-sm font-medium text-black/80 dark:text-white/90 hover:text-black dark:hover:text-white transition-colors"
                     aria-label={item}
                   >
                     {item}
@@ -241,22 +241,14 @@ export function Header() {
                   </div>
                 </>
               ) : (
-                // Not logged in - Show login/signup buttons
+                // Not logged in - Show scan button
                 <>
-                  <Button
-                    variant="ghost"
-                    size="lg"
-                    className="h-8 sm:h-10 px-5 sm:px-6 text-black dark:text-white transition-colors hover:bg-black/15 dark:hover:bg-white/15 rounded-lg"
-                    onClick={() => handleLogin()}
-                  >
-                    Login
-                  </Button>
                   <Button
                     size="lg"
                     className="h-7 sm:h-9 px-3 sm:px-4 text-white dark:text-black tracking-tight group dark:bg-white/95 bg-black rounded-lg dark:hover:bg-white dark:hover:text-black transition-all duration-300"
-                    onClick={() => handleSignup()}
+                    onClick={() => handleScanContract()}
                   >
-                    Sign Up
+                    Scan Contract
                   </Button>
                 </>
               )}
@@ -382,25 +374,14 @@ export function Header() {
                   // Not logged in - Show auth buttons
                   <div className="flex gap-2 mt-2 px-2">
                     <Button
-                      variant="ghost"
-                      size="sm"
-                      className="flex-1 text-black dark:text-white hover:text-blue-400 dark:hover:text-blue-600 transition-colors"
-                      onClick={() => {
-                        setIsMobileMenuOpen(false);
-                        handleLogin();
-                      }}
-                    >
-                      Login
-                    </Button>
-                    <Button
                       size="sm"
                       className="flex-1 bg-black dark:bg-white text-white dark:text-black"
                       onClick={() => {
                         setIsMobileMenuOpen(false);
-                        handleSignup();
+                        handleScanContract();
                       }}
                     >
-                      Sign Up
+                      Scan Contract
                     </Button>
                   </div>
                 )}

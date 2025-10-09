@@ -21,36 +21,32 @@ export default function LoginPage() {
         </div>
 
         {/* Content overlay */}
-        <div className="relative z-10 text-center text-white space-y-6 max-w-md">
+        <div className="relative z-10 text-center  text-white space-y-6 max-w-md">
           {/* Logo/Brand */}
-          <div className="mb-8">
-            <Link href="/">
-              <h1 className="text-4xl font-bold tracking-tighter cursor-pointer hover:opacity-90 transition-opacity">
-                🛡️ ContractGuard AI
-              </h1>
-            </Link>
-          </div>
+          {/*<div className="mb-8">*/}
+          {/*  <Link href="/">*/}
+          {/*    <h1 className="text-4xl font-bold tracking-tighter cursor-pointer hover:opacity-90 transition-opacity">*/}
+          {/*      🛡️ ContractGuard AI*/}
+          {/*    </h1>*/}
+          {/*  </Link>*/}
+          {/*</div>*/}
 
           {/* Main Title */}
-          <h2 className="text-3xl font-semibold leading-tight tracking-tighter">
-            Secure your crypto investments with AI-powered contract analysis.
-          </h2>
+          {/*<h2 className="text-3xl font-semibold leading-tight tracking-tighter">*/}
+          {/*  Secure your crypto investments with AI-powered contract analysis.*/}
+          {/*</h2>*/}
 
           {/* Subtitle */}
-          <p className="text-lg text-gray-200 leading-relaxed tracking-tighter">
-            Detect scams, honeypots, and rug pulls in seconds. Join 1000+
-            traders protecting their investments.
-          </p>
+          {/*<p className="text-lg text-gray-200 leading-relaxed tracking-tighter">*/}
+          {/*  Detect scams, honeypots, and rug pulls in seconds. Join 1000+*/}
+          {/*  traders protecting their investments.*/}
+          {/*</p>*/}
         </div>
       </div>
 
       {/* Right side - Stack Auth Sign In */}
-      <div className="flex flex-col justify-center p-12">
-        <div className="w-full max-w-lg mx-auto">
-          <SignIn
-           firstTab={"magic-link"}
-        />
-        </div>
+      <div className="flex flex-col justify-center items-center p-12">
+        <SignIn firstTab={"magic-link"} />
       </div>
     </div>
   );

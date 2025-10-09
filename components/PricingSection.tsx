@@ -21,7 +21,7 @@ type PriceTier = {
 
 export default function PricingSection() {
   const [billingPeriod, setBillingPeriod] = useState<"monthly" | "yearly">(
-    "monthly"
+    "monthly",
   );
   const [loadingTier, setLoadingTier] = useState<string | null>(null);
   const user = useUser();
@@ -185,7 +185,7 @@ export default function PricingSection() {
     // TODO: Open contact form modal or redirect to contact page
     if (typeof window !== "undefined") {
       window.location.href =
-        "mailto:hello@contractguard.ai?subject=Enterprise Inquiry";
+        "mailto:contact@contractguard.ai?subject=Enterprise Inquiry";
     }
   };
 
