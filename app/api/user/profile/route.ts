@@ -26,13 +26,11 @@ export async function GET(request: NextRequest) {
 
     if (!appUser) {
       // User doesn't exist in our database yet - sync them
-      const nameParts = stackUser.displayName?.split(" ") || [];
       const syncedUser = await authService.syncUser(
         stackUser.id,
         stackUser.primaryEmail,
         {
-          firstName: nameParts[0],
-          lastName: nameParts.slice(1).join(" "),
+          displayName: stackUser.displayName || undefined,
           avatarUrl: stackUser.profileImageUrl || undefined,
         }
       );
@@ -88,12 +86,11 @@ export async function PATCH(request: NextRequest) {
 
     // Parse request body
     const body = await request.json();
-    const { firstName, lastName, avatarUrl } = body;
+    const { displayName, avatarUrl } = body;
 
     // Update user profile
     const updatedUser = await authService.updateUser(appUser.id, {
-      ...(firstName && { firstName }),
-      ...(lastName && { lastName }),
+      ...(displayName && { displayName }),
       ...(avatarUrl && { avatarUrl }),
     });
 

@@ -99,12 +99,13 @@ STRIPE_WEBHOOK_SECRET=whsec_your_webhook_secret
 
 ```bash
 RESEND_API_KEY=re_your_resend_api_key
+TEAM_NOTIFICATION_EMAIL=team@contractguard.ai
 ```
 
-- **Purpose**: Send transactional emails (verification, notifications)
+- **Purpose**: Send transactional emails (verification, notifications) and team notifications
 - **Get from**: https://resend.com
 - **Used by**: EmailService
-- **Required**: No (Stack Auth handles auth emails)
+- **Required**: RESEND_API_KEY recommended, TEAM_NOTIFICATION_EMAIL optional (defaults to support@contractguard.ai)
 
 ### Site Configuration
 

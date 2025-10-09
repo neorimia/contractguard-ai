@@ -266,6 +266,59 @@ export class StripeService {
       );
     }
   }
+
+  /**
+   * Get invoice by ID
+   */
+  async getInvoice(invoiceId: string): Promise<Stripe.Invoice | null> {
+    try {
+      const invoice = await this.stripe.invoices.retrieve(invoiceId);
+      return invoice;
+    } catch (error) {
+      console.error("Failed to retrieve invoice:", error);
+      return null;
+    }
+  }
+
+  /**
+   * Get payment methods for a customer
+   */
+  async getPaymentMethods(
+    customerId: string
+  ): Promise<Stripe.PaymentMethod[]> {
+    try {
+      const paymentMethods = await this.stripe.paymentMethods.list({
+        customer: customerId,
+        type: "card",
+      });
+      return paymentMethods.data;
+    } catch (error) {
+      console.error("Failed to fetch payment methods:", error);
+      return [];
+    }
+  }
+
+  /**
+   * List invoices for a customer
+   */
+  async listInvoices(params: {
+    customerId: string;
+    limit?: number;
+    startingAfter?: string;
+  }): Promise<Stripe.ApiList<Stripe.Invoice>> {
+    try {
+      return await this.stripe.invoices.list({
+        customer: params.customerId,
+        limit: params.limit || 10,
+        starting_after: params.startingAfter,
+      });
+    } catch (error) {
+      console.error("Failed to list invoices:", error);
+      throw new Error(
+        `Failed to list invoices: ${error instanceof Error ? error.message : "Unknown error"}`
+      );
+    }
+  }
 }
 
 export const stripeService = new StripeService();

@@ -9,9 +9,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { stripeService } from "@/lib/services/stripe.service";
 import { AuthService } from "@/lib/services/auth.service";
+import { EmailService } from "@/lib/services/email.service";
 import Stripe from "stripe";
 
 const authService = new AuthService();
+const emailService = new EmailService();
 
 // Disable body parsing for webhook
 export const runtime = "nodejs";
@@ -150,6 +152,62 @@ async function handleSubscriptionCreated(subscription: Stripe.Subscription) {
   });
 
   console.log(`User ${user.id} upgraded to ${tier}`);
+
+  // Send payment confirmation email for initial subscription
+  if (user.email) {
+    try {
+      console.log(
+        `Preparing to send payment confirmation email to ${user.email}`
+      );
+
+      const subscriptionData = subscription as any;
+      const nextPaymentDate = new Date(
+        subscriptionData.current_period_end * 1000
+      );
+
+      // Get the latest invoice for this subscription to get amount
+      const latestInvoice = subscriptionData.latest_invoice;
+
+      if (!latestInvoice) {
+        console.log("No latest invoice found on subscription");
+        return;
+      }
+
+      const invoiceId =
+        typeof latestInvoice === "string" ? latestInvoice : latestInvoice.id;
+      console.log(`Fetching invoice: ${invoiceId}`);
+
+      const invoice = await stripeService.getInvoice(invoiceId);
+
+      if (!invoice) {
+        console.error(`Failed to retrieve invoice ${invoiceId}`);
+        return;
+      }
+
+      const amount = (invoice.amount_paid || invoice.total) / 100;
+      const siteUrl =
+        process.env.NEXT_PUBLIC_SITE_URL || "https://contractguard.ai";
+
+      console.log(
+        `Sending payment confirmation email for $${amount} to ${user.email}`
+      );
+
+      await emailService.sendPaymentConfirmation(user.email, {
+        firstName: user.displayName || undefined,
+        amount,
+        invoiceId: invoice.number || invoiceId,
+        tier,
+        nextPaymentDate,
+        receiptUrl: invoice.hosted_invoice_url || `${siteUrl}/account`,
+      });
+
+      console.log(`✅ Payment confirmation email sent to ${user.email}`);
+    } catch (error) {
+      console.error("❌ Failed to send payment confirmation email:", error);
+    }
+  } else {
+    console.log(`No email address for user ${user.id}`);
+  }
 }
 
 /**
@@ -197,6 +255,12 @@ async function handleSubscriptionDeleted(subscription: Stripe.Subscription) {
     return;
   }
 
+  // Calculate access end date (end of current billing period)
+  const subscriptionData = subscription as any;
+  const accessEndDate = subscriptionData.current_period_end
+    ? new Date(subscriptionData.current_period_end * 1000)
+    : new Date();
+
   // Downgrade user to free tier
   await authService.updateUser(user.id, {
     tier: "free",
@@ -205,6 +269,20 @@ async function handleSubscriptionDeleted(subscription: Stripe.Subscription) {
   });
 
   console.log(`User ${user.id} downgraded to free tier`);
+
+  // Send cancellation email
+  if (user.email) {
+    const siteUrl =
+      process.env.NEXT_PUBLIC_SITE_URL || "https://contractguard.ai";
+
+    await emailService.sendCancellationEmail(user.email, {
+      firstName: user.displayName || undefined,
+      tier: user.tier,
+      accessEndDate,
+      reactivateUrl: `${siteUrl}/pricing`,
+      feedbackUrl: `${siteUrl}/feedback?reason=cancellation`,
+    });
+  }
 }
 
 /**
@@ -237,6 +315,33 @@ async function handleInvoicePaymentSucceeded(invoice: Stripe.Invoice) {
   });
 
   console.log(`Payment succeeded for user ${user.id}`);
+
+  // Send payment confirmation email (skip first invoice as it's sent on subscription creation)
+  if (user.email && invoice.billing_reason !== "subscription_create") {
+    // Get subscription details to determine next payment date
+    const stripeSubscription =
+      await stripeService.getSubscription(subscriptionId);
+
+    if (stripeSubscription) {
+      const subscriptionData = stripeSubscription as any;
+      const nextPaymentDate = new Date(
+        subscriptionData.current_period_end * 1000
+      );
+      const amount = invoice.amount_paid / 100; // Convert from cents
+
+      const siteUrl =
+        process.env.NEXT_PUBLIC_SITE_URL || "https://contractguard.ai";
+
+      await emailService.sendPaymentConfirmation(user.email, {
+        firstName: user.displayName || undefined,
+        amount,
+        invoiceId: invoice.number || invoice.id,
+        tier: user.tier,
+        nextPaymentDate,
+        receiptUrl: invoice.hosted_invoice_url || `${siteUrl}/account`,
+      });
+    }
+  }
 }
 
 /**
@@ -272,7 +377,28 @@ async function handleInvoicePaymentFailed(invoice: Stripe.Invoice) {
     `Payment failed for user ${user.id}, subscription marked as past_due`
   );
 
-  // TODO: Send email notification to user about payment failure
+  // Send payment failed notification
+  if (user.email) {
+    const amount = invoice.amount_due / 100; // Convert from cents
+    const failureReason =
+      invoice.last_finalization_error?.message ||
+      "Your payment method was declined";
+
+    // Next retry attempt (Stripe typically retries in 3-5 days)
+    const nextAttemptDate = new Date();
+    nextAttemptDate.setDate(nextAttemptDate.getDate() + 3);
+
+    const siteUrl =
+      process.env.NEXT_PUBLIC_SITE_URL || "https://contractguard.ai";
+
+    await emailService.sendPaymentFailedNotification(user.email, {
+      firstName: user.displayName || undefined,
+      amount,
+      failureReason,
+      nextAttemptDate,
+      updatePaymentUrl: `${siteUrl}/account#billing`,
+    });
+  }
 }
 
 /**

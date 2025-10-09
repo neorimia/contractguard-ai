@@ -10,8 +10,12 @@ export const siteConfig = {
   twitterHandle: "@contractguardai",
   socialImage: "/og-default.png",
   company: {
-    name: "ContractGuard AI, Inc.",
+    name: "Neorimia, Inc.",
     logo: "/logo.svg",
+  },
+  author: {
+    name: "Neorimia",
+    website: "https://neorimia.com",
   },
   contactEmail: "contact@contractguard.ai",
   links: {

@@ -6,15 +6,8 @@ import { Footer } from "@/components/footer";
 import { useUser } from "@stackframe/stack";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
-import { Button } from "@/components/ui/button";
-import {
-  CreditCard,
-  CheckCircle,
-  XCircle,
-  Loader2,
-  Crown,
-  Zap,
-} from "lucide-react";
+import { SubscriptionCard } from "@/components/SubscriptionCard";
+import { CheckCircle, XCircle } from "lucide-react";
 import { AnalyticsEvents, trackConversion } from "@/lib/analytics/posthog";
 import { trackEvent } from "@/lib/analytics/posthog";
 
@@ -30,6 +23,7 @@ export default function AccountPage() {
   const [userTier, setUserTier] = useState<"free" | "pro" | "enterprise">(
     "free"
   );
+  const [loadingTier, setLoadingTier] = useState(true);
 
   // Check for success/cancel messages from Stripe redirect
   useEffect(() => {
@@ -74,6 +68,7 @@ export default function AccountPage() {
   useEffect(() => {
     const fetchUserTier = async () => {
       try {
+        setLoadingTier(true);
         const response = await fetch("/api/user/profile");
         const data = (await response.json()) as {
           tier?: "free" | "pro" | "enterprise";
@@ -83,6 +78,8 @@ export default function AccountPage() {
         }
       } catch (error) {
         console.error("Failed to fetch user tier:", error);
+      } finally {
+        setLoadingTier(false);
       }
     };
 
@@ -186,85 +183,13 @@ export default function AccountPage() {
             )}
 
             {/* Subscription Status Card */}
-            <div className="mb-6 border border-black/10 dark:border-white/10 rounded-xl overflow-hidden bg-gradient-to-br from-black/[0.02] to-transparent dark:from-white/[0.02]">
-              <div className="p-6">
-                <div className="flex items-start justify-between">
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2 mb-2">
-                      <h3 className="text-lg font-semibold text-black dark:text-white">
-                        Current Plan
-                      </h3>
-                      {userTier !== "free" && (
-                        <span
-                          className={`px-2 py-0.5 text-xs font-medium rounded-full ${
-                            userTier === "enterprise"
-                              ? "bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300"
-                              : "bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300"
-                          }`}
-                        >
-                          {userTier === "enterprise" ? (
-                            <span className="flex items-center gap-1">
-                              <Crown className="h-3 w-3" />
-                              Enterprise
-                            </span>
-                          ) : (
-                            <span className="flex items-center gap-1">
-                              <Zap className="h-3 w-3" />
-                              Pro
-                            </span>
-                          )}
-                        </span>
-                      )}
-                    </div>
-                    <p className="text-2xl font-bold text-black dark:text-white mb-1">
-                      {userTier === "free" && "Free Tier"}
-                      {userTier === "pro" && "Pro Tier"}
-                      {userTier === "enterprise" && "Enterprise"}
-                    </p>
-                    <p className="text-sm text-black/60 dark:text-white/60">
-                      {userTier === "free" &&
-                        "3 scans per day • Basic features"}
-                      {userTier === "pro" &&
-                        "100 scans per day • All Pro features"}
-                      {userTier === "enterprise" &&
-                        "Unlimited scans • Enterprise features"}
-                    </p>
-                  </div>
-
-                  {/* Manage Subscription Button (Only for paid tiers) */}
-                  {userTier !== "free" && (
-                    <Button
-                      onClick={handleManageSubscription}
-                      disabled={loadingPortal}
-                      className="bg-black dark:bg-white text-white dark:text-black hover:bg-black/90 dark:hover:bg-white/90"
-                    >
-                      {loadingPortal ? (
-                        <>
-                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                          Loading...
-                        </>
-                      ) : (
-                        <>
-                          <CreditCard className="mr-2 h-4 w-4" />
-                          Manage Subscription
-                        </>
-                      )}
-                    </Button>
-                  )}
-
-                  {/* Upgrade Button (Only for free tier) */}
-                  {userTier === "free" && (
-                    <Button
-                      onClick={() => router.push("/pricing")}
-                      className="bg-black dark:bg-white text-white dark:text-black hover:bg-black/90 dark:hover:bg-white/90"
-                    >
-                      <Zap className="mr-2 h-4 w-4" />
-                      Upgrade to Pro
-                    </Button>
-                  )}
-                </div>
-              </div>
-            </div>
+            <SubscriptionCard
+              userTier={userTier}
+              loadingPortal={loadingPortal}
+              onManageSubscription={handleManageSubscription}
+              onUpgrade={() => router.push("/pricing")}
+              isLoading={loadingTier}
+            />
 
             {/* Account Settings Component */}
             <div className="border border-black/10 dark:border-white/10 rounded-xl overflow-hidden bg-white dark:bg-black">

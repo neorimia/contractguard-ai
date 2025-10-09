@@ -7,8 +7,7 @@ import { EmailService } from "./email.service";
 import crypto from "crypto";
 
 interface UserProfile {
-  firstName?: string;
-  lastName?: string;
+  displayName?: string;
   avatarUrl?: string;
 }
 
@@ -29,7 +28,7 @@ export class AuthService {
   async syncUser(
     stackUserId: string,
     email: string,
-    profile?: UserProfile
+    profile?: UserProfile,
   ): Promise<User> {
     try {
       // Check if user already exists by Stack ID
@@ -41,8 +40,7 @@ export class AuthService {
           const [updatedUser] = await db
             .update(users)
             .set({
-              firstName: profile.firstName,
-              lastName: profile.lastName,
+              displayName: profile.displayName,
               avatarUrl: profile.avatarUrl,
               updatedAt: new Date(),
             })
@@ -69,8 +67,7 @@ export class AuthService {
           .update(users)
           .set({
             stackUserId, // Update to new Stack ID
-            firstName: profile?.firstName || userByEmail.firstName,
-            lastName: profile?.lastName || userByEmail.lastName,
+            displayName: profile?.displayName || userByEmail.displayName,
             avatarUrl: profile?.avatarUrl || userByEmail.avatarUrl,
             updatedAt: new Date(),
           })
@@ -84,20 +81,45 @@ export class AuthService {
       const newUser: NewUser = {
         stackUserId,
         email,
-        firstName: profile?.firstName,
-        lastName: profile?.lastName,
+        displayName: profile?.displayName,
         avatarUrl: profile?.avatarUrl,
         tier: "free",
         scansToday: 0,
         scansResetAt: this.getNextResetTime(),
       };
+      // Send welcome email (non-blocking)
+      try {
+        const emailService = new EmailService();
+        const tierLimit = getTierLimit("free");
 
+        await emailService.sendWelcomeEmail(newUser.email, {
+          displayName: newUser.displayName || undefined,
+          scansRemaining: tierLimit === -1 ? 100 : tierLimit, // Use 100 for unlimited tiers
+        });
+      } catch (emailError) {
+        // Log but don't fail verification if email fails
+        console.error("Failed to send welcome email:", emailError);
+      }
       const [createdUser] = await db.insert(users).values(newUser).returning();
 
       console.log("User created successfully:", {
         userId: createdUser.id,
         email: createdUser.email,
       });
+      if (newUser) {
+        try {
+          const emailService = new EmailService();
+          const tierLimit = getTierLimit(createdUser.tier);
+
+          await emailService.sendWelcomeEmail(createdUser.email, {
+            displayName: createdUser.displayName || undefined,
+            scansRemaining: tierLimit === -1 ? 100 : tierLimit, // Use 100 for unlimited tiers
+          });
+        } catch (emailError) {
+          // Log but don't fail verification if email fails
+          console.error("Failed to send welcome email:", emailError);
+        }
+      }
       return createdUser;
     } catch (error: any) {
       console.error("Error syncing user:", {
@@ -131,6 +153,13 @@ export class AuthService {
       console.error("Error fetching user by Stack ID:", error);
       return null;
     }
+  }
+
+  /**
+   * Alias for getUserByStackId (for consistency)
+   */
+  async getUserByStackUserId(stackUserId: string): Promise<User | null> {
+    return this.getUserByStackId(stackUserId);
   }
 
   /**
@@ -306,7 +335,7 @@ export class AuthService {
     subscriptionData?: {
       stripeSubscriptionId?: string;
       subscriptionStatus?: string;
-    }
+    },
   ): Promise<void> {
     try {
       await db
@@ -427,6 +456,20 @@ export class AuthService {
 
       console.log(`Email verified for user: ${user.email}`);
 
+      // Send welcome email (non-blocking)
+      try {
+        const emailService = new EmailService();
+        const tierLimit = getTierLimit(user.tier);
+
+        await emailService.sendWelcomeEmail(user.email, {
+          displayName: user.displayName || undefined,
+          scansRemaining: tierLimit === -1 ? 100 : tierLimit, // Use 100 for unlimited tiers
+        });
+      } catch (emailError) {
+        // Log but don't fail verification if email fails
+        console.error("Failed to send welcome email:", emailError);
+      }
+
       return { success: true, email: user.email };
     } catch (error) {
       console.error("Error verifying email:", error);
@@ -455,7 +498,7 @@ export class AuthService {
       // Send email
       const emailService = new EmailService();
       await emailService.sendVerificationEmail(user.email, token, {
-        firstName: user.firstName || undefined,
+        firstName: user.displayName || undefined,
       });
 
       console.log(`Verification email resent to: ${user.email}`);
@@ -570,7 +613,7 @@ export class AuthService {
       verificationToken?: string | null;
       verificationTokenExpires?: Date | null;
       lastLoginAt?: Date;
-    }
+    },
   ): Promise<User> {
     try {
       const [updatedUser] = await db

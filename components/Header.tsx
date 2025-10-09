@@ -3,10 +3,20 @@
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { useState, useEffect } from "react";
-import { Menu, X, Sun, Moon, User, LogOut } from "lucide-react";
+import {
+  Menu,
+  X,
+  Sun,
+  Moon,
+  User,
+  LogOut,
+  MessageCircle,
+  CreditCard,
+} from "lucide-react";
 import { useTheme } from "next-themes";
 import { useRouter } from "next/navigation";
 import { useUser } from "@stackframe/stack";
+import Image from "next/image";
 
 export function Header() {
   const [isScrolled, setIsScrolled] = useState(false);
@@ -104,9 +114,13 @@ export function Header() {
                 className="text-lg font-bold text-black dark:text-white hover:text-blue-400 dark:hover:text-blue-600 transition-colors"
                 aria-label="ContractGuard AI Home"
               >
-                ContractGuard.AI
+                <Image
+                  src={theme === "dark" ? "/icon-white.svg" : "/icon.svg"}
+                  alt="ContractGuard AI"
+                  width={30}
+                  height={30}
+                />
               </Link>
-              <span>/</span>
               {/* Desktop Navigation */}
               <nav className="hidden md:flex items-center gap-6">
                 {["Features", "Pricing", "FAQ"].map((item) => (
@@ -190,6 +204,26 @@ export function Header() {
                           >
                             <User className="h-4 w-4" />
                             Account Settings
+                          </button>
+                          <button
+                            onClick={() => {
+                              setShowUserMenu(false);
+                              router.push("/billing");
+                            }}
+                            className="w-full text-left px-4 py-2 text-sm text-black dark:text-white hover:bg-black/5 dark:hover:bg-white/5 rounded-md transition-colors flex items-center gap-2"
+                          >
+                            <CreditCard className="h-4 w-4" />
+                            Billing
+                          </button>
+                          <button
+                            onClick={() => {
+                              setShowUserMenu(false);
+                              router.push("/feedback");
+                            }}
+                            className="w-full text-left px-4 py-2 text-sm text-black dark:text-white hover:bg-black/5 dark:hover:bg-white/5 rounded-md transition-colors flex items-center gap-2"
+                          >
+                            <MessageCircle className="h-4 w-4" />
+                            Feedback
                           </button>
                           <button
                             onClick={() => {
@@ -287,7 +321,7 @@ export function Header() {
                     </div>
                     <Button
                       size="sm"
-                      className="w-full bg-black dark:bg-white text-white dark:text-black"
+                      className="w-full  bg-black dark:bg-white text-white dark:text-black"
                       onClick={() => {
                         setIsMobileMenuOpen(false);
                         handleScanContract();
@@ -298,7 +332,7 @@ export function Header() {
                     <Button
                       variant="ghost"
                       size="sm"
-                      className="w-full text-black dark:text-white hover:bg-black/5 dark:hover:bg-white/5"
+                      className="w-full justify-start px-0 text-black dark:text-white hover:bg-black/5 dark:hover:bg-white/5"
                       onClick={() => {
                         setIsMobileMenuOpen(false);
                         router.push("/account");
@@ -310,7 +344,31 @@ export function Header() {
                     <Button
                       variant="ghost"
                       size="sm"
-                      className="w-full text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/20"
+                      className="w-full justify-start px-0 text-black dark:text-white hover:bg-black/5 dark:hover:bg-white/5"
+                      onClick={() => {
+                        setIsMobileMenuOpen(false);
+                        router.push("/billing");
+                      }}
+                    >
+                      <CreditCard className="h-4 w-4 mr-2" />
+                      Billing
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="w-full justify-start px-0 text-black dark:text-white hover:bg-black/5 dark:hover:bg-white/5"
+                      onClick={() => {
+                        setIsMobileMenuOpen(false);
+                        router.push("/feedback");
+                      }}
+                    >
+                      <MessageCircle className="h-4 w-4 mr-2" />
+                      Feedback
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="w-full justify-start px-0 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/20"
                       onClick={() => {
                         setIsMobileMenuOpen(false);
                         handleSignOut();

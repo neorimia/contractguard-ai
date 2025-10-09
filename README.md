@@ -135,7 +135,7 @@ NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=your_stripe_publishable_key
 NEXT_PUBLIC_SITE_URL=http://localhost:3000
 ```
 
-For detailed setup instructions, see [AUTH_SETUP_QUICKSTART.md](./AUTH_SETUP_QUICKSTART.md)
+For detailed setup instructions, see [AUTH_SETUP_QUICKSTART.md](docs/AUTH_SETUP_QUICKSTART.md)
 
 ## Project Structure
 
@@ -170,7 +170,7 @@ contractguard-ai/
 
 ## Key Features Documentation
 
-- **Authentication**: See [AUTH_SETUP_QUICKSTART.md](./AUTH_SETUP_QUICKSTART.md)
+- **Authentication**: See [AUTH_SETUP_QUICKSTART.md](docs/AUTH_SETUP_QUICKSTART.md)
 - **Scan Results**: See [SCAN_RESULTS_COMPONENT.md](./SCAN_RESULTS_COMPONENT.md)
 - **Share Cards**: See [SHARE_ON_X_COMPONENT.md](./SHARE_ON_X_COMPONENT.md)
 - **Testing**: See [TESTING_GUIDE.md](./TESTING_GUIDE.md)
@@ -282,4 +282,4 @@ For questions, issues, or feature requests:
 
 ---
 
-Built with ❤️ for the crypto community during the 2024-2025 bull market 🚀
+Powered by [Neorimia](https://neorimia.com) for the crypto community during the 2024-2025 bull market 🚀

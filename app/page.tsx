@@ -159,7 +159,7 @@ function AILoadingState() {
 
       if (nextLineIndex < firstVisibleLineIndex && nextLineIndex !== 0) {
         setSequenceIndex(
-          (prevIndex) => (prevIndex + 1) % TASK_SEQUENCES.length
+          (prevIndex) => (prevIndex + 1) % TASK_SEQUENCES.length,
         );
         return;
       }
@@ -447,15 +447,15 @@ export default function Home() {
         {/* Login Modal */}
         <Dialog open={showLoginModal} onOpenChange={setShowLoginModal}>
           <DialogContent className="sm:max-w-md">
-            {/* <DialogHeader>
+            <DialogHeader>
               <DialogTitle className="text-2xl font-semibold">
                 Sign in to scan contracts
               </DialogTitle>
               <DialogDescription>
                 Create an account or sign in to start scanning smart contracts.
-                Free tier includes 5 scans per day.
+                Free tier includes 3 scans per day.
               </DialogDescription>
-            </DialogHeader> */}
+            </DialogHeader>
             <div className="mt-4">
               <MagicLinkSignIn />
             </div>

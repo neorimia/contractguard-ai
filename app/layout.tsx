@@ -105,6 +105,7 @@ export default function RootLayout({
       </head>
       <body
         className={`${geistSans.variable} ${geistSans.className} antialiased`}
+        suppressHydrationWarning
       >
         <StackProvider app={stackClientApp}>
           <StackTheme>

@@ -4,11 +4,11 @@
 
 ### Quick Links
 
-- 📘 [Quick Start Guide](./AUTH_SETUP_QUICKSTART.md)
-- 🧪 [Testing Guide](./TESTING_GUIDE.md)
-- 🔐 [Environment Variables](./ENV_VARIABLES.md)
-- 📋 [Implementation Summary](./AUTH_IMPLEMENTATION_SUMMARY.md)
-- 📖 [Detailed Setup](./SETUP_AUTH.md)
+- 📘 [Quick Start Guide](AUTH_SETUP_QUICKSTART.md)
+- 🧪 [Testing Guide](../TESTING_GUIDE.md)
+- 🔐 [Environment Variables](../ENV_VARIABLES.md)
+- 📋 [Implementation Summary](AUTH_IMPLEMENTATION_SUMMARY.md)
+- 📖 [Detailed Setup](../SETUP_AUTH.md)
 
 ---
 
@@ -83,7 +83,7 @@ npm run dev
 
 ## 🧪 Testing
 
-See [TESTING_GUIDE.md](./TESTING_GUIDE.md) for 15 comprehensive test cases.
+See [TESTING_GUIDE.md](../TESTING_GUIDE.md) for 15 comprehensive test cases.
 
 **Quick Smoke Test:**
 
@@ -144,7 +144,7 @@ lib/services/auth.service.ts    # User management
 
 ### More Help
 
-See [AUTH_SETUP_QUICKSTART.md](./AUTH_SETUP_QUICKSTART.md) troubleshooting section.
+See [AUTH_SETUP_QUICKSTART.md](AUTH_SETUP_QUICKSTART.md) troubleshooting section.
 
 ---
 
