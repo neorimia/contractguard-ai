@@ -6,6 +6,8 @@ import { eq } from "drizzle-orm";
 import { ContractService } from "@/lib/services/contract.service";
 import { AIAnalysisService } from "@/lib/services/ai.service";
 import { AuthService } from "@/lib/services/auth.service";
+import { ReferralService } from "@/lib/services/referral.service";
+import { getClientInfo } from "@/lib/utils/client-info";
 import { Redis } from "@upstash/redis";
 import { stackServerApp } from "@/stack/server";
 
@@ -232,6 +234,46 @@ export async function POST(req: NextRequest) {
 
     // 9. Increment user scan count
     await authService.incrementScanCount(appUser.id);
+
+    // ============================================================
+    // REFERRAL SYSTEM INTEGRATION
+    // Confirm referral on first audit completion
+    // ============================================================
+    try {
+      // Fetch updated user to get current scan count
+      const updatedUser = await authService.getUserById(appUser.id);
+
+      // Check if this is the user's first audit (scansToday === 1)
+      if (updatedUser && updatedUser.scansToday === 1) {
+        console.log(`First audit detected for user ${updatedUser.id}, checking for referral confirmation`);
+
+        const referralService = new ReferralService();
+        const clientInfo = await getClientInfo(req);
+
+        const referralResult = await referralService.confirmReferral({
+          referredUserId: updatedUser.id,
+          trigger: "first_audit_complete",
+          metadata: clientInfo,
+        });
+
+        if (referralResult.success) {
+          console.log(`Referral confirmed for user ${updatedUser.id}`);
+
+          if (referralResult.reward) {
+            console.log(`Referrer rewarded: ${referralResult.reward.type} x${referralResult.reward.amount}`);
+          }
+        } else if (referralResult.error === "no_pending_referral") {
+          // User wasn't referred - this is normal, no action needed
+          console.log(`No pending referral found for user ${updatedUser.id}`);
+        } else {
+          console.warn(`Referral confirmation failed for user ${updatedUser.id}: ${referralResult.error}`);
+        }
+      }
+    } catch (referralError) {
+      // Log referral errors but don't fail the audit
+      console.error("Error confirming referral on first audit:", referralError);
+    }
+    // ============================================================
 
     // Return with rate limit headers
     return NextResponse.json(result, {

@@ -58,6 +58,12 @@ export const users = pgTable("users", {
   scansToday: integer("scans_today").default(0),
   scansResetAt: timestamp("scans_reset_at").defaultNow(),
 
+  // Referral System
+  referralCode: text("referral_code").unique(), // Format: CG-XXXXXX
+  referredBy: text("referred_by"), // Stores referrer's referral_code
+  bonusScans: integer("bonus_scans").default(0), // Accumulated bonus scans
+  bonusScansUsedToday: integer("bonus_scans_used_today").default(0), // Track daily usage
+
   // Billing Integration
   stripeCustomerId: text("stripe_customer_id"),
   stripeSubscriptionId: text("stripe_subscription_id"),
@@ -90,6 +96,130 @@ export const feedback = pgTable("feedback", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
+// Referral Tables
+export const referrals = pgTable("referrals", {
+  id: text("id")
+    .primaryKey()
+    .$defaultFn(() => crypto.randomUUID()),
+
+  // Relationship
+  referrerId: integer("referrer_id")
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
+  referredId: integer("referred_id").references(() => users.id, {
+    onDelete: "set null",
+  }),
+
+  // Status Tracking
+  status: text("status", {
+    enum: ["pending", "confirmed", "rewarded", "cancelled"],
+  })
+    .notNull()
+    .default("pending"),
+
+  // Reward Configuration
+  rewardType: text("reward_type", {
+    enum: ["scans", "trial", "discount", "credit"],
+  }),
+  rewardAmount: integer("reward_amount"),
+
+  // Timestamps
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
+  confirmedAt: timestamp("confirmed_at", { withTimezone: true }),
+  rewardedAt: timestamp("rewarded_at", { withTimezone: true }),
+
+  // Metadata
+  metadata: jsonb("metadata").$type<{
+    landingIp?: string;
+    signupIp?: string;
+    confirmIp?: string;
+    source?: string;
+  }>(),
+});
+
+export const referralEvents = pgTable("referral_events", {
+  id: text("id")
+    .primaryKey()
+    .$defaultFn(() => crypto.randomUUID()),
+
+  // Relationship
+  referralId: text("referral_id")
+    .notNull()
+    .references(() => referrals.id, { onDelete: "cascade" }),
+
+  // Event Type
+  event: text("event", {
+    enum: [
+      "landing",
+      "signup",
+      "first_audit",
+      "email_verified",
+      "paid",
+      "payout",
+    ],
+  }).notNull(),
+
+  // Anti-Fraud Data
+  ip: text("ip"),
+  userAgent: text("user_agent"),
+  fingerprint: text("fingerprint"),
+  deviceType: text("device_type"),
+
+  // Additional Context
+  metadata: jsonb("metadata").$type<{
+    referer?: string;
+    utmSource?: string;
+    utmMedium?: string;
+    utmCampaign?: string;
+    country?: string;
+    city?: string;
+  }>(),
+
+  // Timestamp
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
+});
+
+export const rewardsLedger = pgTable("rewards_ledger", {
+  id: text("id")
+    .primaryKey()
+    .$defaultFn(() => crypto.randomUUID()),
+
+  // Relationship
+  userId: integer("user_id")
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
+  referralId: text("referral_id").references(() => referrals.id, {
+    onDelete: "set null",
+  }),
+
+  // Reward Details
+  type: text("type", {
+    enum: ["scans", "trial", "discount", "credit", "pro_month"],
+  }).notNull(),
+  amount: integer("amount").notNull(),
+
+  // Status
+  status: text("status", {
+    enum: ["pending", "applied", "expired", "revoked"],
+  })
+    .notNull()
+    .default("pending"),
+
+  // Application Tracking
+  appliedAt: timestamp("applied_at", { withTimezone: true }),
+  expiresAt: timestamp("expires_at", { withTimezone: true }),
+
+  // Metadata
+  metadata: jsonb("metadata").$type<{
+    description?: string;
+    stripeInvoiceId?: string;
+    promoCode?: string;
+  }>(),
+
+  // Timestamps
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
+});
+
 // Types
 export interface Issue {
   severity: "CRITICAL" | "HIGH" | "MEDIUM" | "LOW";
@@ -105,3 +235,9 @@ export type User = typeof users.$inferSelect;
 export type NewUser = typeof users.$inferInsert;
 export type Feedback = typeof feedback.$inferSelect;
 export type NewFeedback = typeof feedback.$inferInsert;
+export type Referral = typeof referrals.$inferSelect;
+export type NewReferral = typeof referrals.$inferInsert;
+export type ReferralEvent = typeof referralEvents.$inferSelect;
+export type NewReferralEvent = typeof referralEvents.$inferInsert;
+export type RewardLedger = typeof rewardsLedger.$inferSelect;
+export type NewRewardLedger = typeof rewardsLedger.$inferInsert;

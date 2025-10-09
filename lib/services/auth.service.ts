@@ -4,6 +4,9 @@ import { users, type User, type NewUser } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { getTierLimit } from "@/lib/config/tier-limits";
 import { EmailService } from "./email.service";
+import { ReferralService } from "./referral.service";
+import { getReferralCookie, clearReferralCookie } from "@/lib/utils/referral-cookies";
+import { getClientInfo } from "@/lib/utils/client-info";
 import crypto from "crypto";
 
 interface UserProfile {
@@ -106,6 +109,45 @@ export class AuthService {
         userId: createdUser.id,
         email: createdUser.email,
       });
+
+      // ============================================================
+      // REFERRAL SYSTEM INTEGRATION
+      // Check for referral cookie and complete signup
+      // ============================================================
+      try {
+        const referralCode = await getReferralCookie();
+
+        if (referralCode) {
+          console.log(`Referral signup detected for user ${createdUser.id} with code: ${referralCode}`);
+
+          const referralService = new ReferralService();
+          const clientInfo = await getClientInfo();
+
+          const result = await referralService.completeSignup({
+            referralCode,
+            referredUserId: createdUser.id,
+            metadata: clientInfo,
+          });
+
+          if (result.success) {
+            console.log(`Referral signup bonus applied successfully for user ${createdUser.id}`);
+
+            if (result.reward) {
+              console.log(`Reward granted: ${result.reward.type} x${result.reward.amount}`);
+            }
+          } else {
+            console.warn(`Referral signup failed: ${result.error}`);
+          }
+
+          // Clear the referral cookie after processing
+          await clearReferralCookie();
+        }
+      } catch (referralError) {
+        // Log referral errors but don't fail user creation
+        console.error("Error processing referral signup:", referralError);
+      }
+      // ============================================================
+
       if (newUser) {
         try {
           const emailService = new EmailService();
