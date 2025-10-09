@@ -97,22 +97,17 @@ const featuresLd = {
 
 export default function FeaturesPage() {
   return (
-    <main
-      className={`relative min-h-screen w-full bg-white dark:bg-black ${geist.className} overflow-hidden`}
-    >
+    <>
       <JsonLd data={featuresLd} />
-      <div className="relative bg-white/95 dark:bg-black/5 pt-14">
-        <Header />
+      <Header />
 
-        <PageHero
-          title="Powerful security features"
-          highlightedText="at your fingertips"
-          description="ContractGuard AI provides comprehensive smart contract security analysis with AI-powered detection, giving you instant insights before you invest."
-        />
+      <PageHero
+        title="Powerful security features"
+        highlightedText="at your fingertips"
+        description="ContractGuard AI provides comprehensive smart contract security analysis with AI-powered detection, giving you instant insights before you invest."
+      />
 
-        <Feature />
-        <Footer />
-      </div>
-    </main>
+      <Feature />
+    </>
   );
 }

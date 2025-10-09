@@ -13,8 +13,8 @@ import { PostHogProvider } from "@/components/analytics/PostHogProvider";
 import { UserIdentifier } from "@/components/analytics/UserIdentifier";
 import { Suspense } from "react";
 import { Header } from "@/components/Header";
-import { HeaderSkeleton } from "@/components/HeaderSkeleton";
 import { Footer } from "@/components/footer";
+import { HeaderSkeleton } from "@/components/HeaderSkeleton";
 import { LayoutSkeleton } from "@/components/LayoutSkeleton";
 
 const geistSans = Geist({
