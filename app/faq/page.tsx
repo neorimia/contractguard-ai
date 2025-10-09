@@ -154,9 +154,7 @@ const faqLd = {
 
 export default function FAQPage() {
   return (
-    <main
-      className={`relative min-h-screen w-full bg-white dark:bg-black ${geist.className} overflow-hidden`}
-    >
+    <>
       <JsonLd data={faqLd} />
       <div className="relative bg-white/95 dark:bg-black/5 pt-14">
         <Header />
@@ -198,9 +196,6 @@ export default function FAQPage() {
             </div>
           </div>
         </section>
-
-        <Footer />
-      </div>
-    </main>
+        </>
   );
 }

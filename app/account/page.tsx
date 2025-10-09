@@ -1,8 +1,6 @@
 "use client";
 
 import { AccountSettings } from "@stackframe/stack";
-import { Header } from "@/components/Header";
-import { Footer } from "@/components/footer";
 import { useUser } from "@stackframe/stack";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -147,59 +145,50 @@ export default function AccountPage() {
   }
 
   return (
-    <main className="relative min-h-screen w-full bg-white dark:bg-black overflow-hidden">
-      <div className="relative bg-white/95 dark:bg-black/5 pt-14">
-        <Header />
+    <section className="min-h-[calc(100vh-5.5rem)] py-6 sm:py-10 bg-white dark:bg-black mx-2 sm:mx-4 mt-1 mb-4 rounded-xl">
+      <div className="w-full max-w-5xl mx-auto px-4">
+        {/* Page Header */}
+        <div className="mb-8 space-y-2">
+          <h1 className="text-3xl sm:text-4xl font-semibold tracking-tight text-black dark:text-white">
+            Account Settings
+          </h1>
+          <p className="text-sm sm:text-base tracking-tight text-black/60 dark:text-white/60">
+            Manage your account preferences and settings
+          </p>
+        </div>
 
-        {/* Account Settings Section */}
-        <section className="min-h-[calc(100vh-5.5rem)] py-6 sm:py-10 bg-white dark:bg-black mx-2 sm:mx-4 mt-1 mb-4 rounded-xl">
-          <div className="w-full max-w-5xl mx-auto px-4">
-            {/* Page Header */}
-            <div className="mb-8 space-y-2">
-              <h1 className="text-3xl sm:text-4xl font-semibold tracking-tight text-black dark:text-white">
-                Account Settings
-              </h1>
-              <p className="text-sm sm:text-base tracking-tight text-black/60 dark:text-white/60">
-                Manage your account preferences and settings
-              </p>
-            </div>
-
-            {/* Success/Error Messages */}
-            {message && (
-              <div
-                className={`mb-6 p-4 rounded-lg border flex items-start gap-3 ${
-                  message.type === "success"
-                    ? "bg-green-50 dark:bg-green-950/20 border-green-200 dark:border-green-900/50 text-green-800 dark:text-green-200"
-                    : "bg-yellow-50 dark:bg-yellow-950/20 border-yellow-200 dark:border-yellow-900/50 text-yellow-800 dark:text-yellow-200"
-                }`}
-              >
-                {message.type === "success" ? (
-                  <CheckCircle className="h-5 w-5 flex-shrink-0 mt-0.5" />
-                ) : (
-                  <XCircle className="h-5 w-5 flex-shrink-0 mt-0.5" />
-                )}
-                <p className="text-sm">{message.text}</p>
-              </div>
+        {/* Success/Error Messages */}
+        {message && (
+          <div
+            className={`mb-6 p-4 rounded-lg border flex items-start gap-3 ${
+              message.type === "success"
+                ? "bg-green-50 dark:bg-green-950/20 border-green-200 dark:border-green-900/50 text-green-800 dark:text-green-200"
+                : "bg-yellow-50 dark:bg-yellow-950/20 border-yellow-200 dark:border-yellow-900/50 text-yellow-800 dark:text-yellow-200"
+            }`}
+          >
+            {message.type === "success" ? (
+              <CheckCircle className="h-5 w-5 flex-shrink-0 mt-0.5" />
+            ) : (
+              <XCircle className="h-5 w-5 flex-shrink-0 mt-0.5" />
             )}
-
-            {/* Subscription Status Card */}
-            <SubscriptionCard
-              userTier={userTier}
-              loadingPortal={loadingPortal}
-              onManageSubscription={handleManageSubscription}
-              onUpgrade={() => router.push("/pricing")}
-              isLoading={loadingTier}
-            />
-
-            {/* Account Settings Component */}
-            <div className="border border-black/10 dark:border-white/10 rounded-xl overflow-hidden bg-white dark:bg-black">
-              <AccountSettings fullPage={false} />
-            </div>
+            <p className="text-sm">{message.text}</p>
           </div>
-        </section>
+        )}
 
-        <Footer />
+        {/* Subscription Status Card */}
+        <SubscriptionCard
+          userTier={userTier}
+          loadingPortal={loadingPortal}
+          onManageSubscription={handleManageSubscription}
+          onUpgrade={() => router.push("/pricing")}
+          isLoading={loadingTier}
+        />
+
+        {/* Account Settings Component */}
+        <div className="border border-black/10 dark:border-white/10 rounded-xl overflow-hidden bg-white dark:bg-black">
+          <AccountSettings fullPage={false} />
+        </div>
       </div>
-    </main>
+    </section>
   );
 }

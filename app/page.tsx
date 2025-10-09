@@ -1,10 +1,11 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, Suspense } from "react";
 import { Audit } from "@/db/schema";
 import { Button } from "@/components/ui/button";
 import { ArrowRight, Shield } from "lucide-react";
 import { Header } from "@/components/Header";
+import { HeaderSkeleton } from "@/components/HeaderSkeleton";
 import { Footer } from "@/components/footer";
 import ScanResults from "@/components/ScanResults";
 import ScanLimitDrawer from "@/components/ScanLimitDrawer";
@@ -360,7 +361,9 @@ export default function Home() {
   return (
     <main className="relative min-h-screen w-full bg-white dark:bg-black overflow-hidden">
       <div className="relative bg-white/95 dark:bg-black/5 pt-14">
-        <Header />
+        <Suspense fallback={<HeaderSkeleton />}>
+          <Header />
+        </Suspense>
 
         {/* Hero Section */}
         <section className="min-h-[calc(100vh-5.5rem)] flex flex-col justify-center py-6 sm:py-10 bg-black/95 dark:bg-white/95 mx-2 sm:mx-4 mt-1 mb-4 rounded-xl">
@@ -462,7 +465,9 @@ export default function Home() {
           </DialogContent>
         </Dialog>
 
-        <Footer />
+        <Suspense fallback={null}>
+          <Footer />
+        </Suspense>
       </div>
     </main>
   );

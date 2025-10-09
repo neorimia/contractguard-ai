@@ -186,61 +186,53 @@ const pricingLd = {
 
 export default function PricingPage() {
   return (
-    <main
-      className={`relative min-h-screen w-full bg-white dark:bg-black ${geist.className} overflow-hidden`}
-    >
+    <>
       <JsonLd data={pricingLd} />
-      <div className="relative bg-white/95 dark:bg-black/5 pt-14">
-        <Header />
+      <PageHero
+        title="Simple pricing,"
+        highlightedText="powerful protection"
+        description="Start free with 3 daily scans. Upgrade when you need unlimited analysis and advanced features. No hidden fees, cancel anytime."
+      />
 
-        <PageHero
-          title="Simple pricing,"
-          highlightedText="powerful protection"
-          description="Start free with 3 daily scans. Upgrade when you need unlimited analysis and advanced features. No hidden fees, cancel anytime."
-        />
+      <PricingSection />
 
-        <PricingSection />
-
-        {/* Additional Value Props */}
-        <section className="py-16 px-4">
-          <div className="max-w-6xl mx-auto">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-              <div className="text-center space-y-2">
-                <div className="text-3xl mb-2">💳</div>
-                <h3 className="text-lg font-semibold text-black dark:text-white">
-                  No Credit Card Required
-                </h3>
-                <p className="text-sm text-black/60 dark:text-white/60">
-                  Start scanning immediately with our free tier. No payment
-                  information needed.
-                </p>
-              </div>
-              <div className="text-center space-y-2">
-                <div className="text-3xl mb-2">🔄</div>
-                <h3 className="text-lg font-semibold text-black dark:text-white">
-                  Cancel Anytime
-                </h3>
-                <p className="text-sm text-black/60 dark:text-white/60">
-                  Change or cancel your plan at any time. No long-term
-                  commitments required.
-                </p>
-              </div>
-              <div className="text-center space-y-2">
-                <div className="text-3xl mb-2">⚡</div>
-                <h3 className="text-lg font-semibold text-black dark:text-white">
-                  Instant Activation
-                </h3>
-                <p className="text-sm text-black/60 dark:text-white/60">
-                  Upgrade instantly and start using Pro features right away. No
-                  waiting period.
-                </p>
-              </div>
+      {/* Additional Value Props */}
+      <section className="py-16 px-4">
+        <div className="max-w-6xl mx-auto">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <div className="text-center space-y-2">
+              <div className="text-3xl mb-2">💳</div>
+              <h3 className="text-lg font-semibold text-black dark:text-white">
+                No Credit Card Required
+              </h3>
+              <p className="text-sm text-black/60 dark:text-white/60">
+                Start scanning immediately with our free tier. No payment
+                information needed.
+              </p>
+            </div>
+            <div className="text-center space-y-2">
+              <div className="text-3xl mb-2">🔄</div>
+              <h3 className="text-lg font-semibold text-black dark:text-white">
+                Cancel Anytime
+              </h3>
+              <p className="text-sm text-black/60 dark:text-white/60">
+                Change or cancel your plan at any time. No long-term commitments
+                required.
+              </p>
+            </div>
+            <div className="text-center space-y-2">
+              <div className="text-3xl mb-2">⚡</div>
+              <h3 className="text-lg font-semibold text-black dark:text-white">
+                Instant Activation
+              </h3>
+              <p className="text-sm text-black/60 dark:text-white/60">
+                Upgrade instantly and start using Pro features right away. No
+                waiting period.
+              </p>
             </div>
           </div>
-        </section>
-
-        <Footer />
-      </div>
-    </main>
+        </div>
+      </section>
+    </>
   );
 }

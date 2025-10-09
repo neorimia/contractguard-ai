@@ -3,8 +3,6 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useUser } from "@stackframe/stack";
-import { Header } from "@/components/Header";
-import { Footer } from "@/components/footer";
 import { Button } from "@/components/ui/button";
 import {
   CreditCard,
@@ -305,519 +303,505 @@ export default function BillingPage() {
 
   if (loading) {
     return (
-      <main className="relative min-h-screen w-full bg-white dark:bg-black overflow-hidden">
-        <div className="relative bg-white/95 dark:bg-black/5 pt-14">
-          <Header />
-          <section className="min-h-[calc(100vh-5.5rem)] py-6 sm:py-10 bg-white dark:bg-black mx-2 sm:mx-4 mt-1 mb-4 rounded-xl">
-            <div className="w-full max-w-6xl mx-auto px-4">
-              {/* Page Header Skeleton */}
-              <div className="mb-8 space-y-2">
-                <div className="h-10 w-64 bg-black/10 dark:bg-white/10 rounded animate-pulse" />
-                <div className="h-5 w-96 bg-black/10 dark:bg-white/10 rounded animate-pulse" />
-              </div>
+      <section className="min-h-[calc(100vh-5.5rem)] py-6 sm:py-10 bg-white dark:bg-black mx-2 sm:mx-4 mt-1 mb-4 rounded-xl">
+        <div className="w-full max-w-6xl mx-auto px-4">
+          {/* Page Header Skeleton */}
+          <div className="mb-8 space-y-2">
+            <div className="h-10 w-64 bg-black/10 dark:bg-white/10 rounded animate-pulse" />
+            <div className="h-5 w-96 bg-black/10 dark:bg-white/10 rounded animate-pulse" />
+          </div>
 
-              {/* Grid Layout Skeleton */}
-              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                {/* Left Column - Main Content */}
-                <div className="lg:col-span-2 space-y-6">
-                  {/* Subscription Overview Skeleton */}
-                  <div className="border border-black/10 dark:border-white/10 rounded-xl overflow-hidden bg-gradient-to-br from-black/[0.02] to-transparent dark:from-white/[0.02]">
-                    <div className="p-6 space-y-6">
-                      {/* Header */}
-                      <div className="flex items-center justify-between">
-                        <div className="h-7 w-48 bg-black/10 dark:bg-white/10 rounded animate-pulse" />
-                        <div className="h-6 w-24 bg-black/10 dark:bg-white/10 rounded-full animate-pulse" />
-                      </div>
-
-                      {/* Title and Price */}
-                      <div className="flex items-baseline justify-between">
-                        <div className="h-8 w-32 bg-black/10 dark:bg-white/10 rounded animate-pulse" />
-                        <div className="h-7 w-28 bg-black/10 dark:bg-white/10 rounded animate-pulse" />
-                      </div>
-
-                      {/* Next billing date */}
-                      <div className="h-5 w-56 bg-black/10 dark:bg-white/10 rounded animate-pulse" />
-
-                      {/* Progress Bar */}
-                      <div className="space-y-2">
-                        <div className="flex justify-between">
-                          <div className="h-4 w-32 bg-black/10 dark:bg-white/10 rounded animate-pulse" />
-                          <div className="h-4 w-24 bg-black/10 dark:bg-white/10 rounded animate-pulse" />
-                        </div>
-                        <div className="h-2 w-full bg-black/10 dark:bg-white/10 rounded-full animate-pulse" />
-                      </div>
-
-                      {/* Features */}
-                      <div className="space-y-2 pt-4 border-t border-black/5 dark:border-white/5">
-                        {[1, 2, 3].map((i) => (
-                          <div key={i} className="flex items-center gap-2">
-                            <div className="h-4 w-4 bg-black/10 dark:bg-white/10 rounded-full animate-pulse" />
-                            <div className="h-4 w-40 bg-black/10 dark:bg-white/10 rounded animate-pulse" />
-                          </div>
-                        ))}
-                      </div>
-
-                      {/* Action Buttons */}
-                      <div className="flex flex-col md:flex-row gap-3">
-                        <div className="flex-1 h-10 bg-black/10 dark:bg-white/10 rounded-lg animate-pulse" />
-                        <div className="flex-1 h-10 bg-black/10 dark:bg-white/10 rounded-lg animate-pulse" />
-                      </div>
-                    </div>
+          {/* Grid Layout Skeleton */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            {/* Left Column - Main Content */}
+            <div className="lg:col-span-2 space-y-6">
+              {/* Subscription Overview Skeleton */}
+              <div className="border border-black/10 dark:border-white/10 rounded-xl overflow-hidden bg-gradient-to-br from-black/[0.02] to-transparent dark:from-white/[0.02]">
+                <div className="p-6 space-y-6">
+                  {/* Header */}
+                  <div className="flex items-center justify-between">
+                    <div className="h-7 w-48 bg-black/10 dark:bg-white/10 rounded animate-pulse" />
+                    <div className="h-6 w-24 bg-black/10 dark:bg-white/10 rounded-full animate-pulse" />
                   </div>
 
-                  {/* Billing History Skeleton */}
-                  <div className="border border-black/10 dark:border-white/10 rounded-xl overflow-hidden">
-                    <div className="p-6">
-                      <div className="h-7 w-40 bg-black/10 dark:bg-white/10 rounded animate-pulse mb-6" />
+                  {/* Title and Price */}
+                  <div className="flex items-baseline justify-between">
+                    <div className="h-8 w-32 bg-black/10 dark:bg-white/10 rounded animate-pulse" />
+                    <div className="h-7 w-28 bg-black/10 dark:bg-white/10 rounded animate-pulse" />
+                  </div>
 
-                      <div className="space-y-3">
-                        {[1, 2, 3].map((i) => (
-                          <div
-                            key={i}
-                            className="p-4 border border-black/5 dark:border-white/5 rounded-lg"
-                          >
-                            <div className="flex items-center justify-between mb-2">
-                              <div className="flex items-center gap-3">
-                                <div className="h-5 w-28 bg-black/10 dark:bg-white/10 rounded animate-pulse" />
-                                <div className="h-5 w-16 bg-black/10 dark:bg-white/10 rounded-full animate-pulse" />
-                              </div>
-                              <div className="flex items-center gap-4">
-                                <div className="h-6 w-20 bg-black/10 dark:bg-white/10 rounded animate-pulse" />
-                                <div className="h-8 w-8 bg-black/10 dark:bg-white/10 rounded animate-pulse" />
-                              </div>
-                            </div>
-                            <div className="h-4 w-64 bg-black/10 dark:bg-white/10 rounded animate-pulse" />
-                          </div>
-                        ))}
-                      </div>
+                  {/* Next billing date */}
+                  <div className="h-5 w-56 bg-black/10 dark:bg-white/10 rounded animate-pulse" />
+
+                  {/* Progress Bar */}
+                  <div className="space-y-2">
+                    <div className="flex justify-between">
+                      <div className="h-4 w-32 bg-black/10 dark:bg-white/10 rounded animate-pulse" />
+                      <div className="h-4 w-24 bg-black/10 dark:bg-white/10 rounded animate-pulse" />
                     </div>
+                    <div className="h-2 w-full bg-black/10 dark:bg-white/10 rounded-full animate-pulse" />
+                  </div>
+
+                  {/* Features */}
+                  <div className="space-y-2 pt-4 border-t border-black/5 dark:border-white/5">
+                    {[1, 2, 3].map((i) => (
+                      <div key={i} className="flex items-center gap-2">
+                        <div className="h-4 w-4 bg-black/10 dark:bg-white/10 rounded-full animate-pulse" />
+                        <div className="h-4 w-40 bg-black/10 dark:bg-white/10 rounded animate-pulse" />
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Action Buttons */}
+                  <div className="flex flex-col md:flex-row gap-3">
+                    <div className="flex-1 h-10 bg-black/10 dark:bg-white/10 rounded-lg animate-pulse" />
+                    <div className="flex-1 h-10 bg-black/10 dark:bg-white/10 rounded-lg animate-pulse" />
                   </div>
                 </div>
+              </div>
 
-                {/* Right Column - Sidebar */}
-                <div className="space-y-6">
-                  {/* Payment Method Skeleton */}
-                  <div className="border border-black/10 dark:border-white/10 rounded-xl overflow-hidden">
-                    <div className="p-6">
-                      <div className="h-6 w-36 bg-black/10 dark:bg-white/10 rounded animate-pulse mb-4" />
+              {/* Billing History Skeleton */}
+              <div className="border border-black/10 dark:border-white/10 rounded-xl overflow-hidden">
+                <div className="p-6">
+                  <div className="h-7 w-40 bg-black/10 dark:bg-white/10 rounded animate-pulse mb-6" />
 
-                      <div className="p-4 border border-black/5 dark:border-white/5 rounded-lg mb-4">
-                        <div className="flex items-center gap-3 mb-2">
-                          <div className="h-5 w-5 bg-black/10 dark:bg-white/10 rounded animate-pulse" />
-                          <div className="h-5 w-24 bg-black/10 dark:bg-white/10 rounded animate-pulse" />
+                  <div className="space-y-3">
+                    {[1, 2, 3].map((i) => (
+                      <div
+                        key={i}
+                        className="p-4 border border-black/5 dark:border-white/5 rounded-lg"
+                      >
+                        <div className="flex items-center justify-between mb-2">
+                          <div className="flex items-center gap-3">
+                            <div className="h-5 w-28 bg-black/10 dark:bg-white/10 rounded animate-pulse" />
+                            <div className="h-5 w-16 bg-black/10 dark:bg-white/10 rounded-full animate-pulse" />
+                          </div>
+                          <div className="flex items-center gap-4">
+                            <div className="h-6 w-20 bg-black/10 dark:bg-white/10 rounded animate-pulse" />
+                            <div className="h-8 w-8 bg-black/10 dark:bg-white/10 rounded animate-pulse" />
+                          </div>
                         </div>
-                        <div className="h-4 w-36 bg-black/10 dark:bg-white/10 rounded animate-pulse" />
+                        <div className="h-4 w-64 bg-black/10 dark:bg-white/10 rounded animate-pulse" />
                       </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
 
-                      <div className="h-10 w-full bg-black/10 dark:bg-white/10 rounded-lg animate-pulse" />
+            {/* Right Column - Sidebar */}
+            <div className="space-y-6">
+              {/* Payment Method Skeleton */}
+              <div className="border border-black/10 dark:border-white/10 rounded-xl overflow-hidden">
+                <div className="p-6">
+                  <div className="h-6 w-36 bg-black/10 dark:bg-white/10 rounded animate-pulse mb-4" />
+
+                  <div className="p-4 border border-black/5 dark:border-white/5 rounded-lg mb-4">
+                    <div className="flex items-center gap-3 mb-2">
+                      <div className="h-5 w-5 bg-black/10 dark:bg-white/10 rounded animate-pulse" />
+                      <div className="h-5 w-24 bg-black/10 dark:bg-white/10 rounded animate-pulse" />
                     </div>
+                    <div className="h-4 w-36 bg-black/10 dark:bg-white/10 rounded animate-pulse" />
                   </div>
 
-                  {/* Usage Stats Skeleton */}
-                  <div className="border border-black/10 dark:border-white/10 rounded-xl overflow-hidden">
-                    <div className="p-6">
-                      <div className="h-6 w-36 bg-black/10 dark:bg-white/10 rounded animate-pulse mb-4" />
+                  <div className="h-10 w-full bg-black/10 dark:bg-white/10 rounded-lg animate-pulse" />
+                </div>
+              </div>
 
-                      <div className="h-4 w-16 bg-black/10 dark:bg-white/10 rounded animate-pulse mb-1" />
-                      <div className="h-8 w-32 bg-black/10 dark:bg-white/10 rounded animate-pulse mb-2" />
-                      <div className="h-2 w-full bg-black/10 dark:bg-white/10 rounded-full animate-pulse mb-2" />
-                      <div className="h-3 w-24 bg-black/10 dark:bg-white/10 rounded animate-pulse" />
+              {/* Usage Stats Skeleton */}
+              <div className="border border-black/10 dark:border-white/10 rounded-xl overflow-hidden">
+                <div className="p-6">
+                  <div className="h-6 w-36 bg-black/10 dark:bg-white/10 rounded animate-pulse mb-4" />
 
-                      <div className="pt-4 border-t border-black/5 dark:border-white/5 mt-4">
-                        <div className="flex justify-between">
-                          <div className="h-5 w-20 bg-black/10 dark:bg-white/10 rounded animate-pulse" />
-                          <div className="h-5 w-24 bg-black/10 dark:bg-white/10 rounded animate-pulse" />
-                        </div>
-                      </div>
+                  <div className="h-4 w-16 bg-black/10 dark:bg-white/10 rounded animate-pulse mb-1" />
+                  <div className="h-8 w-32 bg-black/10 dark:bg-white/10 rounded animate-pulse mb-2" />
+                  <div className="h-2 w-full bg-black/10 dark:bg-white/10 rounded-full animate-pulse mb-2" />
+                  <div className="h-3 w-24 bg-black/10 dark:bg-white/10 rounded animate-pulse" />
+
+                  <div className="pt-4 border-t border-black/5 dark:border-white/5 mt-4">
+                    <div className="flex justify-between">
+                      <div className="h-5 w-20 bg-black/10 dark:bg-white/10 rounded animate-pulse" />
+                      <div className="h-5 w-24 bg-black/10 dark:bg-white/10 rounded animate-pulse" />
                     </div>
                   </div>
                 </div>
               </div>
             </div>
-          </section>
-          <Footer />
+          </div>
         </div>
-      </main>
+      </section>
     );
   }
 
   return (
-    <main className="relative min-h-screen w-full bg-white dark:bg-black overflow-hidden">
-      <div className="relative bg-white/95 dark:bg-black/5 pt-14">
-        <Header />
+    <>
+      {/* Main Content */}
+      <section className="min-h-[calc(100vh-5.5rem)] py-6 sm:py-10 bg-white dark:bg-black mx-2 sm:mx-4 mt-1 mb-4 rounded-xl">
+        <div className="w-full max-w-6xl mx-auto px-4">
+          {/* Page Header */}
+          <div className="mb-8 space-y-2">
+            <h1 className="text-3xl sm:text-4xl font-semibold tracking-tight text-black dark:text-white">
+              Billing & Subscription
+            </h1>
+            <p className="text-sm sm:text-base tracking-tight text-black/60 dark:text-white/60">
+              Manage your subscription, payment methods, and billing history
+            </p>
+          </div>
 
-        {/* Main Content */}
-        <section className="min-h-[calc(100vh-5.5rem)] py-6 sm:py-10 bg-white dark:bg-black mx-2 sm:mx-4 mt-1 mb-4 rounded-xl">
-          <div className="w-full max-w-6xl mx-auto px-4">
-            {/* Page Header */}
-            <div className="mb-8 space-y-2">
-              <h1 className="text-3xl sm:text-4xl font-semibold tracking-tight text-black dark:text-white">
-                Billing & Subscription
-              </h1>
-              <p className="text-sm sm:text-base tracking-tight text-black/60 dark:text-white/60">
-                Manage your subscription, payment methods, and billing history
-              </p>
+          {/* Messages */}
+          {message && (
+            <div
+              className={`mb-6 p-4 rounded-lg border flex items-start gap-3 ${
+                message.type === "success"
+                  ? "bg-green-50 dark:bg-green-950/20 border-green-200 dark:border-green-900/50 text-green-800 dark:text-green-200"
+                  : "bg-red-50 dark:bg-red-950/20 border-red-200 dark:border-red-900/50 text-red-800 dark:text-red-200"
+              }`}
+            >
+              {message.type === "success" ? (
+                <CheckCircle className="h-5 w-5 flex-shrink-0 mt-0.5" />
+              ) : (
+                <XCircle className="h-5 w-5 flex-shrink-0 mt-0.5" />
+              )}
+              <p className="text-sm">{message.text}</p>
             </div>
+          )}
 
-            {/* Messages */}
-            {message && (
-              <div
-                className={`mb-6 p-4 rounded-lg border flex items-start gap-3 ${
-                  message.type === "success"
-                    ? "bg-green-50 dark:bg-green-950/20 border-green-200 dark:border-green-900/50 text-green-800 dark:text-green-200"
-                    : "bg-red-50 dark:bg-red-950/20 border-red-200 dark:border-red-900/50 text-red-800 dark:text-red-200"
-                }`}
-              >
-                {message.type === "success" ? (
-                  <CheckCircle className="h-5 w-5 flex-shrink-0 mt-0.5" />
-                ) : (
-                  <XCircle className="h-5 w-5 flex-shrink-0 mt-0.5" />
-                )}
-                <p className="text-sm">{message.text}</p>
-              </div>
-            )}
+          {/* Grid Layout */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            {/* Left Column - Main Content */}
+            <div className="lg:col-span-2 space-y-6">
+              {/* Subscription Overview */}
+              {subscription ? (
+                <div className="border border-black/10 dark:border-white/10 rounded-xl overflow-hidden bg-gradient-to-br from-black/[0.02] to-transparent dark:from-white/[0.02]">
+                  <div className="p-6">
+                    <div className="flex items-center justify-between mb-6">
+                      <h2 className="text-xl font-semibold text-black dark:text-white">
+                        Current Subscription
+                      </h2>
+                      <span
+                        className={`px-3 py-1 text-xs font-medium rounded-full flex items-center gap-1 ${
+                          userTier === "enterprise"
+                            ? "bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300"
+                            : "bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300"
+                        }`}
+                      >
+                        {userTier === "enterprise" ? (
+                          <>
+                            <Crown className="h-3 w-3" />
+                            Enterprise
+                          </>
+                        ) : (
+                          <>
+                            <Zap className="h-3 w-3" />
+                            Pro
+                          </>
+                        )}
+                      </span>
+                    </div>
 
-            {/* Grid Layout */}
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-              {/* Left Column - Main Content */}
-              <div className="lg:col-span-2 space-y-6">
-                {/* Subscription Overview */}
-                {subscription ? (
-                  <div className="border border-black/10 dark:border-white/10 rounded-xl overflow-hidden bg-gradient-to-br from-black/[0.02] to-transparent dark:from-white/[0.02]">
-                    <div className="p-6">
-                      <div className="flex items-center justify-between mb-6">
-                        <h2 className="text-xl font-semibold text-black dark:text-white">
-                          Current Subscription
-                        </h2>
-                        <span
-                          className={`px-3 py-1 text-xs font-medium rounded-full flex items-center gap-1 ${
-                            userTier === "enterprise"
-                              ? "bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300"
-                              : "bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300"
-                          }`}
-                        >
-                          {userTier === "enterprise" ? (
-                            <>
-                              <Crown className="h-3 w-3" />
-                              Enterprise
-                            </>
-                          ) : (
-                            <>
-                              <Zap className="h-3 w-3" />
-                              Pro
-                            </>
-                          )}
+                    <div className="flex items-baseline justify-between mb-4">
+                      <h3 className="text-2xl font-bold text-black dark:text-white capitalize">
+                        {userTier} Plan
+                      </h3>
+                      <span className="text-xl font-semibold text-black dark:text-white">
+                        ${(subscription.amount / 100).toFixed(2)}/
+                        {subscription.interval}
+                      </span>
+                    </div>
+
+                    <p className="text-sm text-black/60 dark:text-white/60 mb-6">
+                      Next billing date:{" "}
+                      {formatDate(subscription.currentPeriodEnd)}
+                    </p>
+
+                    {/* Progress Bar */}
+                    <div className="space-y-2 mb-6">
+                      <div className="flex justify-between text-xs text-black/60 dark:text-white/60">
+                        <span>Billing Cycle Progress</span>
+                        <span>{Math.round(calculateProgress())}% complete</span>
+                      </div>
+                      <div className="h-2 bg-black/5 dark:bg-white/5 rounded-full overflow-hidden">
+                        <div
+                          className="h-full bg-black dark:bg-white transition-all duration-500"
+                          style={{ width: `${calculateProgress()}%` }}
+                        />
+                      </div>
+                    </div>
+
+                    {/* Features */}
+                    <div className="space-y-2 pt-4 border-t border-black/5 dark:border-white/5 mb-6">
+                      <div className="flex items-center gap-2 text-sm text-black dark:text-white">
+                        <CheckCircle className="h-4 w-4 text-green-600 dark:text-green-400" />
+                        <span>
+                          {userTier === "pro" ? "100" : "Unlimited"} scans per
+                          day
                         </span>
                       </div>
-
-                      <div className="flex items-baseline justify-between mb-4">
-                        <h3 className="text-2xl font-bold text-black dark:text-white capitalize">
-                          {userTier} Plan
-                        </h3>
-                        <span className="text-xl font-semibold text-black dark:text-white">
-                          ${(subscription.amount / 100).toFixed(2)}/
-                          {subscription.interval}
-                        </span>
+                      <div className="flex items-center gap-2 text-sm text-black dark:text-white">
+                        <CheckCircle className="h-4 w-4 text-green-600 dark:text-green-400" />
+                        <span>Priority support</span>
                       </div>
-
-                      <p className="text-sm text-black/60 dark:text-white/60 mb-6">
-                        Next billing date:{" "}
-                        {formatDate(subscription.currentPeriodEnd)}
-                      </p>
-
-                      {/* Progress Bar */}
-                      <div className="space-y-2 mb-6">
-                        <div className="flex justify-between text-xs text-black/60 dark:text-white/60">
-                          <span>Billing Cycle Progress</span>
-                          <span>
-                            {Math.round(calculateProgress())}% complete
-                          </span>
-                        </div>
-                        <div className="h-2 bg-black/5 dark:bg-white/5 rounded-full overflow-hidden">
-                          <div
-                            className="h-full bg-black dark:bg-white transition-all duration-500"
-                            style={{ width: `${calculateProgress()}%` }}
-                          />
-                        </div>
+                      <div className="flex items-center gap-2 text-sm text-black dark:text-white">
+                        <CheckCircle className="h-4 w-4 text-green-600 dark:text-green-400" />
+                        <span>Advanced analytics</span>
                       </div>
+                    </div>
 
-                      {/* Features */}
-                      <div className="space-y-2 pt-4 border-t border-black/5 dark:border-white/5 mb-6">
-                        <div className="flex items-center gap-2 text-sm text-black dark:text-white">
-                          <CheckCircle className="h-4 w-4 text-green-600 dark:text-green-400" />
-                          <span>
-                            {userTier === "pro" ? "100" : "Unlimited"} scans per
-                            day
-                          </span>
-                        </div>
-                        <div className="flex items-center gap-2 text-sm text-black dark:text-white">
-                          <CheckCircle className="h-4 w-4 text-green-600 dark:text-green-400" />
-                          <span>Priority support</span>
-                        </div>
-                        <div className="flex items-center gap-2 text-sm text-black dark:text-white">
-                          <CheckCircle className="h-4 w-4 text-green-600 dark:text-green-400" />
-                          <span>Advanced analytics</span>
-                        </div>
-                      </div>
-
-                      {/* Cancellation Notice */}
-                      {subscription.cancelAtPeriodEnd && (
-                        <div className="mb-6 p-4 rounded-lg bg-yellow-50 dark:bg-yellow-950/20 border border-yellow-200 dark:border-yellow-900/50">
-                          <div className="flex items-start gap-3">
-                            <AlertTriangle className="h-5 w-5 text-yellow-600 dark:text-yellow-400 flex-shrink-0 mt-0.5" />
-                            <div className="flex-1">
-                              <p className="text-sm text-yellow-800 dark:text-yellow-200">
-                                Your subscription will cancel on{" "}
-                                {formatDate(subscription.currentPeriodEnd)}
-                              </p>
-                              <Button
-                                variant="link"
-                                onClick={handleReactivate}
-                                disabled={loadingReactivate}
-                                className="mt-2 p-0 h-auto text-yellow-800 dark:text-yellow-200 hover:text-yellow-900 dark:hover:text-yellow-100"
-                              >
-                                {loadingReactivate ? (
-                                  <>
-                                    <Loader2 className="mr-2 h-3 w-3 animate-spin" />
-                                    Reactivating...
-                                  </>
-                                ) : (
-                                  "Reactivate subscription"
-                                )}
-                              </Button>
-                            </div>
+                    {/* Cancellation Notice */}
+                    {subscription.cancelAtPeriodEnd && (
+                      <div className="mb-6 p-4 rounded-lg bg-yellow-50 dark:bg-yellow-950/20 border border-yellow-200 dark:border-yellow-900/50">
+                        <div className="flex items-start gap-3">
+                          <AlertTriangle className="h-5 w-5 text-yellow-600 dark:text-yellow-400 flex-shrink-0 mt-0.5" />
+                          <div className="flex-1">
+                            <p className="text-sm text-yellow-800 dark:text-yellow-200">
+                              Your subscription will cancel on{" "}
+                              {formatDate(subscription.currentPeriodEnd)}
+                            </p>
+                            <Button
+                              variant="link"
+                              onClick={handleReactivate}
+                              disabled={loadingReactivate}
+                              className="mt-2 p-0 h-auto text-yellow-800 dark:text-yellow-200 hover:text-yellow-900 dark:hover:text-yellow-100"
+                            >
+                              {loadingReactivate ? (
+                                <>
+                                  <Loader2 className="mr-2 h-3 w-3 animate-spin" />
+                                  Reactivating...
+                                </>
+                              ) : (
+                                "Reactivate subscription"
+                              )}
+                            </Button>
                           </div>
                         </div>
+                      </div>
+                    )}
+
+                    {/* Action Buttons */}
+                    <div className="flex flex-col md:flex-row gap-3">
+                      {userTier !== "enterprise" && (
+                        <Button
+                          className="flex-1 bg-black dark:bg-white text-white dark:text-black hover:bg-black/90 dark:hover:bg-white/90"
+                          onClick={() => router.push("/pricing")}
+                        >
+                          <Crown className="mr-2 h-4 w-4" />
+                          Upgrade to Enterprise
+                        </Button>
                       )}
 
-                      {/* Action Buttons */}
-                      <div className="flex flex-col md:flex-row gap-3">
-                        {userTier !== "enterprise" && (
-                          <Button
-                            className="flex-1 bg-black dark:bg-white text-white dark:text-black hover:bg-black/90 dark:hover:bg-white/90"
-                            onClick={() => router.push("/pricing")}
-                          >
-                            <Crown className="mr-2 h-4 w-4" />
-                            Upgrade to Enterprise
-                          </Button>
-                        )}
-
-                        {!subscription.cancelAtPeriodEnd && (
-                          <Button
-                            variant="outline"
-                            className="flex-1"
-                            onClick={() => setShowCancelModal(true)}
-                          >
-                            Cancel Subscription
-                          </Button>
-                        )}
-                      </div>
+                      {!subscription.cancelAtPeriodEnd && (
+                        <Button
+                          variant="outline"
+                          className="flex-1"
+                          onClick={() => setShowCancelModal(true)}
+                        >
+                          Cancel Subscription
+                        </Button>
+                      )}
                     </div>
                   </div>
-                ) : (
-                  <div className="border border-black/10 dark:border-white/10 rounded-xl overflow-hidden bg-gradient-to-br from-black/[0.02] to-transparent dark:from-white/[0.02] p-6">
-                    <h2 className="text-xl font-semibold text-black dark:text-white mb-4">
-                      Free Tier
+                </div>
+              ) : (
+                <div className="border border-black/10 dark:border-white/10 rounded-xl overflow-hidden bg-gradient-to-br from-black/[0.02] to-transparent dark:from-white/[0.02] p-6">
+                  <h2 className="text-xl font-semibold text-black dark:text-white mb-4">
+                    Free Tier
+                  </h2>
+                  <p className="text-sm text-black/60 dark:text-white/60 mb-6">
+                    Upgrade to unlock more scans and advanced features
+                  </p>
+                  <Button
+                    className="w-full bg-black dark:bg-white text-white dark:text-black"
+                    onClick={() => router.push("/pricing")}
+                  >
+                    <Zap className="mr-2 h-4 w-4" />
+                    Upgrade to Pro
+                  </Button>
+                </div>
+              )}
+
+              {/* Billing History */}
+              {invoices.length > 0 && (
+                <div className="border border-black/10 dark:border-white/10 rounded-xl overflow-hidden">
+                  <div className="p-6">
+                    <h2 className="text-xl font-semibold text-black dark:text-white mb-6">
+                      Billing History
                     </h2>
-                    <p className="text-sm text-black/60 dark:text-white/60 mb-6">
-                      Upgrade to unlock more scans and advanced features
-                    </p>
-                    <Button
-                      className="w-full bg-black dark:bg-white text-white dark:text-black"
-                      onClick={() => router.push("/pricing")}
-                    >
-                      <Zap className="mr-2 h-4 w-4" />
-                      Upgrade to Pro
-                    </Button>
-                  </div>
-                )}
 
-                {/* Billing History */}
-                {invoices.length > 0 && (
-                  <div className="border border-black/10 dark:border-white/10 rounded-xl overflow-hidden">
-                    <div className="p-6">
-                      <h2 className="text-xl font-semibold text-black dark:text-white mb-6">
-                        Billing History
-                      </h2>
-
-                      <div className="space-y-3">
-                        {invoices.map((invoice) => (
-                          <div
-                            key={invoice.id}
-                            className="p-4 border border-black/5 dark:border-white/5 rounded-lg hover:bg-black/5 dark:hover:bg-white/5 transition-colors"
-                          >
-                            <div className="flex items-center justify-between mb-2">
-                              <div className="flex items-center gap-3">
-                                <span className="font-semibold text-black dark:text-white">
-                                  {formatDate(invoice.created)}
-                                </span>
-                                <span
-                                  className={`px-2 py-0.5 text-xs font-medium rounded-full ${
-                                    invoice.status === "paid"
-                                      ? "bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300"
-                                      : "bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-300"
-                                  }`}
-                                >
-                                  {invoice.status.toUpperCase()}
-                                </span>
-                              </div>
-
-                              <div className="flex items-center gap-4">
-                                <span className="text-lg font-semibold text-black dark:text-white">
-                                  ${(invoice.amountPaid / 100).toFixed(2)}
-                                </span>
-
-                                {invoice.invoicePdf && (
-                                  <Button
-                                    variant="ghost"
-                                    size="sm"
-                                    onClick={() =>
-                                      window.open(invoice.invoicePdf, "_blank")
-                                    }
-                                  >
-                                    <Download className="h-4 w-4" />
-                                  </Button>
-                                )}
-                              </div>
+                    <div className="space-y-3">
+                      {invoices.map((invoice) => (
+                        <div
+                          key={invoice.id}
+                          className="p-4 border border-black/5 dark:border-white/5 rounded-lg hover:bg-black/5 dark:hover:bg-white/5 transition-colors"
+                        >
+                          <div className="flex items-center justify-between mb-2">
+                            <div className="flex items-center gap-3">
+                              <span className="font-semibold text-black dark:text-white">
+                                {formatDate(invoice.created)}
+                              </span>
+                              <span
+                                className={`px-2 py-0.5 text-xs font-medium rounded-full ${
+                                  invoice.status === "paid"
+                                    ? "bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300"
+                                    : "bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-300"
+                                }`}
+                              >
+                                {invoice.status.toUpperCase()}
+                              </span>
                             </div>
 
-                            <p className="text-sm text-black/60 dark:text-white/60">
-                              {invoice.number} • {invoice.description}
-                            </p>
+                            <div className="flex items-center gap-4">
+                              <span className="text-lg font-semibold text-black dark:text-white">
+                                ${(invoice.amountPaid / 100).toFixed(2)}
+                              </span>
+
+                              {invoice.invoicePdf && (
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() =>
+                                    window.open(invoice.invoicePdf, "_blank")
+                                  }
+                                >
+                                  <Download className="h-4 w-4" />
+                                </Button>
+                              )}
+                            </div>
                           </div>
-                        ))}
-                      </div>
+
+                          <p className="text-sm text-black/60 dark:text-white/60">
+                            {invoice.number} • {invoice.description}
+                          </p>
+                        </div>
+                      ))}
                     </div>
                   </div>
-                )}
+                </div>
+              )}
+            </div>
+
+            {/* Right Column - Sidebar */}
+            <div className="space-y-6">
+              {/* Payment Method */}
+              <div className="border border-black/10 dark:border-white/10 rounded-xl overflow-hidden">
+                <div className="p-6">
+                  <h3 className="text-lg font-semibold text-black dark:text-white mb-4">
+                    Payment Method
+                  </h3>
+
+                  {paymentMethod ? (
+                    <>
+                      <div className="p-4 border border-black/5 dark:border-white/5 rounded-lg bg-gradient-to-br from-black/5 to-transparent dark:from-white/5 mb-4">
+                        <div className="flex items-center gap-3 mb-2">
+                          <CreditCard className="h-5 w-5 text-black/60 dark:text-white/60" />
+                          <span className="font-mono text-black dark:text-white">
+                            •••• {paymentMethod.card.last4}
+                          </span>
+                        </div>
+                        <p className="text-sm text-black/60 dark:text-white/60">
+                          {paymentMethod.card.brand.toUpperCase()} • Expires{" "}
+                          {paymentMethod.card.expMonth}/
+                          {paymentMethod.card.expYear}
+                        </p>
+                      </div>
+
+                      <Button
+                        onClick={handleManagePayment}
+                        disabled={loadingPortal}
+                        variant="outline"
+                        className="w-full"
+                      >
+                        {loadingPortal ? (
+                          <>
+                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                            Loading...
+                          </>
+                        ) : (
+                          <>
+                            <Edit className="mr-2 h-4 w-4" />
+                            Update Payment
+                          </>
+                        )}
+                      </Button>
+                    </>
+                  ) : (
+                    <>
+                      <p className="text-sm text-black/60 dark:text-white/60 mb-4">
+                        No payment method on file
+                      </p>
+                      <Button
+                        onClick={handleManagePayment}
+                        disabled={loadingPortal}
+                        variant="outline"
+                        className="w-full"
+                      >
+                        {loadingPortal ? (
+                          <>
+                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                            Loading...
+                          </>
+                        ) : (
+                          "Add Payment Method"
+                        )}
+                      </Button>
+                    </>
+                  )}
+                </div>
               </div>
 
-              {/* Right Column - Sidebar */}
-              <div className="space-y-6">
-                {/* Payment Method */}
+              {/* Usage Stats */}
+              {usage && (
                 <div className="border border-black/10 dark:border-white/10 rounded-xl overflow-hidden">
                   <div className="p-6">
                     <h3 className="text-lg font-semibold text-black dark:text-white mb-4">
-                      Payment Method
+                      Usage Statistics
                     </h3>
 
-                    {paymentMethod ? (
-                      <>
-                        <div className="p-4 border border-black/5 dark:border-white/5 rounded-lg bg-gradient-to-br from-black/5 to-transparent dark:from-white/5 mb-4">
-                          <div className="flex items-center gap-3 mb-2">
-                            <CreditCard className="h-5 w-5 text-black/60 dark:text-white/60" />
-                            <span className="font-mono text-black dark:text-white">
-                              •••• {paymentMethod.card.last4}
-                            </span>
+                    <div>
+                      <p className="text-sm text-black/60 dark:text-white/60 mb-1">
+                        Today
+                      </p>
+                      <p className="text-2xl font-bold text-black dark:text-white mb-2">
+                        {usage.current.scansToday} /{" "}
+                        {usage.current.limit === 999999
+                          ? "∞"
+                          : usage.current.limit}{" "}
+                        scans
+                      </p>
+
+                      {usage.current.limit !== 999999 && (
+                        <>
+                          <div className="h-2 bg-black/5 dark:bg-white/5 rounded-full overflow-hidden mb-2">
+                            <div
+                              className="h-full bg-black dark:bg-white transition-all duration-500"
+                              style={{
+                                width: `${Math.min((usage.current.scansToday / usage.current.limit) * 100, 100)}%`,
+                              }}
+                            />
                           </div>
-                          <p className="text-sm text-black/60 dark:text-white/60">
-                            {paymentMethod.card.brand.toUpperCase()} • Expires{" "}
-                            {paymentMethod.card.expMonth}/
-                            {paymentMethod.card.expYear}
+                          <p className="text-xs text-black/60 dark:text-white/60">
+                            Resets {formatDate(usage.current.resetAt)}
                           </p>
-                        </div>
+                        </>
+                      )}
+                    </div>
 
-                        <Button
-                          onClick={handleManagePayment}
-                          disabled={loadingPortal}
-                          variant="outline"
-                          className="w-full"
-                        >
-                          {loadingPortal ? (
-                            <>
-                              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                              Loading...
-                            </>
-                          ) : (
-                            <>
-                              <Edit className="mr-2 h-4 w-4" />
-                              Update Payment
-                            </>
-                          )}
-                        </Button>
-                      </>
-                    ) : (
-                      <>
-                        <p className="text-sm text-black/60 dark:text-white/60 mb-4">
-                          No payment method on file
-                        </p>
-                        <Button
-                          onClick={handleManagePayment}
-                          disabled={loadingPortal}
-                          variant="outline"
-                          className="w-full"
-                        >
-                          {loadingPortal ? (
-                            <>
-                              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                              Loading...
-                            </>
-                          ) : (
-                            "Add Payment Method"
-                          )}
-                        </Button>
-                      </>
-                    )}
-                  </div>
-                </div>
-
-                {/* Usage Stats */}
-                {usage && (
-                  <div className="border border-black/10 dark:border-white/10 rounded-xl overflow-hidden">
-                    <div className="p-6">
-                      <h3 className="text-lg font-semibold text-black dark:text-white mb-4">
-                        Usage Statistics
-                      </h3>
-
-                      <div>
-                        <p className="text-sm text-black/60 dark:text-white/60 mb-1">
-                          Today
-                        </p>
-                        <p className="text-2xl font-bold text-black dark:text-white mb-2">
-                          {usage.current.scansToday} /{" "}
-                          {usage.current.limit === 999999
-                            ? "∞"
-                            : usage.current.limit}{" "}
-                          scans
-                        </p>
-
-                        {usage.current.limit !== 999999 && (
-                          <>
-                            <div className="h-2 bg-black/5 dark:bg-white/5 rounded-full overflow-hidden mb-2">
-                              <div
-                                className="h-full bg-black dark:bg-white transition-all duration-500"
-                                style={{
-                                  width: `${Math.min((usage.current.scansToday / usage.current.limit) * 100, 100)}%`,
-                                }}
-                              />
-                            </div>
-                            <p className="text-xs text-black/60 dark:text-white/60">
-                              Resets {formatDate(usage.current.resetAt)}
-                            </p>
-                          </>
-                        )}
-                      </div>
-
-                      <div className="pt-4 border-t border-black/5 dark:border-white/5 mt-4 space-y-2">
-                        <div className="flex justify-between text-sm">
-                          <span className="text-black/60 dark:text-white/60">
-                            This Month
-                          </span>
-                          <span className="font-semibold text-black dark:text-white">
-                            {usage.current.scansThisMonth} scans
-                          </span>
-                        </div>
+                    <div className="pt-4 border-t border-black/5 dark:border-white/5 mt-4 space-y-2">
+                      <div className="flex justify-between text-sm">
+                        <span className="text-black/60 dark:text-white/60">
+                          This Month
+                        </span>
+                        <span className="font-semibold text-black dark:text-white">
+                          {usage.current.scansThisMonth} scans
+                        </span>
                       </div>
                     </div>
                   </div>
-                )}
-              </div>
+                </div>
+              )}
             </div>
           </div>
-        </section>
-
-        <Footer />
-      </div>
+        </div>
+      </section>
 
       {/* Cancel Subscription Modal */}
       {showCancelModal && (
@@ -871,6 +855,6 @@ export default function BillingPage() {
           </div>
         </div>
       )}
-    </main>
+    </>
   );
 }

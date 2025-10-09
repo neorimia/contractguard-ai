@@ -4,6 +4,7 @@ import { useState, useEffect, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { useUser } from "@stackframe/stack";
 import { Header } from "@/components/Header";
+import { HeaderSkeleton } from "@/components/HeaderSkeleton";
 import { Footer } from "@/components/footer";
 import { Button } from "@/components/ui/button";
 import { Send, CheckCircle } from "lucide-react";
@@ -174,14 +175,14 @@ function FeedbackForm() {
                       onChange={(e) => {
                         if (feedback.includes("Reason:")) {
                           const parts = feedback.split(
-                            "\n\nAdditional comments:",
+                            "\n\nAdditional comments:"
                           );
                           setFeedback(
-                            `Reason: ${e.target.value}${parts[1] ? "\n\nAdditional comments:" + parts[1] : ""}`,
+                            `Reason: ${e.target.value}${parts[1] ? "\n\nAdditional comments:" + parts[1] : ""}`
                           );
                         } else {
                           setFeedback(
-                            `Reason: ${e.target.value}\n\n${feedback}`,
+                            `Reason: ${e.target.value}\n\n${feedback}`
                           );
                         }
                       }}
@@ -212,12 +213,12 @@ function FeedbackForm() {
               onChange={(e) => {
                 if (reason === "cancellation") {
                   const reasonText = feedback.split(
-                    "\n\nAdditional comments:",
+                    "\n\nAdditional comments:"
                   )[0];
                   setFeedback(
                     reasonText
                       ? `${reasonText}\n\nAdditional comments: ${e.target.value}`
-                      : e.target.value,
+                      : e.target.value
                   );
                 } else {
                   setFeedback(e.target.value);
@@ -258,26 +259,16 @@ function FeedbackForm() {
 
 export default function FeedbackPage() {
   return (
-    <main
-      className={`relative min-h-screen w-full bg-white dark:bg-black ${geist.className} overflow-hidden`}
-    >
-      <div className="relative bg-white/95 dark:bg-black/5 pt-14">
-        <Header />
-
-        <section className="min-h-[calc(100vh-5.5rem)] py-12">
-          <Suspense
-            fallback={
-              <div className="flex items-center justify-center min-h-[60vh]">
-                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-black dark:border-white" />
-              </div>
-            }
-          >
-            <FeedbackForm />
-          </Suspense>
-        </section>
-
-        <Footer />
-      </div>
-    </main>
+    <section className="min-h-[calc(100vh-5.5rem)] py-12">
+      <Suspense
+        fallback={
+          <div className="flex items-center justify-center min-h-[60vh]">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-black dark:border-white" />
+          </div>
+        }
+      >
+        <FeedbackForm />
+      </Suspense>
+    </section>
   );
 }

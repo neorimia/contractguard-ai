@@ -12,6 +12,9 @@ import { AuthErrorBoundary } from "@/components/auth/AuthErrorBoundary";
 import { PostHogProvider } from "@/components/analytics/PostHogProvider";
 import { UserIdentifier } from "@/components/analytics/UserIdentifier";
 import { Suspense } from "react";
+import { Header } from "@/components/Header";
+import { HeaderSkeleton } from "@/components/HeaderSkeleton";
+import { Footer } from "@/components/footer";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -120,7 +123,19 @@ export default function RootLayout({
                   enableSystem
                   disableTransitionOnChange
                 >
-                  <AuthErrorBoundary>{children}</AuthErrorBoundary>
+                  <AuthErrorBoundary>
+                    <main className="relative min-h-screen w-full bg-white dark:bg-black overflow-hidden">
+                      <div className="relative bg-white/95 dark:bg-black/5 pt-14">
+                        <Suspense fallback={<HeaderSkeleton />}>
+                          <Header />
+                        </Suspense>
+                        {children}
+                        <Suspense fallback={null}>
+                          <Footer />
+                        </Suspense>
+                      </div>
+                    </main>
+                  </AuthErrorBoundary>
                 </ThemeProvider>
               </PostHogProvider>
             </StackAuthProvider>
