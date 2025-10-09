@@ -204,7 +204,7 @@ export async function POST(req: NextRequest) {
         : analysis.riskScore;
 
     // 7. Save to database
-    const result = {
+    const auditData = {
       contractAddress: normalizedAddress,
       chain,
       sourceCode: contractData.sourceCode.slice(0, 10000), // Store partial
@@ -220,13 +220,17 @@ export async function POST(req: NextRequest) {
       shares: 0,
     };
 
+    let result;
     if (existing) {
-      await db
+      const [updated] = await db
         .update(audits)
-        .set({ ...result, updatedAt: new Date() })
-        .where(eq(audits.contractAddress, normalizedAddress));
+        .set({ ...auditData, updatedAt: new Date() })
+        .where(eq(audits.contractAddress, normalizedAddress))
+        .returning();
+      result = updated;
     } else {
-      await db.insert(audits).values(result);
+      const [inserted] = await db.insert(audits).values(auditData).returning();
+      result = inserted;
     }
 
     // 8. Cache in Redis
@@ -245,7 +249,9 @@ export async function POST(req: NextRequest) {
 
       // Check if this is the user's first audit (scansToday === 1)
       if (updatedUser && updatedUser.scansToday === 1) {
-        console.log(`First audit detected for user ${updatedUser.id}, checking for referral confirmation`);
+        console.log(
+          `First audit detected for user ${updatedUser.id}, checking for referral confirmation`
+        );
 
         const referralService = new ReferralService();
         const clientInfo = await getClientInfo(req);
@@ -260,13 +266,17 @@ export async function POST(req: NextRequest) {
           console.log(`Referral confirmed for user ${updatedUser.id}`);
 
           if (referralResult.reward) {
-            console.log(`Referrer rewarded: ${referralResult.reward.type} x${referralResult.reward.amount}`);
+            console.log(
+              `Referrer rewarded: ${referralResult.reward.type} x${referralResult.reward.amount}`
+            );
           }
         } else if (referralResult.error === "no_pending_referral") {
           // User wasn't referred - this is normal, no action needed
           console.log(`No pending referral found for user ${updatedUser.id}`);
         } else {
-          console.warn(`Referral confirmation failed for user ${updatedUser.id}: ${referralResult.error}`);
+          console.warn(
+            `Referral confirmation failed for user ${updatedUser.id}: ${referralResult.error}`
+          );
         }
       }
     } catch (referralError) {

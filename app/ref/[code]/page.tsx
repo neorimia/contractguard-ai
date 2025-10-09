@@ -4,23 +4,18 @@ import { ReferralService } from "@/lib/services/referral.service";
 import { Button } from "@/components/ui/button";
 import { CheckCircle, Shield, Zap, TrendingUp } from "lucide-react";
 import Link from "next/link";
-import { setReferralCookie } from "@/lib/utils/referral-cookies";
 
 export default async function ReferralLandingPage({
   params,
 }: {
-  params: { code: string };
+  params: Promise<{ code: string }>;
 }) {
-  const { code } = params;
+  const { code } = await params;
 
   // Validate code and get referrer info
+  // Note: Cookie is already set by middleware
   const referralService = new ReferralService();
   const validation = await referralService.validateReferralCode(code);
-
-  // Set cookie (server-side)
-  if (validation.valid) {
-    await setReferralCookie(code);
-  }
 
   if (!validation.valid) {
     return (
@@ -73,7 +68,10 @@ export default async function ReferralLandingPage({
         <div className="mt-8 space-y-3">
           <div className="flex items-center justify-center gap-3 text-lg">
             <div className="flex h-10 w-10 items-center justify-center rounded-full bg-green-100 dark:bg-green-900">
-              <CheckCircle className="text-green-600 dark:text-green-400" size={24} />
+              <CheckCircle
+                className="text-green-600 dark:text-green-400"
+                size={24}
+              />
             </div>
             <span>
               Get <strong>+3 free scans</strong> when you sign up
@@ -89,14 +87,20 @@ export default async function ReferralLandingPage({
 
           <div className="flex items-center justify-center gap-3 text-lg">
             <div className="flex h-10 w-10 items-center justify-center rounded-full bg-purple-100 dark:bg-purple-900">
-              <Shield className="text-purple-600 dark:text-purple-400" size={24} />
+              <Shield
+                className="text-purple-600 dark:text-purple-400"
+                size={24}
+              />
             </div>
             <span>Protect your crypto investments</span>
           </div>
 
           <div className="flex items-center justify-center gap-3 text-lg">
             <div className="flex h-10 w-10 items-center justify-center rounded-full bg-orange-100 dark:bg-orange-900">
-              <TrendingUp className="text-orange-600 dark:text-orange-400" size={24} />
+              <TrendingUp
+                className="text-orange-600 dark:text-orange-400"
+                size={24}
+              />
             </div>
             <span>Join 10,000+ savvy crypto traders</span>
           </div>
@@ -115,7 +119,8 @@ export default async function ReferralLandingPage({
         {/* Trust indicators */}
         <div className="mt-12 space-y-2">
           <p className="text-sm text-muted-foreground">
-            <strong>Special Offer:</strong> Sign up through this link and get +3 bonus scans instantly
+            <strong>Special Offer:</strong> Sign up through this link and get +3
+            bonus scans instantly
           </p>
           <p className="text-xs text-muted-foreground">
             No credit card required • Start protecting your investments today

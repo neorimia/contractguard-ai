@@ -15,6 +15,7 @@ import { Suspense } from "react";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/footer";
 import { HeaderSkeleton } from "@/components/HeaderSkeleton";
+import CookieBanner from "@/components/CookieBanner";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -135,6 +136,7 @@ export default function RootLayout({
                         </Suspense>
                       </div>
                     </main>
+                    <CookieBanner />
                   </AuthErrorBoundary>
                 </ThemeProvider>
               </PostHogProvider>

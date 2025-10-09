@@ -4,8 +4,8 @@ import { ReferralBannerContainer } from "@/components/referrals/ReferralBannerCo
 export default function Home() {
   return (
     <>
-      <ReferralBannerContainer />
       <ScanInterface />
+      <ReferralBannerContainer />
     </>
   );
 }

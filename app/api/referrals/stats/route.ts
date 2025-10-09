@@ -2,7 +2,8 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { ReferralService } from "@/lib/services/referral.service";
-import { getUserFromRequest } from "@/lib/middleware/auth.middleware";
+import { AuthService } from "@/lib/services/auth.service";
+import { stackServerApp } from "@/stack/server";
 import { Redis } from "@upstash/redis";
 
 const redis = new Redis({
@@ -15,31 +16,60 @@ const CACHE_TTL = 300;
 
 export async function GET(request: NextRequest) {
   try {
-    // Get authenticated user
-    const user = getUserFromRequest(request);
+    // Get authenticated user from Stack Auth
+    const stackUser = await stackServerApp.getUser();
+
+    if (!stackUser) {
+      return NextResponse.json(
+        { error: "Unauthorized - You must be logged in" },
+        { status: 401 }
+      );
+    }
+
+    // Validate that user has an email
+    if (!stackUser.primaryEmail) {
+      return NextResponse.json(
+        { error: "Invalid user account - Missing email address" },
+        { status: 400 }
+      );
+    }
+
+    // Get or create app user in our database
+    const authService = new AuthService();
+    let appUser = await authService.getUserByStackId(stackUser.id);
+
+    if (!appUser) {
+      // First time user - create in our database
+      appUser = await authService.syncUser(
+        stackUser.id,
+        stackUser.primaryEmail,
+        {
+          displayName: stackUser.displayName || undefined,
+          avatarUrl: stackUser.profileImageUrl || undefined,
+        }
+      );
+    }
 
     // Check Redis cache first
-    const cacheKey = `referral:stats:${user.id}`;
+    const cacheKey = `referral:stats:${appUser.id}`;
     const cached = await redis.get(cacheKey);
 
     if (cached) {
-      console.log(`Cache hit for referral stats: user ${user.id}`);
+      console.log(`Cache hit for referral stats: user ${appUser.id}`);
       return NextResponse.json(cached);
     }
 
-    console.log(`Cache miss for referral stats: user ${user.id}`);
+    console.log(`Cache miss for referral stats: user ${appUser.id}`);
 
     const referralService = new ReferralService();
 
     // Get or generate referral code
-    let referralCode = user.email; // Placeholder, will be replaced
-
-    // We need to get user's referral code from database
-    // For now, generate if not exists
-    referralCode = await referralService.generateReferralCodeForUser(user.id);
+    const referralCode = await referralService.generateReferralCodeForUser(
+      appUser.id
+    );
 
     // Get referral stats
-    const stats = await referralService.getReferralStats(user.id);
+    const stats = await referralService.getReferralStats(appUser.id);
 
     const referralLink = `${process.env.NEXT_PUBLIC_SITE_URL}/ref/${referralCode}`;
 
@@ -63,7 +93,9 @@ export async function GET(request: NextRequest) {
 
     // Cache the response
     await redis.set(cacheKey, response, { ex: CACHE_TTL });
-    console.log(`Cached referral stats for user ${user.id} (TTL: ${CACHE_TTL}s)`);
+    console.log(
+      `Cached referral stats for user ${appUser.id} (TTL: ${CACHE_TTL}s)`
+    );
 
     return NextResponse.json(response);
   } catch (error) {
