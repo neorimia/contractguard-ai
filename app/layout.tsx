@@ -15,6 +15,7 @@ import { Suspense } from "react";
 import { Header } from "@/components/Header";
 import { HeaderSkeleton } from "@/components/HeaderSkeleton";
 import { Footer } from "@/components/footer";
+import { LayoutSkeleton } from "@/components/LayoutSkeleton";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -129,7 +130,9 @@ export default function RootLayout({
                         <Suspense fallback={<HeaderSkeleton />}>
                           <Header />
                         </Suspense>
-                        {children}
+                        <Suspense fallback={<LayoutSkeleton />}>
+                          {children}
+                        </Suspense>
                         <Suspense fallback={null}>
                           <Footer />
                         </Suspense>

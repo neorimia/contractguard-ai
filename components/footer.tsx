@@ -6,6 +6,7 @@ import { motion } from "motion/react";
 import { Button } from "@/components/ui/button";
 import Image from "next/image";
 import { useTheme } from "next-themes";
+import { useEffect, useState } from "react";
 
 const footerLinks = [
   {
@@ -30,6 +31,12 @@ const footerLinks = [
 export function Footer() {
   const currentYear = new Date().getFullYear();
   const { theme } = useTheme();
+  const [mounted, setMounted] = useState(false);
+
+  // Wait until after client-side hydration to show theme-dependent content
+  useEffect(() => {
+    setMounted(true);
+  }, []);
   return (
     <footer className="sticky bottom-0 w-full mt-auto bg-white dark:bg-black border-t border-black/5 dark:border-white/5 backdrop-blur-md z-10">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 sm:py-8">
@@ -40,7 +47,9 @@ export function Footer() {
               className="text-4xl font-bold tracking-tighter text-black dark:text-white hover:opacity-90 transition-opacity"
             >
               <Image
-                src={theme === "dark" ? "/logo-white.svg" : "/logo.svg"}
+                src={
+                  mounted && theme === "dark" ? "/logo-white.svg" : "/logo.svg"
+                }
                 alt="ContractGuard AI"
                 width={130}
                 height={50}

@@ -160,7 +160,7 @@ function AILoadingState() {
 
       if (nextLineIndex < firstVisibleLineIndex && nextLineIndex !== 0) {
         setSequenceIndex(
-          (prevIndex) => (prevIndex + 1) % TASK_SEQUENCES.length,
+          (prevIndex) => (prevIndex + 1) % TASK_SEQUENCES.length
         );
         return;
       }
@@ -359,116 +359,106 @@ export default function Home() {
   };
 
   return (
-    <main className="relative min-h-screen w-full bg-white dark:bg-black overflow-hidden">
-      <div className="relative bg-white/95 dark:bg-black/5 pt-14">
-        <Suspense fallback={<HeaderSkeleton />}>
-          <Header />
-        </Suspense>
+    <>
+      {/* Hero Section */}
+      <section className="min-h-[calc(100vh-5.5rem)] flex flex-col justify-center py-6 sm:py-10 bg-black/95 dark:bg-white/95 mx-2 sm:mx-4 mt-1 mb-4 rounded-xl">
+        <div className="w-full max-w-6xl mx-auto text-center space-y-6 sm:space-y-8 px-4">
+          {/* Main Content */}
+          <h1 className="text-4xl sm:text-6xl md:text-7xl font-semibold tracking-tight text-white dark:text-black">
+            Scan smart contracts{" "}
+            <span className="bg-gradient-to-r from-white to-white/70 dark:from-black dark:to-black/70 bg-clip-text text-transparent">
+              in seconds
+            </span>
+          </h1>
+          <p className="text-base sm:text-lg tracking-tight text-white/60 dark:text-black/60 max-w-2xl mx-auto">
+            AI-powered security analysis that detects scams, honeypots, and rug
+            pulls. Get instant results in plain English.
+          </p>
 
-        {/* Hero Section */}
-        <section className="min-h-[calc(100vh-5.5rem)] flex flex-col justify-center py-6 sm:py-10 bg-black/95 dark:bg-white/95 mx-2 sm:mx-4 mt-1 mb-4 rounded-xl">
-          <div className="w-full max-w-6xl mx-auto text-center space-y-6 sm:space-y-8 px-4">
-            {/* Main Content */}
-            <h1 className="text-4xl sm:text-6xl md:text-7xl font-semibold tracking-tight text-white dark:text-black">
-              Scan smart contracts{" "}
-              <span className="bg-gradient-to-r from-white to-white/70 dark:from-black dark:to-black/70 bg-clip-text text-transparent">
-                in seconds
-              </span>
-            </h1>
-            <p className="text-base sm:text-lg tracking-tight text-white/60 dark:text-black/60 max-w-2xl mx-auto">
-              AI-powered security analysis that detects scams, honeypots, and
-              rug pulls. Get instant results in plain English.
-            </p>
-
-            {/* Input Section or Loading State */}
-            {loading ? (
-              <div className="max-w-2xl mx-auto mt-8">
-                <AILoadingState />
-              </div>
-            ) : (
-              <div className="max-w-2xl mx-auto mt-8">
-                <div className="bg-white/10 dark:bg-black/10 backdrop-blur-sm border border-white/20 dark:border-black/20 rounded-2xl p-6">
-                  <label className="block text-sm font-medium text-white/80 dark:text-black/80 mb-3">
-                    Contract Address
-                  </label>
-                  <div className="flex sm:flex-row flex-col gap-4">
-                    <input
-                      type="text"
-                      placeholder="0x..."
-                      value={address}
-                      onChange={(e) => setAddress(e.target.value)}
-                      onKeyDown={(e) => {
-                        if (e.key === "Enter" && address && !loading) {
-                          analyzeContract();
-                        }
-                      }}
-                      className="flex-1 px-4 py-3 bg-white/5 dark:bg-black/5 border border-white/20 dark:border-black/20 rounded-lg text-white dark:text-black placeholder-white/50 dark:placeholder-black/50 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 transition-all"
-                      disabled={loading}
-                    />
-                    <Button
-                      onClick={analyzeContract}
-                      disabled={loading || !address}
-                      size="lg"
-                      className="px-6 py-3 bg-white/95 dark:bg-black text-black dark:text-white hover:bg-white dark:hover:bg-black transition-all duration-300"
-                    >
-                      SCAN CONTRACT
-                      <ArrowRight className="ml-2 h-4 w-4" />
-                    </Button>
-                  </div>
-
-                  {error && (
-                    <div className="mt-4 p-4 bg-red-500/20 border border-red-500/50 rounded-lg">
-                      <p className="text-red-200 dark:text-red-800 text-sm">
-                        {error}
-                      </p>
-                    </div>
-                  )}
-                </div>
-              </div>
-            )}
-          </div>
-        </section>
-
-        {/* Results Section */}
-        {result && (
-          <div ref={resultsRef}>
-            <ScanResults result={result} contractAddress={address} />
-          </div>
-        )}
-
-        {/* Scan Limit Drawer */}
-        {limitError && (
-          <ScanLimitDrawer
-            isOpen={showLimitDrawer}
-            onClose={() => setShowLimitDrawer(false)}
-            scansRemaining={limitError.scansRemaining}
-            resetAt={limitError.resetAt}
-            upgradeUrl={limitError.upgradeUrl || "/pricing"}
-          />
-        )}
-
-        {/* Login Modal */}
-        <Dialog open={showLoginModal} onOpenChange={setShowLoginModal}>
-          <DialogContent className="sm:max-w-md">
-            <DialogHeader>
-              <DialogTitle className="text-2xl font-semibold">
-                Sign in to scan contracts
-              </DialogTitle>
-              <DialogDescription>
-                Create an account or sign in to start scanning smart contracts.
-                Free tier includes 3 scans per day.
-              </DialogDescription>
-            </DialogHeader>
-            <div className="mt-4">
-              <MagicLinkSignIn />
+          {/* Input Section or Loading State */}
+          {loading ? (
+            <div className="max-w-2xl mx-auto mt-8">
+              <AILoadingState />
             </div>
-          </DialogContent>
-        </Dialog>
+          ) : (
+            <div className="max-w-2xl mx-auto mt-8">
+              <div className="bg-white/10 dark:bg-black/10 backdrop-blur-sm border border-white/20 dark:border-black/20 rounded-2xl p-6">
+                <label className="block text-sm font-medium text-white/80 dark:text-black/80 mb-3">
+                  Contract Address
+                </label>
+                <div className="flex sm:flex-row flex-col gap-4">
+                  <input
+                    type="text"
+                    placeholder="0x..."
+                    value={address}
+                    onChange={(e) => setAddress(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" && address && !loading) {
+                        analyzeContract();
+                      }
+                    }}
+                    className="flex-1 px-4 py-3 bg-white/5 dark:bg-black/5 border border-white/20 dark:border-black/20 rounded-lg text-white dark:text-black placeholder-white/50 dark:placeholder-black/50 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 transition-all"
+                    disabled={loading}
+                  />
+                  <Button
+                    onClick={analyzeContract}
+                    disabled={loading || !address}
+                    size="lg"
+                    className="px-6 py-3 bg-white/95 dark:bg-black text-black dark:text-white hover:bg-white dark:hover:bg-black transition-all duration-300"
+                  >
+                    SCAN CONTRACT
+                    <ArrowRight className="ml-2 h-4 w-4" />
+                  </Button>
+                </div>
 
-        <Suspense fallback={null}>
-          <Footer />
-        </Suspense>
-      </div>
-    </main>
+                {error && (
+                  <div className="mt-4 p-4 bg-red-500/20 border border-red-500/50 rounded-lg">
+                    <p className="text-red-200 dark:text-red-800 text-sm">
+                      {error}
+                    </p>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+        </div>
+      </section>
+
+      {/* Results Section */}
+      {result && (
+        <div ref={resultsRef}>
+          <ScanResults result={result} contractAddress={address} />
+        </div>
+      )}
+
+      {/* Scan Limit Drawer */}
+      {limitError && (
+        <ScanLimitDrawer
+          isOpen={showLimitDrawer}
+          onClose={() => setShowLimitDrawer(false)}
+          scansRemaining={limitError.scansRemaining}
+          resetAt={limitError.resetAt}
+          upgradeUrl={limitError.upgradeUrl || "/pricing"}
+        />
+      )}
+
+      {/* Login Modal */}
+      <Dialog open={showLoginModal} onOpenChange={setShowLoginModal}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="text-2xl font-semibold">
+              Sign in to scan contracts
+            </DialogTitle>
+            <DialogDescription>
+              Create an account or sign in to start scanning smart contracts.
+              Free tier includes 3 scans per day.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="mt-4">
+            <MagicLinkSignIn />
+          </div>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }

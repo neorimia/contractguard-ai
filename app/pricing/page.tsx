@@ -1,6 +1,4 @@
 import { Geist } from "next/font/google";
-import { Footer } from "@/components/footer";
-import { Header } from "@/components/Header";
 import PricingSection from "@/components/PricingSection";
 import PageHero from "@/components/PageHero";
 import type { Metadata } from "next";
