@@ -6,9 +6,9 @@
 
 - 📘 [Quick Start Guide](AUTH_SETUP_QUICKSTART.md)
 - 🧪 [Testing Guide](../TESTING_GUIDE.md)
-- 🔐 [Environment Variables](../ENV_VARIABLES.md)
+- 🔐 [Environment Variables](ENV_VARIABLES.md)
 - 📋 [Implementation Summary](AUTH_IMPLEMENTATION_SUMMARY.md)
-- 📖 [Detailed Setup](../SETUP_AUTH.md)
+- 📖 [Detailed Setup](SETUP_AUTH.md)
 
 ---
 

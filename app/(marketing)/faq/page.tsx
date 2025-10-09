@@ -185,7 +185,7 @@ export default function FAQPage() {
                 Email Support
               </a>
               <a
-                href="/"
+                href="/public"
                 className="inline-flex items-center justify-center px-6 py-3 bg-white/10 dark:bg-black/10 text-white dark:text-black rounded-lg font-medium border border-white/20 dark:border-black/20 hover:bg-white/20 dark:hover:bg-black/20 transition-all"
               >
                 Scan Contract

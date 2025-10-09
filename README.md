@@ -172,7 +172,7 @@ contractguard-ai/
 
 - **Authentication**: See [AUTH_SETUP_QUICKSTART.md](docs/AUTH_SETUP_QUICKSTART.md)
 - **Scan Results**: See [SCAN_RESULTS_COMPONENT.md](./SCAN_RESULTS_COMPONENT.md)
-- **Share Cards**: See [SHARE_ON_X_COMPONENT.md](./SHARE_ON_X_COMPONENT.md)
+- **Share Cards**: See [SHARE_ON_X_COMPONENT.md](docs/SHARE_ON_X_COMPONENT.md)
 - **Testing**: See [TESTING_GUIDE.md](./TESTING_GUIDE.md)
 - **SEO**: See [README_SEO.md](./README_SEO.md)
 
