@@ -6,6 +6,9 @@ import { Button } from "@/components/ui/button";
 import { ArrowRight } from "lucide-react";
 import ScanResults from "@/components/ScanResults";
 import ScanLimitDrawer from "@/components/ScanLimitDrawer";
+import { SoftSignupPrompt } from "@/components/auth/SoftSignupPrompt";
+import { CompleteAccountPrompt } from "@/components/auth/CompleteAccountPrompt";
+import { AccountUpgradeModal } from "@/components/auth/AccountUpgradeModal";
 import { MagicLinkSignIn, useUser } from "@stackframe/stack";
 import {
   Dialog,
@@ -27,6 +30,13 @@ interface ScanLimitError {
   status: string;
 }
 
+interface ScanMetadata {
+  accessType?: string;
+  scansRemaining?: number;
+  prompt?: string;
+  sessionId?: string;
+}
+
 export function ScanInterface() {
   const [address, setAddress] = useState("");
   const [loading, setLoading] = useState(false);
@@ -35,6 +45,14 @@ export function ScanInterface() {
   const [showLimitDrawer, setShowLimitDrawer] = useState(false);
   const [limitError, setLimitError] = useState<ScanLimitError | null>(null);
   const [showLoginModal, setShowLoginModal] = useState(false);
+  const [scanMetadata, setScanMetadata] = useState<ScanMetadata | null>(null);
+  const [anonymousScansPerformed, setAnonymousScansPerformed] = useState(0);
+  const [showSoftSignupPrompt, setShowSoftSignupPrompt] = useState(false);
+  const [showUpgradeModal, setShowUpgradeModal] = useState(false);
+  const [upgradeData, setUpgradeData] = useState<{
+    email: string;
+    scansRemaining: number;
+  } | null>(null);
   const user = useUser();
   const resultsRef = useRef<HTMLDivElement>(null);
 
@@ -54,17 +72,12 @@ export function ScanInterface() {
   const analyzeContract = async () => {
     if (!address) return;
 
-    // Check if user is logged in
-    if (!user) {
-      setShowLoginModal(true);
-      return;
-    }
-
-    // Track scan initiated
+    // Track scan initiated (works for both anonymous and authenticated)
     trackEvent(AnalyticsEvents.SCAN_INITIATED, {
       contractAddress: address,
       chain: "ethereum",
-      userId: user.id,
+      userId: user?.id,
+      isAnonymous: !user,
     });
 
     setLoading(true);
@@ -86,9 +99,42 @@ export function ScanInterface() {
       const data = await response.json();
 
       if (!response.ok) {
-        // Check if it's a scan limit error
+        // Check if it's anonymous limit reached (prompt signup)
+        if (data.action === "signup_required") {
+          // Track anonymous limit reached
+          trackEvent(AnalyticsEvents.SCAN_LIMIT_REACHED, {
+            contractAddress: address,
+            scansPerformed: data.scansPerformed,
+            accessType: "anonymous",
+          });
+
+          setLimitError(data);
+          setShowLimitDrawer(true);
+          return;
+        }
+
+        // Check if soft account needs upgrade
+        if (data.action === "upgrade_required" && data.accountType === "soft") {
+          // Track upgrade prompt
+          trackEvent(AnalyticsEvents.SCAN_LIMIT_REACHED, {
+            contractAddress: address,
+            scansRemaining: data.scansRemaining || 0,
+            accountType: "soft",
+            action: "upgrade_required",
+          });
+
+          setUpgradeData({
+            email: user?.primaryEmail || "",
+            scansRemaining: data.scansRemaining || 0,
+          });
+          setShowUpgradeModal(true);
+          return;
+        }
+
+        // Check if it's a scan limit error (authenticated user)
         if (
           data.error === "Scan limit exceeded" ||
+          data.error === "Access limit exceeded" ||
           (data.status === "error" && data.scansRemaining !== undefined)
         ) {
           // Track scan limit reached
@@ -118,9 +164,26 @@ export function ScanInterface() {
         riskScore: data.riskScore,
         recommendation: data.recommendation,
         issuesFound: data.issues?.length || 0,
+        isAnonymous: !user,
       });
 
       setResult(data);
+
+      // Handle anonymous scan metadata
+      if (data.metadata) {
+        setScanMetadata(data.metadata);
+
+        // Track anonymous scans performed
+        if (data.metadata.accessType === "anonymous") {
+          const scansPerformed = 3 - (data.metadata.scansRemaining || 0);
+          setAnonymousScansPerformed(scansPerformed);
+
+          // Show soft signup prompt after 2nd scan
+          if (scansPerformed >= 2) {
+            setShowSoftSignupPrompt(true);
+          }
+        }
+      }
     } catch (err: any) {
       setError(err.message);
     } finally {
@@ -194,6 +257,21 @@ export function ScanInterface() {
         </div>
       </section>
 
+      {/* Soft Signup Prompt (for anonymous users after 2+ scans) */}
+      {showSoftSignupPrompt &&
+        !user &&
+        scanMetadata?.accessType === "anonymous" &&
+        scanMetadata?.sessionId && (
+          <div className="max-w-4xl mx-auto px-4 mb-6">
+            <SoftSignupPrompt
+              scansPerformed={anonymousScansPerformed}
+              scansRemaining={scanMetadata.scansRemaining || 0}
+              anonymousSessionId={scanMetadata.sessionId}
+              onClose={() => setShowSoftSignupPrompt(false)}
+            />
+          </div>
+        )}
+
       {/* Results Section */}
       {result && (
         <div ref={resultsRef}>
@@ -235,6 +313,17 @@ export function ScanInterface() {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Account Upgrade Modal (for soft accounts) */}
+      {showUpgradeModal && upgradeData && (
+        <AccountUpgradeModal
+          isOpen={showUpgradeModal}
+          email={upgradeData.email}
+          accountType="soft"
+          scansRemaining={upgradeData.scansRemaining}
+          onClose={() => setShowUpgradeModal(false)}
+        />
+      )}
     </>
   );
 }

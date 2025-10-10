@@ -14,6 +14,8 @@ import {
   Zap,
   XCircle,
   Edit,
+  Coins,
+  ShoppingCart,
 } from "lucide-react";
 import { trackEvent } from "@/lib/analytics/posthog";
 
@@ -54,6 +56,24 @@ interface InvoiceData {
   description: string;
 }
 
+interface PurchaseData {
+  id: string;
+  type: "instant_credits" | "pro_subscription" | "team_subscription";
+  credits: number | null;
+  amount: number;
+  currency: string;
+  status: "pending" | "completed" | "failed" | "refunded";
+  createdAt: string;
+  completedAt: string | null;
+}
+
+interface InstantCreditsData {
+  balance: number;
+  usedToday: number;
+  totalPurchased: number;
+  recentPurchases: PurchaseData[];
+}
+
 interface UsageData {
   current: {
     scansToday: number;
@@ -77,6 +97,8 @@ export default function BillingPage() {
     null
   );
   const [invoices, setInvoices] = useState<InvoiceData[]>([]);
+  const [instantCredits, setInstantCredits] =
+    useState<InstantCreditsData | null>(null);
   const [usage, setUsage] = useState<UsageData | null>(null);
   const [userTier, setUserTier] = useState<"free" | "pro" | "enterprise">(
     "free"
@@ -107,15 +129,18 @@ export default function BillingPage() {
         setLoading(true);
 
         // Parallel fetch
-        const [billingRes, invoicesRes, usageRes] = await Promise.all([
-          fetch("/api/user/billing"),
-          fetch("/api/user/billing/invoices?limit=10"),
-          fetch("/api/user/usage"),
-        ]);
+        const [billingRes, invoicesRes, usageRes, creditsRes] =
+          await Promise.all([
+            fetch("/api/user/billing"),
+            fetch("/api/user/billing/invoices?limit=10"),
+            fetch("/api/user/usage"),
+            fetch("/api/user/credits"),
+          ]);
 
         const billingData = await billingRes.json();
         const invoicesData = await invoicesRes.json();
         const usageData = await usageRes.json();
+        const creditsData = await creditsRes.json();
 
         if (billingData.status === "success") {
           setSubscription(billingData.data.subscription);
@@ -129,14 +154,18 @@ export default function BillingPage() {
 
         if (usageData.status === "success") {
           setUsage(usageData.data);
-
           fetchUserTier(); // Re-fetch after Stripe redirect
+        }
+
+        if (creditsData.status === "success") {
+          setInstantCredits(creditsData.data);
         }
 
         // Track page view
         trackEvent("billing_page_viewed", {
           tier: billingData.data?.tier || "free",
           hasSubscription: !!billingData.data?.subscription,
+          hasInstantCredits: creditsData.data?.balance > 0,
         });
         console.log("Fetched billing data");
       } catch (error) {
@@ -619,6 +648,122 @@ export default function BillingPage() {
                 </div>
               )}
 
+              {/* Instant Credits */}
+              {instantCredits && (
+                <div className="border border-black/10 dark:border-white/10 rounded-xl overflow-hidden bg-gradient-to-br from-black/[0.02] to-transparent dark:from-white/[0.02]">
+                  <div className="p-6">
+                    <div className="flex items-center justify-between mb-6">
+                      <h2 className="text-xl font-semibold text-black dark:text-white">
+                        Instant Report Credits
+                      </h2>
+                      <span className="px-3 py-1 text-xs font-medium rounded-full bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-300 flex items-center gap-1">
+                        <Coins className="h-3 w-3" />
+                        Pay-per-scan
+                      </span>
+                    </div>
+
+                    {/* Credits Balance */}
+                    <div className="mb-6">
+                      <p className="text-sm text-black/60 dark:text-white/60 mb-2">
+                        Available Credits
+                      </p>
+                      <div className="flex items-baseline gap-2 mb-1">
+                        <span className="text-4xl font-bold text-black dark:text-white">
+                          {instantCredits.balance}
+                        </span>
+                        <span className="text-lg text-black/60 dark:text-white/60">
+                          {instantCredits.balance === 1 ? "report" : "reports"}
+                        </span>
+                      </div>
+                      {instantCredits.usedToday > 0 && (
+                        <p className="text-xs text-black/60 dark:text-white/60">
+                          {instantCredits.usedToday} used today
+                        </p>
+                      )}
+                    </div>
+
+                    {/* Stats */}
+                    <div className="grid grid-cols-2 gap-4 mb-6 p-4 border border-black/5 dark:border-white/5 rounded-lg bg-black/5 dark:bg-white/5">
+                      <div>
+                        <p className="text-xs text-black/60 dark:text-white/60 mb-1">
+                          Total Purchased
+                        </p>
+                        <p className="text-lg font-semibold text-black dark:text-white">
+                          {instantCredits.totalPurchased}
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-xs text-black/60 dark:text-white/60 mb-1">
+                          Remaining
+                        </p>
+                        <p className="text-lg font-semibold text-black dark:text-white">
+                          {instantCredits.balance}
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Recent Purchases */}
+                    {instantCredits.recentPurchases.length > 0 && (
+                      <div className="mb-6">
+                        <h3 className="text-sm font-semibold text-black dark:text-white mb-3">
+                          Recent Credit Purchases
+                        </h3>
+                        <div className="space-y-2">
+                          {instantCredits.recentPurchases
+                            .slice(0, 3)
+                            .map((purchase) => (
+                              <div
+                                key={purchase.id}
+                                className="flex items-center justify-between p-3 border border-black/5 dark:border-white/5 rounded-lg"
+                              >
+                                <div className="flex items-center gap-3">
+                                  <Coins className="h-4 w-4 text-orange-600 dark:text-orange-400" />
+                                  <div>
+                                    <p className="text-sm font-medium text-black dark:text-white">
+                                      {purchase.credits}{" "}
+                                      {purchase.credits === 1
+                                        ? "Report"
+                                        : "Reports"}
+                                    </p>
+                                    <p className="text-xs text-black/60 dark:text-white/60">
+                                      {formatDate(purchase.createdAt)}
+                                    </p>
+                                  </div>
+                                </div>
+                                <div className="flex items-center gap-3">
+                                  <span
+                                    className={`px-2 py-0.5 text-xs font-medium rounded-full ${
+                                      purchase.status === "completed"
+                                        ? "bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300"
+                                        : purchase.status === "pending"
+                                          ? "bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-300"
+                                          : "bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300"
+                                    }`}
+                                  >
+                                    {purchase.status}
+                                  </span>
+                                  <span className="text-sm font-semibold text-black dark:text-white">
+                                    ${(purchase.amount / 100).toFixed(2)}
+                                  </span>
+                                </div>
+                              </div>
+                            ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Buy More Button */}
+                    <Button
+                      className="w-full bg-orange-600 hover:bg-orange-700 text-white"
+                      onClick={() => router.push("/pricing")}
+                    >
+                      <ShoppingCart className="mr-2 h-4 w-4" />
+                      Buy More Credits
+                    </Button>
+                  </div>
+                </div>
+              )}
+
               {/* Billing History */}
               {invoices.length > 0 && (
                 <div className="border border-black/10 dark:border-white/10 rounded-xl overflow-hidden">
@@ -795,6 +940,40 @@ export default function BillingPage() {
                         </span>
                       </div>
                     </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Instant Credits Summary */}
+              {instantCredits && instantCredits.balance > 0 && (
+                <div className="border border-black/10 dark:border-white/10 rounded-xl overflow-hidden bg-gradient-to-br from-orange-50/50 to-transparent dark:from-orange-950/20">
+                  <div className="p-6">
+                    <h3 className="text-lg font-semibold text-black dark:text-white mb-4 flex items-center gap-2">
+                      <Coins className="h-5 w-5 text-orange-600 dark:text-orange-400" />
+                      Instant Credits
+                    </h3>
+
+                    <div className="mb-4">
+                      <p className="text-sm text-black/60 dark:text-white/60 mb-1">
+                        Available
+                      </p>
+                      <p className="text-3xl font-bold text-orange-600 dark:text-orange-400">
+                        {instantCredits.balance}
+                      </p>
+                      <p className="text-xs text-black/60 dark:text-white/60 mt-1">
+                        {instantCredits.balance === 1 ? "report" : "reports"}{" "}
+                        remaining
+                      </p>
+                    </div>
+
+                    <Button
+                      variant="outline"
+                      className="w-full border-orange-200 dark:border-orange-800 text-orange-700 dark:text-orange-300 hover:bg-orange-50 dark:hover:bg-orange-950/50"
+                      onClick={() => router.push("/pricing")}
+                    >
+                      <ShoppingCart className="mr-2 h-4 w-4" />
+                      Buy More
+                    </Button>
                   </div>
                 </div>
               )}

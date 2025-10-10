@@ -8,6 +8,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { stackServerApp } from "@/stack/server";
 import { stripeService, STRIPE_PRICES } from "@/lib/services/stripe.service";
 import { AuthService } from "@/lib/services/auth.service";
+import { getSubscriptionPlan, isValidSubscriptionTier } from "@/lib/config/pricing";
 
 const authService = new AuthService();
 
@@ -36,19 +37,27 @@ export async function POST(req: NextRequest) {
     // 3. Parse request body
     const { priceId, tier } = await req.json();
 
-    // Validate tier
-    if (!["pro", "enterprise"].includes(tier)) {
+    // Validate tier - support both 'enterprise' and 'team'
+    const normalizedTier = tier === "enterprise" ? "team" : tier;
+
+    if (!isValidSubscriptionTier(normalizedTier)) {
       return NextResponse.json(
         { error: "Invalid tier", status: "error" },
         { status: 400 }
       );
     }
 
-    // Map tier to price ID
-    const stripePriceId =
-      tier === "pro"
-        ? priceId || STRIPE_PRICES.PRO_MONTHLY
-        : priceId || STRIPE_PRICES.ENTERPRISE_MONTHLY;
+    // Get pricing config
+    const pricingPlan = getSubscriptionPlan(normalizedTier);
+    if (!pricingPlan) {
+      return NextResponse.json(
+        { error: "Invalid pricing plan", status: "error" },
+        { status: 400 }
+      );
+    }
+
+    // Map tier to price ID (support custom priceId override)
+    const stripePriceId = priceId || pricingPlan.stripePriceId;
 
     // 4. Get or create Stripe customer
     const customer = await stripeService.getOrCreateCustomer({

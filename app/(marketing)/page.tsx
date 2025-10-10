@@ -1,14 +1,12 @@
 import { Geist } from "next/font/google";
-import { Footer } from "@/components/footer";
-import { Header } from "@/components/Header";
 import HeroSection from "@/components/HeroSection";
-import PricingSection from "@/components/PricingSection";
 import Feature from "@/components/Feature";
 import FAQSection from "@/components/FAQSection";
 import type { Metadata } from "next";
 import { siteConfig } from "@/config/site";
 import JsonLd from "@/components/seo/json-ld";
 import { softwareApplicationLd, howToLd, faqPageLd } from "@/lib/seo/jsonld";
+import PricingSectionHybrid from "@/components/PricingSectionHybrid";
 
 const geist = Geist({
   weight: ["400", "600"],
@@ -97,7 +95,7 @@ export default function Home() {
       <JsonLd data={faqPageLd(faqData)} />
       <HeroSection />
       <Feature />
-      <PricingSection />
+      <PricingSectionHybrid />
       <FAQSection />
     </>
   );

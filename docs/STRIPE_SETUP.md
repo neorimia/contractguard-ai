@@ -15,7 +15,44 @@ Complete guide for setting up Stripe payment integration in ContractGuard AI.
 1. Go to [Products](https://dashboard.stripe.com/products)
 2. Click **"+ Create product"**
 
-### Pro Monthly Product
+### Instant Report Products (One-Time Payments)
+
+#### 1 Report Package
+
+- **Name:** ContractGuard - 1 Report
+- **Description:** One-time instant contract audit report
+- **Pricing:**
+  - Model: One-time
+  - Price: $4.99 USD
+  - Currency: USD
+- Click **"Save product"**
+- **Copy the Price ID** (starts with `price_...`) → Use as `STRIPE_PRICE_INSTANT_1`
+
+#### 3 Reports Package
+
+- **Name:** ContractGuard - 3 Reports
+- **Description:** Three instant contract audit reports (33% off)
+- **Pricing:**
+  - Model: One-time
+  - Price: $9.99 USD
+  - Currency: USD
+- Click **"Save product"**
+- **Copy the Price ID** → Use as `STRIPE_PRICE_INSTANT_3`
+
+#### 5 Reports Package
+
+- **Name:** ContractGuard - 5 Reports
+- **Description:** Five instant contract audit reports (40% off)
+- **Pricing:**
+  - Model: One-time
+  - Price: $14.99 USD
+  - Currency: USD
+- Click **"Save product"**
+- **Copy the Price ID** → Use as `STRIPE_PRICE_INSTANT_5`
+
+### Subscription Products (Recurring)
+
+#### Pro Monthly Product
 
 - **Name:** ContractGuard Pro
 - **Description:** Unlimited scans with advanced features
@@ -25,19 +62,19 @@ Complete guide for setting up Stripe payment integration in ContractGuard AI.
   - Billing period: Monthly
   - Currency: USD
 - Click **"Save product"**
-- **Copy the Price ID** (starts with `price_...`)
+- **Copy the Price ID** → Use as `STRIPE_PRICE_PRO_MONTHLY`
 
-### Enterprise Monthly Product
+#### Team Monthly Product
 
-- **Name:** ContractGuard Enterprise
+- **Name:** ContractGuard Team
 - **Description:** Unlimited scans, API access, and white-label options
 - **Pricing:**
   - Model: Recurring
-  - Price: $199.00 USD
+  - Price: $99.00 USD
   - Billing period: Monthly
   - Currency: USD
 - Click **"Save product"**
-- **Copy the Price ID** (starts with `price_...`)
+- **Copy the Price ID** → Use as `STRIPE_PRICE_TEAM_MONTHLY`
 
 ## Step 2: Get API Keys
 
@@ -111,9 +148,14 @@ STRIPE_SECRET_KEY=sk_test_... # or sk_live_... for production
 NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=pk_test_... # or pk_live_... for production
 STRIPE_WEBHOOK_SECRET=whsec_...
 
-# Stripe Product Price IDs
-STRIPE_PRO_MONTHLY_PRICE_ID=price_...
-STRIPE_ENTERPRISE_MONTHLY_PRICE_ID=price_...
+# Instant Report Price IDs (one-time payments)
+STRIPE_PRICE_INSTANT_1=price_...  # 1 report - $4.99
+STRIPE_PRICE_INSTANT_3=price_...  # 3 reports - $9.99
+STRIPE_PRICE_INSTANT_5=price_...  # 5 reports - $14.99
+
+# Subscription Price IDs (recurring)
+STRIPE_PRICE_PRO_MONTHLY=price_...   # Pro Plan - $29/month
+STRIPE_PRICE_TEAM_MONTHLY=price_...  # Team Plan - $99/month
 
 # Site URL (for redirect URLs)
 NEXT_PUBLIC_SITE_URL=http://localhost:3000 # or your production URL

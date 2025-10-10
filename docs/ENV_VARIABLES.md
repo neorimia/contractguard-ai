@@ -88,12 +88,21 @@ CLAUDE_API_KEY=your_claude_api_key_here
 STRIPE_SECRET_KEY=sk_test_your_stripe_secret_key
 STRIPE_PUBLISHABLE_KEY=pk_test_your_stripe_publishable_key
 STRIPE_WEBHOOK_SECRET=whsec_your_webhook_secret
+
+# Instant Report Price IDs (one-time payments)
+STRIPE_PRICE_INSTANT_1=price_xxx  # 1 report - $4.99
+STRIPE_PRICE_INSTANT_3=price_xxx  # 3 reports - $9.99
+STRIPE_PRICE_INSTANT_5=price_xxx  # 5 reports - $14.99
+
+# Subscription Price IDs
+STRIPE_PRICE_PRO_MONTHLY=price_xxx    # Pro Plan - $29/month
+STRIPE_PRICE_TEAM_MONTHLY=price_xxx   # Team Plan - $99/month
 ```
 
-- **Purpose**: Process Pro tier subscriptions
+- **Purpose**: Process instant reports and subscriptions
 - **Get from**: https://dashboard.stripe.com
-- **Used by**: Payment service (when implemented)
-- **Required**: For monetization (Week 3)
+- **Used by**: Checkout and payment services
+- **Required**: For monetization (instant reports + subscriptions)
 
 ### Email Service
 

@@ -488,6 +488,87 @@ export class ReferralService {
   }
 
   /**
+   * Process instant purchase reward
+   * Awards 1 instant credit to referrer when referred user makes instant purchase
+   */
+  async processInstantPurchase(params: {
+    referredUserId: number;
+    purchaseAmount: number;
+  }): Promise<{
+    success: boolean;
+    reward?: any;
+    error?: string;
+  }> {
+    try {
+      const { referredUserId, purchaseAmount } = params;
+
+      // Find referral for this user
+      const [referral] = await db
+        .select()
+        .from(referrals)
+        .where(eq(referrals.referredId, referredUserId))
+        .limit(1);
+
+      if (!referral) {
+        console.log(`No referral found for user ${referredUserId}`);
+        return { success: false, error: "no_referral_found" };
+      }
+
+      // Log instant purchase event
+      await this.eventsService.logEvent({
+        referralId: referral.id,
+        event: "paid",
+        clientInfo: {},
+        metadata: {
+          purchaseType: "instant_credit",
+          amount: purchaseAmount,
+        },
+      });
+
+      // Award 1 instant credit to referrer
+      const reward = await this.rewardsService.applyReward(
+        referral.referrerId,
+        {
+          type: "credit" as const,
+          amount: 1,
+        },
+        referral.id
+      );
+
+      // Get referrer for email
+      const [referrer] = await db
+        .select()
+        .from(users)
+        .where(eq(users.id, referral.referrerId))
+        .limit(1);
+
+      // Send instant purchase reward notification email (non-blocking)
+      if (referrer) {
+        this.sendReferralRewardEmail(
+          referrer,
+          1,
+          "credit"
+        ).catch((error) => {
+          console.error("Failed to send instant purchase reward email:", error);
+        });
+      }
+
+      console.log(`Instant purchase reward applied for referral ${referral.id}`);
+
+      return {
+        success: true,
+        reward,
+      };
+    } catch (error) {
+      console.error("Error processing instant purchase:", error);
+      return {
+        success: false,
+        error: "instant_purchase_processing_failed",
+      };
+    }
+  }
+
+  /**
    * Process paid conversion
    */
   async processPaidConversion(params: {

@@ -87,6 +87,10 @@ export async function GET(req: NextRequest) {
         limit,
         resetAt: dbUser.scansResetAt?.toISOString() || new Date().toISOString(),
       },
+      instantCredits: {
+        balance: dbUser.instantCredits || 0,
+        usedToday: dbUser.instantCreditsUsedToday || 0,
+      },
       historical: {
         daily: historicalScans.map((day) => ({
           date: day.date,
@@ -100,6 +104,22 @@ export async function GET(req: NextRequest) {
         ],
       },
       tier: dbUser.tier,
+      accessSummary: {
+        type:
+          dbUser.tier === "pro" || dbUser.tier === "enterprise"
+            ? "subscription"
+            : (dbUser.instantCredits || 0) > 0
+              ? "instant_credits"
+              : "free",
+        description:
+          dbUser.tier === "pro"
+            ? "Pro Plan - Unlimited scans"
+            : dbUser.tier === "enterprise"
+              ? "Enterprise Plan - Unlimited scans"
+              : (dbUser.instantCredits || 0) > 0
+                ? `${dbUser.instantCredits} instant ${dbUser.instantCredits === 1 ? "report" : "reports"} available`
+                : `${limit - (dbUser.scansToday || 0)} free scans remaining today`,
+      },
     };
 
     return NextResponse.json({

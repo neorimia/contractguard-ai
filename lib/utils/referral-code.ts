@@ -1,6 +1,5 @@
 // lib/utils/referral-code.ts
 
-import crypto from "crypto";
 import { referralConfig } from "@/lib/referrals/config";
 
 // Remove ambiguous characters: 0, O, I, L, 1
@@ -8,10 +7,12 @@ const ALPHABET = "23456789ABCDEFGHJKMNPQRSTUVWXYZ";
 
 /**
  * Generate a custom alphanumeric ID without ambiguous characters
- * Alternative to nanoid using crypto.randomBytes
+ * Uses Web Crypto API for Edge Runtime compatibility
  */
 function generateCustomId(length: number): string {
-  const bytes = crypto.randomBytes(length * 2); // Generate extra bytes for better randomness
+  // Use Web Crypto API instead of Node.js crypto for Edge Runtime compatibility
+  const bytes = new Uint8Array(length * 2);
+  crypto.getRandomValues(bytes); // Generate extra bytes for better randomness
   let result = "";
 
   for (let i = 0; i < length; i++) {
@@ -47,7 +48,9 @@ export function validateReferralCodeFormat(code: string): boolean {
  */
 export function extractReferralCode(input: string): string | null {
   const match = input.match(
-    new RegExp(`${referralConfig.codePrefix}-[${ALPHABET}]{${referralConfig.codeLength}}`)
+    new RegExp(
+      `${referralConfig.codePrefix}-[${ALPHABET}]{${referralConfig.codeLength}}`
+    )
   );
   return match ? match[0] : null;
 }

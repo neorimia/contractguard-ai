@@ -24,11 +24,17 @@ export async function GET(req: NextRequest) {
 
     // Get user from database
     const dbUser = await authService.getUserByStackUserId(user.id);
+
+    // If user doesn't have a Stripe customer ID, return empty invoice list
+    // This is normal for users who only use instant credits
     if (!dbUser || !dbUser.stripeCustomerId) {
-      return NextResponse.json(
-        { status: "error", error: "No billing account found" },
-        { status: 404 }
-      );
+      return NextResponse.json({
+        status: "success",
+        data: {
+          invoices: [],
+          hasMore: false,
+        },
+      });
     }
 
     // Parse query parameters
