@@ -1320,10 +1320,7 @@ export class AnalyticsService {
       .select({ count: count() })
       .from(users)
       .where(
-        and(
-          eq(users.tier, "pro"),
-          eq(users.stripeSubscriptionStatus, "active")
-        )
+        and(eq(users.tier, "pro"), eq(users.stripeSubscriptionStatus, "active"))
       );
 
     const activeTeamCount = await db
@@ -1377,8 +1374,7 @@ export class AnalyticsService {
       arr: mrr * 12, // Annual Recurring Revenue
       newThisMonth,
       canceledThisMonth,
-      churnRate:
-        totalActive > 0 ? (canceledThisMonth / totalActive) * 100 : 0,
+      churnRate: totalActive > 0 ? (canceledThisMonth / totalActive) * 100 : 0,
       reactivatedThisMonth: 0, // Implement separately
     };
   }
@@ -1491,7 +1487,9 @@ export class AnalyticsService {
     const prevRevenue = prevInstant.totalRevenue + prevSubs.mrr;
     const currentRevenue = currentInstant.totalRevenue + currentSubs.mrr;
     const revenueGrowth =
-      prevRevenue > 0 ? ((currentRevenue - prevRevenue) / prevRevenue) * 100 : 0;
+      prevRevenue > 0
+        ? ((currentRevenue - prevRevenue) / prevRevenue) * 100
+        : 0;
 
     return {
       revenueGrowth,
@@ -1517,7 +1515,9 @@ export class AnalyticsService {
     const reportViews = await db
       .select({ count: count() })
       .from(audits)
-      .where(and(gte(audits.createdAt, startDate), lte(audits.createdAt, endDate)));
+      .where(
+        and(gte(audits.createdAt, startDate), lte(audits.createdAt, endDate))
+      );
 
     // Instant purchases
     const instantPurchases = await db
@@ -1754,17 +1754,25 @@ export function RevenueChart() {
 // db/schema.ts additions
 export const users = pgTable("users", {
   // ... existing fields ...
-  
+
   // Admin fields
   isAdmin: boolean("is_admin").default(false),
-  adminAccessGrantedAt: timestamp("admin_access_granted_at", { withTimezone: true }),
-  adminAccessGrantedBy: integer("admin_access_granted_by").references(() => users.id),
+  adminAccessGrantedAt: timestamp("admin_access_granted_at", {
+    withTimezone: true,
+  }),
+  adminAccessGrantedBy: integer("admin_access_granted_by").references(
+    () => users.id
+  ),
 });
 
 // Create analytics_events table for detailed tracking
 export const analyticsEvents = pgTable("analytics_events", {
-  id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
-  userId: integer("user_id").references(() => users.id, { onDelete: "set null" }),
+  id: text("id")
+    .primaryKey()
+    .$defaultFn(() => crypto.randomUUID()),
+  userId: integer("user_id").references(() => users.id, {
+    onDelete: "set null",
+  }),
   guestSessionId: text("guest_session_id"),
   event: text("event").notNull(), // 'paywall_shown', 'checkout_initiated', etc.
   properties: jsonb("properties").$type<Record<string, any>>(),
