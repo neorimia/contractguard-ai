@@ -11,6 +11,9 @@ import { stripeService } from "@/lib/services/stripe.service";
 import { AuthService } from "@/lib/services/auth.service";
 import { EmailService } from "@/lib/services/email.service";
 import { ReferralService } from "@/lib/services/referral.service";
+import { db } from "@/db";
+import { purchases, users } from "@/db/schema";
+import { eq, sql } from "drizzle-orm";
 import Stripe from "stripe";
 
 const authService = new AuthService();
@@ -48,6 +51,12 @@ export async function POST(req: NextRequest) {
       case "checkout.session.completed":
         await handleCheckoutSessionCompleted(
           event.data.object as Stripe.Checkout.Session
+        );
+        break;
+
+      case "payment_intent.succeeded":
+        await handlePaymentIntentSucceeded(
+          event.data.object as Stripe.PaymentIntent
         );
         break;
 
@@ -95,32 +104,189 @@ export async function POST(req: NextRequest) {
 
 /**
  * Handle successful checkout session
+ * Handles both subscription and one-time payment completions
  */
 async function handleCheckoutSessionCompleted(
   session: Stripe.Checkout.Session
 ) {
   console.log("Checkout session completed:", session.id);
+  console.log("Session mode:", session.mode);
+  console.log("Session metadata:", session.metadata);
 
-  const userId = session.metadata?.userId || session.client_reference_id;
+  // Handle subscription checkout
+  if (session.mode === "subscription") {
+    const userId = session.metadata?.userId || session.client_reference_id;
 
-  if (!userId) {
-    console.error("No user ID found in session metadata");
+    if (!userId) {
+      console.error("No user ID found in session metadata");
+      return;
+    }
+
+    // Update user with Stripe customer ID
+    if (session.customer && typeof session.customer === "string") {
+      await authService.updateUser(parseInt(userId), {
+        stripeCustomerId: session.customer,
+      });
+    }
+
+    // If subscription was created, update user
+    if (session.subscription && typeof session.subscription === "string") {
+      await authService.updateUser(parseInt(userId), {
+        stripeSubscriptionId: session.subscription,
+        subscriptionStatus: "active",
+      });
+    }
+  }
+  // Handle one-time payment (instant credits)
+  else if (session.mode === "payment") {
+    // Trigger instant purchase processing
+    await handleInstantPurchase(session);
+  }
+}
+
+/**
+ * Handle instant purchase completion
+ */
+async function handleInstantPurchase(session: Stripe.Checkout.Session) {
+  console.log("Processing instant purchase for session:", session.id);
+
+  // Find purchase record
+  const [purchase] = await db
+    .select()
+    .from(purchases)
+    .where(eq(purchases.stripeCheckoutSessionId, session.id))
+    .limit(1);
+
+  if (!purchase) {
+    console.error("Purchase not found for session:", session.id);
     return;
   }
 
-  // Update user with Stripe customer ID
-  if (session.customer && typeof session.customer === "string") {
-    await authService.updateUser(parseInt(userId), {
-      stripeCustomerId: session.customer,
-    });
-  }
+  // Update purchase status
+  await db
+    .update(purchases)
+    .set({
+      status: "completed",
+      stripePaymentIntentId: session.payment_intent as string,
+      completedAt: new Date(),
+    })
+    .where(eq(purchases.id, purchase.id));
 
-  // If subscription was created, update user
-  if (session.subscription && typeof session.subscription === "string") {
-    await authService.updateUser(parseInt(userId), {
-      stripeSubscriptionId: session.subscription,
-      subscriptionStatus: "active",
-    });
+  console.log(`Purchase ${purchase.id} marked as completed`);
+
+  // Credit the user/guest account
+  if (purchase.userId) {
+    // Registered user → add instant credits
+    const user = await authService.getUserById(purchase.userId);
+    if (user) {
+      await db
+        .update(users)
+        .set({
+          instantCredits: sql`${users.instantCredits} + ${purchase.credits || 0}`,
+        })
+        .where(eq(users.id, purchase.userId));
+
+      console.log(
+        `✅ Added ${purchase.credits} credits to user ${purchase.userId}`
+      );
+
+      // ============================================================
+      // REFERRAL SYSTEM INTEGRATION
+      // Award referral credit for instant purchase
+      // ============================================================
+      try {
+        console.log(`Checking for referral reward for user ${purchase.userId}`);
+
+        const referralResult = await referralService.processInstantPurchase({
+          referredUserId: purchase.userId,
+          purchaseAmount: purchase.amount,
+        });
+
+        if (referralResult.success) {
+          console.log(`✅ Referral reward applied for user ${purchase.userId}`);
+          if (referralResult.reward) {
+            console.log(
+              `✅ Referrer received: ${referralResult.reward.type} x${referralResult.reward.amount}`
+            );
+          }
+        } else if (referralResult.error === "no_referral_found") {
+          console.log(
+            `ℹ️ No referral found for user ${purchase.userId} (not referred)`
+          );
+        } else {
+          console.warn(
+            `⚠️ Referral reward failed for user ${purchase.userId}: ${referralResult.error}`
+          );
+        }
+      } catch (referralError) {
+        console.error(
+          "❌ Error processing instant purchase referral:",
+          referralError
+        );
+        // Don't fail webhook - log error and continue
+      }
+      // ============================================================
+
+      // Send receipt email
+      if (purchase.guestEmail || user.email) {
+        const siteUrl =
+          process.env.NEXT_PUBLIC_SITE_URL || "https://contractguard.ai";
+
+        // TODO: Implement sendPurchaseReceipt email template
+        console.log(
+          `TODO: Send purchase receipt to ${purchase.guestEmail || user.email}`
+        );
+      }
+    }
+  } else if (purchase.guestSessionId) {
+    // Guest user → create or update temporary guest account
+    const [guestUser] = await db
+      .select()
+      .from(users)
+      .where(eq(users.guestSessionId, purchase.guestSessionId))
+      .limit(1);
+
+    if (guestUser) {
+      // Update existing guest
+      await db
+        .update(users)
+        .set({
+          instantCredits: sql`${users.instantCredits} + ${purchase.credits || 0}`,
+        })
+        .where(eq(users.guestSessionId, purchase.guestSessionId));
+
+      console.log(
+        `✅ Added ${purchase.credits} credits to guest ${purchase.guestSessionId}`
+      );
+    } else {
+      // Create new guest account
+      await db.insert(users).values({
+        stackUserId: `guest_${purchase.guestSessionId}`,
+        email:
+          purchase.guestEmail ||
+          `guest_${purchase.guestSessionId}@temp.local`,
+        isGuest: true,
+        guestSessionId: purchase.guestSessionId,
+        tier: "free",
+        instantCredits: purchase.credits || 0,
+        scansToday: 0,
+        scansResetAt: new Date(Date.now() + 24 * 60 * 60 * 1000),
+        emailVerified: false,
+      });
+
+      console.log(
+        `✅ Created guest account with ${purchase.credits} credits for ${purchase.guestSessionId}`
+      );
+    }
+
+    // Send receipt to guest email
+    if (purchase.guestEmail) {
+      const siteUrl =
+        process.env.NEXT_PUBLIC_SITE_URL || "https://contractguard.ai";
+
+      // TODO: Implement sendGuestPurchaseReceipt email template
+      console.log(`TODO: Send guest receipt to ${purchase.guestEmail}`);
+    }
   }
 }
 
@@ -433,6 +599,162 @@ async function handleInvoicePaymentFailed(invoice: Stripe.Invoice) {
       nextAttemptDate,
       updatePaymentUrl: `${siteUrl}/account#billing`,
     });
+  }
+}
+
+/**
+ * Handle successful one-time payment for instant credits
+ */
+async function handlePaymentIntentSucceeded(
+  paymentIntent: Stripe.PaymentIntent
+) {
+  console.log("Payment intent succeeded:", paymentIntent.id);
+
+  // Find purchase record by checkout session
+  const checkoutSessionId = paymentIntent.metadata?.checkoutSessionId;
+
+  if (!checkoutSessionId) {
+    console.log("No checkout session ID in payment intent metadata");
+    return;
+  }
+
+  // Find purchase record
+  const [purchase] = await db
+    .select()
+    .from(purchases)
+    .where(eq(purchases.stripeCheckoutSessionId, checkoutSessionId))
+    .limit(1);
+
+  if (!purchase) {
+    console.error("Purchase not found for session:", checkoutSessionId);
+    return;
+  }
+
+  // Update purchase status
+  await db
+    .update(purchases)
+    .set({
+      status: "completed",
+      stripePaymentIntentId: paymentIntent.id,
+      completedAt: new Date(),
+    })
+    .where(eq(purchases.id, purchase.id));
+
+  console.log(`Purchase ${purchase.id} marked as completed`);
+
+  // Credit the user/guest account
+  if (purchase.userId) {
+    // Registered user → add instant credits
+    const user = await authService.getUserById(purchase.userId);
+    if (user) {
+      await db
+        .update(users)
+        .set({
+          instantCredits: sql`${users.instantCredits} + ${purchase.credits || 0}`,
+        })
+        .where(eq(users.id, purchase.userId));
+
+      console.log(
+        `✅ Added ${purchase.credits} credits to user ${purchase.userId}`
+      );
+
+      // ============================================================
+      // REFERRAL SYSTEM INTEGRATION
+      // Award referral credit for instant purchase
+      // ============================================================
+      try {
+        console.log(`Checking for referral reward for user ${purchase.userId}`);
+
+        const referralResult = await referralService.processInstantPurchase({
+          referredUserId: purchase.userId,
+          purchaseAmount: purchase.amount,
+        });
+
+        if (referralResult.success) {
+          console.log(`✅ Referral reward applied for user ${purchase.userId}`);
+          if (referralResult.reward) {
+            console.log(
+              `✅ Referrer received: ${referralResult.reward.type} x${referralResult.reward.amount}`
+            );
+          }
+        } else if (referralResult.error === "no_referral_found") {
+          console.log(
+            `ℹ️ No referral found for user ${purchase.userId} (not referred)`
+          );
+        } else {
+          console.warn(
+            `⚠️ Referral reward failed for user ${purchase.userId}: ${referralResult.error}`
+          );
+        }
+      } catch (referralError) {
+        console.error(
+          "❌ Error processing instant purchase referral:",
+          referralError
+        );
+        // Don't fail webhook - log error and continue
+      }
+      // ============================================================
+
+      // Send receipt email
+      if (purchase.guestEmail || user.email) {
+        const siteUrl =
+          process.env.NEXT_PUBLIC_SITE_URL || "https://contractguard.ai";
+
+        // TODO: Implement sendPurchaseReceipt email template
+        console.log(
+          `TODO: Send purchase receipt to ${purchase.guestEmail || user.email}`
+        );
+      }
+    }
+  } else if (purchase.guestSessionId) {
+    // Guest user → create or update temporary guest account
+    const [guestUser] = await db
+      .select()
+      .from(users)
+      .where(eq(users.guestSessionId, purchase.guestSessionId))
+      .limit(1);
+
+    if (guestUser) {
+      // Update existing guest
+      await db
+        .update(users)
+        .set({
+          instantCredits: sql`${users.instantCredits} + ${purchase.credits || 0}`,
+        })
+        .where(eq(users.guestSessionId, purchase.guestSessionId));
+
+      console.log(
+        `✅ Added ${purchase.credits} credits to guest ${purchase.guestSessionId}`
+      );
+    } else {
+      // Create new guest account
+      await db.insert(users).values({
+        stackUserId: `guest_${purchase.guestSessionId}`,
+        email:
+          purchase.guestEmail ||
+          `guest_${purchase.guestSessionId}@temp.local`,
+        isGuest: true,
+        guestSessionId: purchase.guestSessionId,
+        tier: "free",
+        instantCredits: purchase.credits || 0,
+        scansToday: 0,
+        scansResetAt: new Date(Date.now() + 24 * 60 * 60 * 1000),
+        emailVerified: false,
+      });
+
+      console.log(
+        `✅ Created guest account with ${purchase.credits} credits for ${purchase.guestSessionId}`
+      );
+    }
+
+    // Send receipt to guest email
+    if (purchase.guestEmail) {
+      const siteUrl =
+        process.env.NEXT_PUBLIC_SITE_URL || "https://contractguard.ai";
+
+      // TODO: Implement sendGuestPurchaseReceipt email template
+      console.log(`TODO: Send guest receipt to ${purchase.guestEmail}`);
+    }
   }
 }
 

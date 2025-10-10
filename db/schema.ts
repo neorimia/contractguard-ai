@@ -58,6 +58,14 @@ export const users = pgTable("users", {
   scansToday: integer("scans_today").default(0),
   scansResetAt: timestamp("scans_reset_at").defaultNow(),
 
+  // Instant Credits System
+  instantCredits: integer("instant_credits").default(0), // Pay-per-scan credits
+  instantCreditsUsedToday: integer("instant_credits_used_today").default(0),
+
+  // Guest User Support
+  guestSessionId: text("guest_session_id").unique(), // For anonymous purchases
+  isGuest: boolean("is_guest").default(false),
+
   // Referral System
   referralCode: text("referral_code").unique(), // Format: CG-XXXXXX
   referredBy: text("referred_by"), // Stores referrer's referral_code
@@ -224,6 +232,52 @@ export const rewardsLedger = pgTable("rewards_ledger", {
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
 });
 
+// Purchases table for one-time and subscription transactions
+export const purchases = pgTable("purchases", {
+  id: text("id")
+    .primaryKey()
+    .$defaultFn(() => crypto.randomUUID()),
+
+  // User relationship (nullable for guest purchases)
+  userId: integer("user_id").references(() => users.id, {
+    onDelete: "cascade",
+  }),
+  guestSessionId: text("guest_session_id"), // For anonymous purchases
+  guestEmail: text("guest_email"), // For receipt delivery
+
+  // Purchase details
+  type: text("type", {
+    enum: ["instant_credits", "pro_subscription", "team_subscription"],
+  }).notNull(),
+  credits: integer("credits"), // For instant credits purchases
+  amount: integer("amount").notNull(), // In cents
+  currency: text("currency").notNull().default("usd"),
+
+  // Stripe references
+  stripeCheckoutSessionId: text("stripe_checkout_session_id").unique(),
+  stripePaymentIntentId: text("stripe_payment_intent_id"),
+
+  // Status tracking
+  status: text("status", {
+    enum: ["pending", "completed", "failed", "refunded"],
+  })
+    .notNull()
+    .default("pending"),
+
+  // Metadata
+  metadata: jsonb("metadata").$type<{
+    packageSize?: number;
+    ipAddress?: string;
+    userAgent?: string;
+    referralCode?: string;
+    contractAddress?: string;
+  }>(),
+
+  // Timestamps
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
+  completedAt: timestamp("completed_at", { withTimezone: true }),
+});
+
 // Types
 export interface Issue {
   severity: "CRITICAL" | "HIGH" | "MEDIUM" | "LOW";
@@ -245,3 +299,5 @@ export type ReferralEvent = typeof referralEvents.$inferSelect;
 export type NewReferralEvent = typeof referralEvents.$inferInsert;
 export type RewardLedger = typeof rewardsLedger.$inferSelect;
 export type NewRewardLedger = typeof rewardsLedger.$inferInsert;
+export type Purchase = typeof purchases.$inferSelect;
+export type NewPurchase = typeof purchases.$inferInsert;

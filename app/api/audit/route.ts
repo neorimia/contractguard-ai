@@ -7,6 +7,7 @@ import { ContractService } from "@/lib/services/contract.service";
 import { AIAnalysisService } from "@/lib/services/ai.service";
 import { AuthService } from "@/lib/services/auth.service";
 import { ReferralService } from "@/lib/services/referral.service";
+import { accessValidationService } from "@/lib/services/access-validation.service";
 import { getClientInfo } from "@/lib/utils/client-info";
 import { Redis } from "@upstash/redis";
 import { stackServerApp } from "@/stack/server";
@@ -93,17 +94,27 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // 3. Rate limit check
-    const { allowed, scansRemaining, resetAt } =
-      await authService.checkScanLimit(appUser.id);
+    // 3. Hybrid access validation (Pro/Team → Instant Credits → Free Tier)
+    const accessStatus = await accessValidationService.validateAccess(
+      appUser.id
+    );
 
-    if (!allowed) {
+    if (!accessStatus.hasAccess) {
+      // Determine upgrade message based on current state
+      let upgradeMessage = "Upgrade to Pro for unlimited scans!";
+      if (accessStatus.accessType === "instant_credit") {
+        upgradeMessage = "Buy more instant reports or upgrade to Pro.";
+      }
+
       return NextResponse.json(
         {
-          error: "Scan limit exceeded",
-          message: `You've used all your scans for today. ${appUser.tier === "free" ? "Upgrade to Pro for 100 scans per day!" : "Your limit will reset soon."}`,
+          error: "Access limit exceeded",
+          message:
+            accessStatus.reason ||
+            `No scans available. ${upgradeMessage}`,
+          accessType: accessStatus.accessType,
           scansRemaining: 0,
-          resetAt: resetAt.toISOString(),
+          instantCredits: accessStatus.instantCredits,
           upgradeUrl: "/pricing",
           status: "error",
         },
@@ -111,7 +122,7 @@ export async function POST(req: NextRequest) {
           status: 429,
           headers: {
             "X-RateLimit-Remaining": "0",
-            "X-RateLimit-Reset": resetAt.toISOString(),
+            "X-Access-Type": accessStatus.accessType,
           },
         }
       );
@@ -134,8 +145,26 @@ export async function POST(req: NextRequest) {
     const cached = await redis.get(cacheKey);
 
     if (cached) {
-      console.log("Cache hit");
-      return NextResponse.json(cached);
+      console.log("Cache hit (Redis)");
+
+      // Consume scan even for cached results
+      await accessValidationService.consumeScan(
+        appUser.id,
+        accessStatus.accessType
+      );
+
+      // Get updated access status
+      const updatedAccessStatus = await accessValidationService.getAccessStatus(
+        appUser.id
+      );
+
+      return NextResponse.json(cached, {
+        headers: {
+          "X-Access-Type": updatedAccessStatus.accessType,
+          "X-Scans-Remaining": updatedAccessStatus.scansRemaining.toString(),
+          "X-Instant-Credits": updatedAccessStatus.instantCredits.toString(),
+        },
+      });
     }
 
     // 2. Check database cache (24 hour TTL)
@@ -144,6 +173,8 @@ export async function POST(req: NextRequest) {
     });
 
     if (existing && isRecent(existing.createdAt, 24 * 60 * 60 * 1000)) {
+      console.log("Cache hit (Database)");
+
       // Update view count
       await db
         .update(audits)
@@ -151,7 +182,25 @@ export async function POST(req: NextRequest) {
         .where(eq(audits.contractAddress, normalizedAddress));
 
       await redis.set(cacheKey, existing, { ex: 300 }); // 5 min cache
-      return NextResponse.json(existing);
+
+      // Consume scan for cached result
+      await accessValidationService.consumeScan(
+        appUser.id,
+        accessStatus.accessType
+      );
+
+      // Get updated access status
+      const updatedAccessStatus = await accessValidationService.getAccessStatus(
+        appUser.id
+      );
+
+      return NextResponse.json(existing, {
+        headers: {
+          "X-Access-Type": updatedAccessStatus.accessType,
+          "X-Scans-Remaining": updatedAccessStatus.scansRemaining.toString(),
+          "X-Instant-Credits": updatedAccessStatus.instantCredits.toString(),
+        },
+      });
     }
 
     // 3. Fetch fresh data
@@ -236,8 +285,16 @@ export async function POST(req: NextRequest) {
     // 8. Cache in Redis
     await redis.set(cacheKey, result, { ex: 300 });
 
-    // 9. Increment user scan count
-    await authService.incrementScanCount(appUser.id);
+    // 9. Consume scan based on access type
+    await accessValidationService.consumeScan(
+      appUser.id,
+      accessStatus.accessType
+    );
+
+    // 10. Get updated access status after consumption
+    const updatedAccessStatus = await accessValidationService.getAccessStatus(
+      appUser.id
+    );
 
     // ============================================================
     // REFERRAL SYSTEM INTEGRATION
@@ -247,8 +304,17 @@ export async function POST(req: NextRequest) {
       // Fetch updated user to get current scan count
       const updatedUser = await authService.getUserById(appUser.id);
 
-      // Check if this is the user's first audit (scansToday === 1)
-      if (updatedUser && updatedUser.scansToday === 1) {
+      // Check if this is the user's first audit
+      // For free tier: scansToday === 1
+      // For instant credit: instantCreditsUsedToday === 1
+      const isFirstAudit =
+        (accessStatus.accessType === "free" && updatedUser.scansToday === 1) ||
+        (accessStatus.accessType === "instant_credit" &&
+          updatedUser.instantCreditsUsedToday === 1) ||
+        (["pro", "team"].includes(accessStatus.accessType) &&
+          updatedUser.scansToday === 1);
+
+      if (updatedUser && isFirstAudit) {
         console.log(
           `First audit detected for user ${updatedUser.id}, checking for referral confirmation`
         );
@@ -285,11 +351,12 @@ export async function POST(req: NextRequest) {
     }
     // ============================================================
 
-    // Return with rate limit headers
+    // Return with access status headers
     return NextResponse.json(result, {
       headers: {
-        "X-RateLimit-Remaining": Math.max(0, scansRemaining - 1).toString(),
-        "X-RateLimit-Reset": resetAt.toISOString(),
+        "X-Access-Type": updatedAccessStatus.accessType,
+        "X-Scans-Remaining": updatedAccessStatus.scansRemaining.toString(),
+        "X-Instant-Credits": updatedAccessStatus.instantCredits.toString(),
       },
     });
   } catch (error: any) {

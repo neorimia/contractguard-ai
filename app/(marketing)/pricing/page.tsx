@@ -1,5 +1,5 @@
 import { Geist } from "next/font/google";
-import PricingSection from "@/components/PricingSection";
+import PricingSectionHybrid from "@/components/PricingSectionHybrid";
 import PageHero from "@/components/PageHero";
 import type { Metadata } from "next";
 import { siteConfig } from "@/config/site";
@@ -189,10 +189,10 @@ export default function PricingPage() {
       <PageHero
         title="Simple pricing,"
         highlightedText="powerful protection"
-        description="Start free with 3 daily scans. Upgrade when you need unlimited analysis and advanced features. No hidden fees, cancel anytime."
+        description="Pay per scan or subscribe for unlimited access. One-time audits or professional monitoring — transparent pricing that fits your needs."
       />
 
-      <PricingSection />
+      <PricingSectionHybrid />
 
       {/* Additional Value Props */}
       <section className="py-16 px-4">
