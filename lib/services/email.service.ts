@@ -235,6 +235,34 @@ export class EmailService {
   }
 
   /**
+   * Send magic link for soft signup (email-only registration)
+   */
+  async sendMagicLink(
+    to: string,
+    token: string,
+    scansRemaining: number = 0
+  ): Promise<void> {
+    try {
+      const magicLinkUrl = `${process.env.NEXT_PUBLIC_SITE_URL}/api/auth/verify-magic-link?token=${token}`;
+
+      await resend.emails.send({
+        from: "ContractGuard AI <noreply@contractguard.ai>",
+        to,
+        subject: "Your Magic Link - ContractGuard AI 🔗",
+        html: this.getMagicLinkTemplate(magicLinkUrl, scansRemaining),
+      });
+
+      console.log(`[${this.serviceName}] Magic link sent to ${to}`);
+    } catch (error) {
+      console.error(
+        `[${this.serviceName}] Error sending magic link:`,
+        error
+      );
+      throw new Error("Failed to send magic link");
+    }
+  }
+
+  /**
    * Email template for verification
    */
   private getVerificationEmailTemplate(
@@ -376,6 +404,180 @@ export class EmailService {
             <p>AI-Powered Smart Contract Security Scanner</p>
             <p style="margin-top: 16px;">
                 Questions? Contact us at <a href="mailto:support@contractguard.ai" style="color: #3b82f6;">support@contractguard.ai</a>
+            </p>
+        </div>
+    </div>
+</body>
+</html>
+        `.trim();
+  }
+
+  /**
+   * Email template for magic link (soft signup)
+   */
+  private getMagicLinkTemplate(
+    magicLinkUrl: string,
+    scansRemaining: number
+  ): string {
+    return `
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            margin: 0;
+            padding: 0;
+            background-color: #f5f5f5;
+        }
+        .container {
+            max-width: 600px;
+            margin: 40px auto;
+            padding: 0;
+            background-color: #ffffff;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+        .header {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            color: white;
+            padding: 40px 30px;
+            border-radius: 8px 8px 0 0;
+            text-align: center;
+        }
+        .header h1 {
+            margin: 0;
+            font-size: 28px;
+            font-weight: 700;
+        }
+        .content {
+            padding: 40px 30px;
+        }
+        .button {
+            display: inline-block;
+            padding: 16px 32px;
+            background: #10b981;
+            color: white !important;
+            text-decoration: none;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 16px;
+            text-align: center;
+        }
+        .button:hover {
+            background: #059669;
+        }
+        .button-container {
+            text-align: center;
+            margin: 32px 0;
+        }
+        .highlight-box {
+            background-color: #d1fae5;
+            border-left: 4px solid #10b981;
+            padding: 16px;
+            margin: 24px 0;
+            border-radius: 4px;
+        }
+        .highlight-box p {
+            margin: 0;
+            color: #065f46;
+            font-size: 15px;
+            font-weight: 500;
+        }
+        .link-text {
+            font-size: 14px;
+            color: #666;
+            word-break: break-all;
+            background-color: #f9fafb;
+            padding: 12px;
+            border-radius: 4px;
+            margin: 20px 0;
+        }
+        .footer {
+            padding: 30px;
+            background-color: #f9fafb;
+            border-radius: 0 0 8px 8px;
+            text-align: center;
+            font-size: 13px;
+            color: #666;
+        }
+        .footer p {
+            margin: 8px 0;
+        }
+        .warning {
+            background-color: #fef3c7;
+            border-left: 4px solid #f59e0b;
+            padding: 16px;
+            margin: 24px 0;
+            border-radius: 4px;
+        }
+        .warning p {
+            margin: 0;
+            color: #92400e;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🔗 Your Magic Link</h1>
+        </div>
+
+        <div class="content">
+            <p style="font-size: 18px; margin-top: 0;"><strong>Hello,</strong></p>
+
+            <p>Thank you for continuing with ContractGuard AI! Click the button below to complete your registration and unlock unlimited scans:</p>
+
+            <div class="button-container">
+                <a href="${magicLinkUrl}" class="button">Complete Registration</a>
+            </div>
+
+            <p style="font-size: 14px; color: #666;">
+                Or copy and paste this link into your browser:
+            </p>
+            <div class="link-text">
+                <a href="${magicLinkUrl}" style="color: #10b981;">${magicLinkUrl}</a>
+            </div>
+
+            ${
+              scansRemaining > 0
+                ? `
+            <div class="highlight-box">
+                <p>📊 You have <strong>${scansRemaining}</strong> anonymous scan${scansRemaining > 1 ? "s" : ""} remaining. After registration, you'll get unlimited scans!</p>
+            </div>
+            `
+                : ""
+            }
+
+            <div class="warning">
+                <p><strong>⏰ This link expires in 1 hour.</strong></p>
+                <p style="margin-top: 8px;">If you didn't request this magic link, you can safely ignore this email.</p>
+            </div>
+
+            <p style="margin-top: 32px;"><strong>What you'll get with a free account:</strong></p>
+            <ul style="line-height: 1.8;">
+                <li>✅ Unlimited contract scans</li>
+                <li>✅ AI-powered risk assessments</li>
+                <li>✅ Detailed security reports</li>
+                <li>✅ Honeypot & rug pull detection</li>
+                <li>✅ Save your scan history</li>
+            </ul>
+
+            <p style="margin-top: 24px; font-size: 14px; color: #666;">
+                Registration takes just one click - no password required!
+            </p>
+        </div>
+
+        <div class="footer">
+            <p><strong>ContractGuard AI</strong></p>
+            <p>AI-Powered Smart Contract Security Scanner</p>
+            <p style="margin-top: 16px;">
+                Questions? Contact us at <a href="mailto:support@contractguard.ai" style="color: #10b981;">support@contractguard.ai</a>
             </p>
         </div>
     </div>

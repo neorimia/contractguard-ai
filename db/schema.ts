@@ -62,7 +62,12 @@ export const users = pgTable("users", {
   instantCredits: integer("instant_credits").default(0), // Pay-per-scan credits
   instantCreditsUsedToday: integer("instant_credits_used_today").default(0),
 
-  // Guest User Support
+  // Anonymous & Progressive Signup Support
+  anonymousSessionId: text("anonymous_session_id").unique(), // For anonymous scans
+  softSignupEmail: text("soft_signup_email"), // Email-only registration
+  accountType: text("account_type").default("full"), // anonymous | soft | full
+
+  // Guest User Support (for purchases)
   guestSessionId: text("guest_session_id").unique(), // For anonymous purchases
   isGuest: boolean("is_guest").default(false),
 
@@ -278,6 +283,27 @@ export const purchases = pgTable("purchases", {
   completedAt: timestamp("completed_at", { withTimezone: true }),
 });
 
+// Anonymous Scans table for temporary storage
+export const anonymousScans = pgTable("anonymous_scans", {
+  id: text("id")
+    .primaryKey()
+    .$defaultFn(() => crypto.randomUUID()),
+
+  sessionId: text("session_id").notNull(), // Anonymous session UUID
+  contractAddress: text("contract_address").notNull(),
+  chain: text("chain").notNull().default("ethereum"),
+
+  // Analysis results (same as audits table)
+  riskScore: integer("risk_score"),
+  summary: text("summary"),
+  issues: jsonb("issues").$type<Issue[]>(),
+  recommendation: text("recommendation"), // BUY, AVOID, CAUTION
+
+  // Timestamps
+  createdAt: timestamp("created_at").defaultNow(),
+  expiresAt: timestamp("expires_at").notNull(), // 24 hours from creation
+});
+
 // Types
 export interface Issue {
   severity: "CRITICAL" | "HIGH" | "MEDIUM" | "LOW";
@@ -301,3 +327,5 @@ export type RewardLedger = typeof rewardsLedger.$inferSelect;
 export type NewRewardLedger = typeof rewardsLedger.$inferInsert;
 export type Purchase = typeof purchases.$inferSelect;
 export type NewPurchase = typeof purchases.$inferInsert;
+export type AnonymousScan = typeof anonymousScans.$inferSelect;
+export type NewAnonymousScan = typeof anonymousScans.$inferInsert;
