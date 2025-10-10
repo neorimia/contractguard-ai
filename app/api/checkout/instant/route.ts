@@ -9,14 +9,50 @@ import { NextRequest, NextResponse } from "next/server";
 import { stackServerApp } from "@/stack/server";
 import Stripe from "stripe";
 import { db } from "@/db";
-import { purchases } from "@/db/schema";
+import { purchases, users } from "@/db/schema";
 import { getInstantPackageByIndex } from "@/lib/config/pricing";
 import crypto from "crypto";
+import { eq } from "drizzle-orm";
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
   apiVersion: "2025-09-30.clover",
   typescript: true,
 });
+
+/**
+ * Ensure Stack Auth user exists in local database
+ * Returns local user ID or null for guests
+ */
+async function ensureUserExists(stackUser: any): Promise<number | null> {
+  if (!stackUser) return null;
+
+  // Check if user already exists in local DB
+  const existingUser = await db
+    .select()
+    .from(users)
+    .where(eq(users.stackUserId, stackUser.id))
+    .limit(1);
+
+  if (existingUser.length > 0) {
+    return existingUser[0].id;
+  }
+
+  // Create new user record
+  const newUser = await db
+    .insert(users)
+    .values({
+      stackUserId: stackUser.id,
+      email: stackUser.primaryEmail || `user-${stackUser.id}@temp.local`,
+      emailVerified: stackUser.primaryEmailVerified || false,
+      displayName: stackUser.displayName || null,
+      tier: "free",
+      scansToday: 0,
+      instantCredits: 0,
+    })
+    .returning({ id: users.id });
+
+  return newUser[0].id;
+}
 
 export async function POST(req: NextRequest) {
   try {
@@ -30,13 +66,16 @@ export async function POST(req: NextRequest) {
           error: "Invalid package",
           details: "Please select a valid instant report package",
         },
-        { status: 400 },
+        { status: 400 }
       );
     }
 
     // Check if user is authenticated
     const stackUser = await stackServerApp.getUser();
     const isGuest = !stackUser;
+
+    // Ensure authenticated user exists in local database
+    const localUserId = await ensureUserExists(stackUser);
 
     // Generate guest session ID for anonymous users
     const guestSessionId = isGuest ? crypto.randomUUID() : null;
@@ -71,7 +110,7 @@ export async function POST(req: NextRequest) {
       metadata: {
         type: "instant_credits",
         credits: pkg.credits.toString(),
-        userId: stackUser?.id || "",
+        userId: localUserId?.toString() || "",
         guestSessionId: guestSessionId || "",
         contractAddress: contractAddress || "",
       },
@@ -85,7 +124,7 @@ export async function POST(req: NextRequest) {
 
     // Create purchase record
     await db.insert(purchases).values({
-      userId: stackUser ? parseInt(stackUser.id) : null,
+      userId: localUserId,
       guestSessionId,
       guestEmail: guestEmail || null,
       type: "instant_credits",
@@ -96,7 +135,7 @@ export async function POST(req: NextRequest) {
       status: "pending",
       metadata: {
         packageSize: pkg.credits,
-        ipAddress: req.headers.get("x-forwarded-for") || req.ip || "",
+        ipAddress: req.headers.get("x-forwarded-for") || "",
         userAgent: req.headers.get("user-agent") || "",
         contractAddress: contractAddress || "",
       },
@@ -115,7 +154,7 @@ export async function POST(req: NextRequest) {
         details: error.message || "Unknown error occurred",
         status: "error",
       },
-      { status: 500 },
+      { status: 500 }
     );
   }
 }

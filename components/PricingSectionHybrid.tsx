@@ -6,8 +6,6 @@
 
 "use client";
 
-import { Zap, Sparkles } from "lucide-react";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { motion } from "motion/react";
 import { useState } from "react";
 import { useUser } from "@stackframe/stack";
@@ -157,39 +155,51 @@ export default function PricingSectionHybrid() {
             to professional monitoring — transparent pricing, no surprises.
           </p>
 
-          {/* Tab Navigation */}
-          <Tabs
-            value={selectedTab}
-            onValueChange={(v) =>
-              setSelectedTab(v as "instant" | "subscription")
-            }
-            className="w-full"
-          >
-            <div className="flex justify-center mb-8">
-              <TabsList className="inline-flex p-1 backdrop-blur-sm border border-black/10 dark:border-white/10 bg-black/[0.02] dark:bg-white/[0.02] rounded-xl">
-                <TabsTrigger
-                  value="instant"
-                  className="px-6 py-2 text-sm font-medium rounded-lg data-[state=active]:bg-black data-[state=active]:text-white dark:data-[state=active]:bg-white dark:data-[state=active]:text-black transition-all"
-                >
-                  <Zap className="w-4 h-4 mr-2" />
-                  Instant Reports
-                </TabsTrigger>
-                <TabsTrigger
-                  value="subscription"
-                  className="px-6 py-2 text-sm font-medium rounded-lg data-[state=active]:bg-black data-[state=active]:text-white dark:data-[state=active]:bg-white dark:data-[state=active]:text-black transition-all"
-                >
-                  <Sparkles className="w-4 h-4 mr-2" />
-                  Subscriptions
-                </TabsTrigger>
-              </TabsList>
-            </div>
+          {/* Pricing Type Toggle */}
+          <div className="flex justify-center mb-8">
+            <div className="relative inline-flex items-center p-1 backdrop-blur-sm border border-black/10 dark:border-white/10 bg-black/[0.02] dark:bg-white/[0.02] rounded-xl">
+              <button
+                type="button"
+                onClick={() => setSelectedTab("instant")}
+                className={`relative z-10 px-6 py-2 text-sm font-medium rounded-lg transition-all duration-300 ${
+                  selectedTab === "instant"
+                    ? "text-white dark:text-black"
+                    : "text-black/60 dark:text-white/60 hover:text-black/80 dark:hover:text-white/80"
+                }`}
+              >
+                Instant Reports
+              </button>
+              <button
+                type="button"
+                onClick={() => setSelectedTab("subscription")}
+                className={`relative z-10 px-6 py-2 text-sm font-medium rounded-lg transition-all duration-300 ${
+                  selectedTab === "subscription"
+                    ? "text-white dark:text-black"
+                    : "text-black/60 dark:text-white/60 hover:text-black/80 dark:hover:text-white/80"
+                }`}
+              >
+                Subscriptions
+              </button>
 
-            {/* Instant Reports Tab */}
-            <TabsContent
-              value="instant"
-              className="mt-0"
-              key={`instant-${selectedTab}`}
-            >
+              <motion.div
+                className="absolute inset-0 z-0 rounded-lg bg-black dark:bg-white"
+                initial={false}
+                animate={{
+                  x: selectedTab === "instant" ? 0 : "100%",
+                  width: "50%",
+                }}
+                transition={{
+                  type: "spring",
+                  stiffness: 300,
+                  damping: 30,
+                }}
+              />
+            </div>
+          </div>
+
+          {/* Instant Reports Section */}
+          {selectedTab === "instant" && (
+            <div key="instant-content">
               <div className="text-center mb-6">
                 <p className="text-sm text-black/60 dark:text-white/60">
                   One-time payment • Credits never expire
@@ -224,14 +234,12 @@ export default function PricingSectionHybrid() {
                   ))}
                 </div>
               </div>
-            </TabsContent>
+            </div>
+          )}
 
-            {/* Subscriptions Tab */}
-            <TabsContent
-              value="subscription"
-              className="mt-0"
-              key={`subscription-${selectedTab}`}
-            >
+          {/* Subscriptions Section */}
+          {selectedTab === "subscription" && (
+            <div key="subscription-content">
               {/* Billing Toggle */}
               <div className="flex justify-center mb-6">
                 <div className="relative inline-flex items-center p-1 backdrop-blur-sm border border-black/10 dark:border-white/10 bg-black/[0.02] dark:bg-white/[0.02] rounded-xl">
@@ -330,8 +338,8 @@ export default function PricingSectionHybrid() {
                   />
                 </div>
               </div>
-            </TabsContent>
-          </Tabs>
+            </div>
+          )}
         </div>
       </div>
     </section>
