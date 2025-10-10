@@ -9,7 +9,10 @@ import {
   type User,
 } from "@/db/schema";
 import { eq, and, desc, count, sql } from "drizzle-orm";
-import { generateReferralCode, validateReferralCodeFormat } from "@/lib/utils/referral-code";
+import {
+  generateReferralCode,
+  validateReferralCodeFormat,
+} from "@/lib/utils/referral-code";
 import { referralConfig } from "@/lib/referrals/config";
 import type { ClientInfo } from "@/lib/utils/client-info";
 import { RewardsService } from "./rewards.service";
@@ -201,7 +204,9 @@ export class ReferralService {
         },
       });
 
-      console.log(`Referral created: ${referral.id} for referrer ${referrer.id}`);
+      console.log(
+        `Referral created: ${referral.id} for referrer ${referrer.id}`
+      );
 
       return {
         success: true,
@@ -315,7 +320,9 @@ export class ReferralService {
         userEmail: referredUser?.email,
       });
 
-      console.log(`Fraud check for referral ${referralId}: score ${fraudCheck.riskScore}`);
+      console.log(
+        `Fraud check for referral ${referralId}: score ${fraudCheck.riskScore}`
+      );
 
       // If high risk, keep as pending and don't auto-reward
       if (!fraudCheck.isValid) {
@@ -347,9 +354,12 @@ export class ReferralService {
 
       // Send welcome bonus email (non-blocking)
       this.emailService
-        .sendWelcomeEmail(referredUser?.email || "", {
+        .sendWelcomeBonusEmail(referredUser?.email || "", {
           displayName: referredUser?.displayName || undefined,
-          scansRemaining: referralConfig.signupBonusForReferred.amount,
+          referrerName: referrer.displayName || "",
+          bonusScans: referralConfig.signupBonusForReferred.amount,
+          totalScans: referralConfig.signupBonusForReferred.amount,
+          bonusAmount: referralConfig.signupBonusForReferred.amount,
         })
         .catch((error) => {
           console.error("Failed to send welcome email:", error);
@@ -582,9 +592,8 @@ export class ReferralService {
       ).length;
 
       // Get total rewards earned
-      const totalEarned = await this.rewardsService.getTotalRewardsEarned(
-        userId
-      );
+      const totalEarned =
+        await this.rewardsService.getTotalRewardsEarned(userId);
 
       // Get recent referrals (last 10)
       const recentReferrals = await db

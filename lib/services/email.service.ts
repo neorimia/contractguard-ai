@@ -6,6 +6,7 @@ import { PaymentConfirmationEmail } from "@/emails/PaymentConfirmationEmail";
 import { PaymentFailedEmail } from "@/emails/PaymentFailedEmail";
 import { CancellationEmail } from "@/emails/CancellationEmail";
 import { FeedbackNotificationEmail } from "@/emails/FeedbackNotificationEmail";
+import { WelcomeBonusEmail } from "@/emails/WelcomeBonusEmail";
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
@@ -74,6 +75,30 @@ export class EmailService {
         error
       );
       // Don't throw - email failure shouldn't block main flow
+    }
+  }
+
+  /**
+   * Send welcome bonus email after signup bonus
+   *
+   */
+  async sendWelcomeBonusEmail(
+    to: string,
+    context: {
+      displayName?: string;
+      referrerName: string;
+      bonusScans: number;
+      totalScans: number;
+      bonusAmount: number;
+    }
+  ): Promise<void> {
+    try {
+      const html = await render(WelcomeBonusEmail(context));
+    } catch (error) {
+      console.error(
+        `[${this.serviceName}] Failed to send welcome bonus email:`,
+        error
+      );
     }
   }
 

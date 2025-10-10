@@ -5,7 +5,10 @@ import { eq } from "drizzle-orm";
 import { getTierLimit } from "@/lib/config/tier-limits";
 import { EmailService } from "./email.service";
 import { ReferralService } from "./referral.service";
-import { getReferralCookie, clearReferralCookie } from "@/lib/utils/referral-cookies";
+import {
+  getReferralCookie,
+  clearReferralCookie,
+} from "@/lib/utils/referral-cookies";
 import { getClientInfo } from "@/lib/utils/client-info";
 import crypto from "crypto";
 
@@ -90,19 +93,7 @@ export class AuthService {
         scansToday: 0,
         scansResetAt: this.getNextResetTime(),
       };
-      // Send welcome email (non-blocking)
-      try {
-        const emailService = new EmailService();
-        const tierLimit = getTierLimit("free");
 
-        await emailService.sendWelcomeEmail(newUser.email, {
-          displayName: newUser.displayName || undefined,
-          scansRemaining: tierLimit === -1 ? 100 : tierLimit, // Use 100 for unlimited tiers
-        });
-      } catch (emailError) {
-        // Log but don't fail verification if email fails
-        console.error("Failed to send welcome email:", emailError);
-      }
       const [createdUser] = await db.insert(users).values(newUser).returning();
 
       console.log("User created successfully:", {
@@ -118,7 +109,9 @@ export class AuthService {
         const referralCode = await getReferralCookie();
 
         if (referralCode) {
-          console.log(`Referral signup detected for user ${createdUser.id} with code: ${referralCode}`);
+          console.log(
+            `Referral signup detected for user ${createdUser.id} with code: ${referralCode}`,
+          );
 
           const referralService = new ReferralService();
           const clientInfo = await getClientInfo();
@@ -130,10 +123,14 @@ export class AuthService {
           });
 
           if (result.success) {
-            console.log(`Referral signup bonus applied successfully for user ${createdUser.id}`);
+            console.log(
+              `Referral signup bonus applied successfully for user ${createdUser.id}`,
+            );
 
             if (result.reward) {
-              console.log(`Reward granted: ${result.reward.type} x${result.reward.amount}`);
+              console.log(
+                `Reward granted: ${result.reward.type} x${result.reward.amount}`,
+              );
             }
           } else {
             console.warn(`Referral signup failed: ${result.error}`);
