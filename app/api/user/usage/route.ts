@@ -105,7 +105,7 @@ export async function GET(req: NextRequest) {
       },
       tier: dbUser.tier,
       accessSummary: {
-        type: 
+        type:
           dbUser.tier === "pro" || dbUser.tier === "enterprise"
             ? "subscription"
             : (dbUser.instantCredits || 0) > 0

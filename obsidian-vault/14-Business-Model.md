@@ -1,522 +1,317 @@
-# Business Model - Monetization Strategy
+# Business Model – Hybrid Monetization Strategy (Account + Referral-Driven)
 
-Complete business model and revenue strategy for ContractGuard AI.
+Complete business model and revenue strategy for **ContractGuard AI**, now optimized for **account-based access** and **referral growth**.
+
+---
+
+## 💡 Overview
+
+ContractGuard AI operates with a **hybrid monetization model** combining:
+
+- ⚡ **Pay-per-Scan (Instant Reports)** for casual users
+- 💎 **Freemium → Pro Subscriptions** for recurring users
+- 🔗 **API & Team Plans** for B2B clients
+
+All scans now require a **user account** (email, Google, or wallet login) to:
+
+- Track usage & credits
+- Enable referrals and rewards
+- Sync data across devices
+- Improve user retention and upsell targeting
 
 ---
 
 ## 💰 Revenue Streams
 
-### 1. Freemium SaaS (Primary)
+### 1. Freemium SaaS (Core Layer)
 
-```
-┌─────────────────────────────────────────┐
-│ FREE TIER                               │
-├─────────────────────────────────────────┤
-│ • 3 scans per day                       │
-│ • Basic risk analysis                   │
-│ • Community support                     │
-│ • Ads (optional)                        │
-│                                         │
-│ Price: $0                               │
-│ Target: Everyone                        │
-│ Goal: Acquisition & virality           │
-└─────────────────────────────────────────┘
+**FREE TIER (Requires Account)**
 
-┌─────────────────────────────────────────┐
-│ PRO TIER - $29/month                    │
-├─────────────────────────────────────────┤
-│ • Unlimited scans                       │
-│ • Advanced analysis                     │
-│ • API access (500 calls/day)           │
-│ • Priority processing                   │
-│ • Historical analysis                   │
-│ • PDF exports                           │
-│ • No ads                                │
-│ • Email support                         │
-│                                         │
-│ Price: $29/month                        │
-│ Target: Active traders                  │
-│ Goal: Core revenue                      │
-└─────────────────────────────────────────┘
+- 3 scans/day
+- Basic risk report
+- Limited AI summary
+- Referral rewards (1 free scan/invite)
+- Ads (optional)
+- **Price:** €0
+- **Target:** Entry users
+- **Goal:** Virality + lead generation
 
-┌─────────────────────────────────────────┐
-│ ENTERPRISE - Custom pricing             │
-├─────────────────────────────────────────┤
-│ • Everything in Pro                     │
-│ • Unlimited API calls                   │
-│ • White-label option                    │
-│ • Custom AI training                    │
-│ • Dedicated support                     │
-│ • SLA guarantees                        │
-│ • Multi-user teams                      │
-│ • Custom integrations                   │
-│                                         │
-│ Price: $199-999/month                   │
-│ Target: Exchanges, wallets, funds       │
-│ Goal: High-value contracts              │
-└─────────────────────────────────────────┘
-```
+**PRO TIER – €29/month**
+
+- Unlimited scans
+- Advanced risk & fairness scoring
+- Historical analysis + PDF export
+- Contract monitoring & alerts
+- Ask-AI negotiation assistant
+- Referral bonus: +1 report per signup
+- No ads + priority queue
+- **Target:** Active traders, startups
+- **Goal:** Recurring MRR
+
+**TEAM / API PLAN – €99–499/month**
+
+- Everything in Pro
+- Multi-user dashboard
+- Unlimited API calls
+- SLA + dedicated support
+- Custom integrations
+- White-label access
+- **Target:** Funds, DEXs, law firms
+- **Goal:** B2B recurring revenue
+
+---
+
+### 2. Instant Reports (Pay-Per-Scan)
+
+**INSTANT REPORTS (Requires Login)**
+
+- Full audit in 60 seconds
+- 25% preview → unlock full report
+- Buy report credits via Stripe
+- Credits stored in user account
+
+**Packages:**
+
+- 1 report = €4.99
+- 3 reports = €9.99
+- 5 reports = €14.99
+
+**Referral:** Invite a friend → +1 credit  
+**Upsell:** "Upgrade to Pro for unlimited"
+
+🧩 **Rationale:**  
+Even one-time users must register → enables remarketing, referral tracking, and analytics-based upsells.
+
+---
+
+### 3. Referral & Affiliate System
+
+**Referral Rules:**
+
+- Each verified signup via referral = +1 free scan
+- 3 referred users → 1 week of Pro access
+- 10 referred users → 1 month of Pro access
+- Pro users earn 10% recurring commission
+
+**Affiliate Partners:**
+
+- Influencers & YouTubers: 20% recurring
+- B2B Referrals (DEXs, wallets): 15–30% rev share
+- Exchanges (Binance, Coinbase): up to 50% of fees
+
+**Goal:** Turn every user into a marketer while maintaining low CAC.
+
+---
+
+### 4. API Licensing (Developer Revenue)
+
+| Tier       | Price  | Volume         | Target                  |
+| ---------- | ------ | -------------- | ----------------------- |
+| Hobby      | €0     | 100 req/mo     | Builders                |
+| Startup    | €99    | 10,000 req/mo  | Telegram bots, trackers |
+| Business   | €499   | 100,000 req/mo | Exchanges, dApps        |
+| Enterprise | Custom | Unlimited      | White-label partners    |
+
+API tokens are linked to the same **user account** → unified referral + usage analytics.
+
+---
+
+## 🧠 Why Account-Based Access Works
+
+| Benefit           | Description                                   |
+| ----------------- | --------------------------------------------- |
+| Referral Tracking | Each user has unique code for invite rewards  |
+| Data Retention    | Store previous audits for upsells and history |
+| Growth Analytics  | Map referral trees and viral loops            |
+| Personalized UX   | Smart upsell triggers (“You’re out of scans”) |
+| Compliance        | GDPR + secure access control                  |
+| Conversion        | Easier email follow-up and remarketing        |
+
+---
+
+## 🧩 Updated Hybrid Revenue Mix
+
+| Stream               | Type         | % of Revenue | Requires Account |
+| -------------------- | ------------ | ------------ | ---------------- |
+| Instant Reports      | One-time     | 40–50%       | ✅ Yes           |
+| Pro Subscriptions    | Recurring    | 25–35%       | ✅ Yes           |
+| API/Team Plans       | Recurring    | 10–15%       | ✅ Yes           |
+| Referrals/Affiliates | Hybrid       | 5–10%        | ✅ Yes           |
+| Premium Research     | Subscription | 2–5%         | ✅ Yes           |
 
 ---
 
 ## 📊 Unit Economics
 
-### Cost Structure
+**Per Instant Report:**
 
-**Per User (Monthly):**
-```
-AI API Costs:        $8  (OpenAI/Caffeine)
-Infrastructure:      $3  (Neon + Upstash + Vercel)
-Support:            $2  (Customer service)
-Payment Processing: $1  (Stripe fees)
-───────────────────────
-Total Cost:         $14
+Revenue: €9.00
+Cost: €0.50 (AI + infra)
+Referral reward: €0.30
+Net profit: €8.20 (91%)
 
-Revenue (Pro):      $29
-Profit per user:    $15
-Margin:             52%
-```
+**Per Pro User:**
 
-### Customer Acquisition
+Revenue: €29/month
+AI/Infra cost: €8
+Support + rewards: €4
+Referral cost: €2 (avg)
+Net profit: €15 → 52% margin
 
-**CAC (Customer Acquisition Cost):**
-```
-Organic (Twitter, PH):     $5-15
-Paid Ads:                  $30-50
-Influencer/Affiliate:      $20-30
-Average CAC:               $20
-```
+**Referral ROI:**
 
-**LTV (Lifetime Value):**
-```
-Pro tier: $29/month
-Average retention: 12+ months
-LTV: $348+
-
-LTV/CAC ratio: 17.4x ✅ (healthy)
-```
+- Avg referral CAC: €3–5 (via free scan reward)
+- Avg LTV per referred user: €120
+- LTV/CAC ratio: 24x ✅
 
 ---
 
-## 📈 Revenue Projections
+## 📈 12-Month Projection (Hybrid + Account Model)
 
-### Conservative (12 Months)
+| Month | Users   | Referrals | Paid  | Revenue  | MRR     |
+| ----- | ------- | --------- | ----- | -------- | ------- |
+| 1     | 5,000   | 500       | 100   | €5,500   | €2,900  |
+| 3     | 20,000  | 3,000     | 600   | €20,000  | €11,600 |
+| 6     | 75,000  | 15,000    | 2,000 | €55,000  | €29,000 |
+| 12    | 200,000 | 40,000    | 5,000 | €150,000 | €65,000 |
 
-| Month | Users | Scans | Pro | Revenue | MRR |
-|-------|-------|-------|-----|---------|-----|
-| 1 | 5,000 | 2,000 | 50 | $1,450 | $1,450 |
-| 2 | 10,000 | 5,000 | 100 | $2,900 | $2,900 |
-| 3 | 20,000 | 10,000 | 200 | $5,800 | $5,800 |
-| 6 | 50,000 | 30,000 | 500 | $14,500 | $14,500 |
-| 12 | 100,000 | 75,000 | 1,000 | $29,000 | $29,000 |
-
-**Year 1 Total Revenue: ~$150,000**
-
-### Optimistic (Viral Growth)
-
-| Month | Users | Scans | Pro | Revenue | MRR |
-|-------|-------|-------|-----|---------|-----|
-| 1 | 10,000 | 5,000 | 100 | $2,900 | $2,900 |
-| 2 | 25,000 | 15,000 | 300 | $8,700 | $8,700 |
-| 3 | 50,000 | 30,000 | 600 | $17,400 | $17,400 |
-| 6 | 150,000 | 100,000 | 2,000 | $58,000 | $58,000 |
-| 12 | 300,000 | 250,000 | 5,000 | $145,000 | $145,000 |
-
-**Year 1 Total Revenue: ~$600,000**
+**Referral-driven viral growth → CAC neutral by Month 3.**
 
 ---
 
-## 💡 Additional Revenue Streams
+## 💳 Stripe + Account Integration
 
-### 2. API Licensing
-
-**Developer API:**
-```
-Hobby:    $0/month     - 100 requests/month
-Startup:  $99/month    - 10,000 requests/month
-Business: $499/month   - 100,000 requests/month
-Custom:   Contact      - Unlimited
-```
-
-**Target:** Trading bots, portfolio trackers, other dApps
-
-**Potential:** $5-20k MRR by Month 6
-
----
-
-### 3. Affiliate Commissions
-
-**Exchange Referrals:**
-```
-Binance:     20-50% of trading fees
-Coinbase:    $10-50 per signup
-Kraken:      $10-20 per signup
-```
-
-**Integration:**
-- AI recommends best exchange for user
-- Natural in-context suggestions
-- Not pushy, adds value
-
-**Potential:** $2-5k/month by Month 3
-
----
-
-### 4. White-Label Licensing
-
-**Offer:** Full platform as white-label solution
-
-**Target Customers:**
-- Crypto exchanges
-- Wallet providers
-- DeFi protocols
-- News platforms
-
-**Pricing:** $5,000-20,000/month per client
-
-**Potential:** 1-3 clients = $15-60k MRR
-
----
-
-### 5. Premium Research Reports
-
-**Weekly Deep Dives:**
-```
-Free:     Weekly newsletter
-Premium:  $29/month - Daily insights
-VIP:      $99/month - Custom research
-```
-
-**Content:**
-- Scam pattern analysis
-- Market trends
-- New vulnerability discoveries
-- Token risk reports
-
-**Potential:** $3-10k MRR by Month 6
-
----
-
-## 🎯 Pricing Strategy
-
-### Why $29/month?
-
-**Psychology:**
-- Below $30 = impulse buy territory
-- Premium enough to signal quality
-- Comparable to other crypto tools
-- Annual option: $290 ($24/month, 17% discount)
-
-**Competitive Pricing:**
-```
-Token Sniffer Pro:  $25/month
-GoPlus Pro:         $30/month
-De.Fi Scanner:      $35/month
-ContractGuard:      $29/month ✅ (sweet spot)
-```
-
-### Price Testing (Month 2-3)
-
-Test these tiers:
-- A: $19/month (volume play)
-- B: $29/month (baseline)
-- C: $39/month (premium)
-
-Measure:
-- Conversion rates
-- Total revenue
-- User feedback
-
-**Hypothesis:** $29 will have highest revenue (2-3% conversion)
-
----
-
-## 📊 Conversion Funnel
-
-### User Journey
-
-```
-Landing Page
-    ↓
-Try Free Scan (100%)
-    ↓
-See Results (90%)
-    ↓
-Share/Return (40%)
-    ↓
-Hit Rate Limit (30%)
-    ↓
-View Pricing (50% of limited users = 15%)
-    ↓
-Upgrade to Pro (2-5% of viewers = 0.3-0.75%)
-```
-
-**Optimization Targets:**
-1. Increase return rate (40% → 60%)
-2. Improve limit hit rate (30% → 50%)
-3. Boost conversion (2% → 5%)
-
----
-
-## 💳 Payment Processing
-
-### Stripe Integration
-
-**Products:**
-```typescript
+```ts
+// products/pricing.ts
 {
-  pro_monthly: {
-    price: 2900, // $29.00
-    interval: 'month',
-    features: ['unlimited_scans', 'api_access']
-  },
-  pro_annual: {
-    price: 29000, // $290.00
-    interval: 'year',
-    features: ['unlimited_scans', 'api_access']
-  }
+  instant_1: { price: 499, type: 'one_time' },
+  instant_3: { price: 999, type: 'one_time' },
+  instant_5: { price: 1499, type: 'one_time' },
+  pro_monthly: { price: 2900, interval: 'month' },
+  pro_annual: { price: 29000, interval: 'year' },
+  team_monthly: { price: 9900, interval: 'month' },
+}
+
+```
+
+**Database Schema (Neon + Stack Auth):**
+
+```sql
+users {
+  id uuid primary key,
+  email text,
+  referral_code text unique,
+  referred_by text,
+  credits int default 0,
+  plan text default 'free',
+  stripe_customer_id text,
+  created_at timestamptz default now()
 }
 ```
 
-**Customer Portal:**
-- Update payment method
-- Change plan
-- View invoices
-- Cancel subscription
+---
 
-**Fees:**
-- Stripe: 2.9% + $0.30 per transaction
-- Monthly: $0.84 + $0.30 = $1.14 (3.9%)
-- Net revenue: $27.86
+## 🧩 Referral Logic
+
+| Event                    | Reward                    | Condition      |
+| ------------------------ | ------------------------- | -------------- |
+| New signup via referral  | +1 credit to both         | Email verified |
+| Referral upgrades to Pro | +10% commission recurring | Pro active     |
+| 3 signups                | 7 days Pro bonus          | Any plan       |
+| 10 signups               | 1 month Pro bonus         | Any plan       |
 
 ---
 
-## 🚀 Growth Tactics
+## 🧮 Funnel with Account Login
 
-### Month 1: Launch (Acquisition Focus)
+```
+Landing Page
+  ↓
+Sign Up (email)
+  ↓
+Free Scan (3/day)
+  ↓
+Preview Report (locked sections)
+  ↓
+Unlock Full Report (€4.99)
+  ↓
+Upgrade to Pro (€29/mo)
+  ↓
+Invite friends → Earn credits
+```
 
-**Goal:** 5,000 users, 50 Pro
-
-**Tactics:**
-1. Product Hunt launch
-2. Crypto Twitter campaign
-3. Reddit posts (r/CryptoMoonShots)
-4. Discord/Telegram shares
-5. Free for influencers
-
-**Budget:** $0-500
+**Key Insight:** Account login enables re-engagement via email, Discord, or notifications, turning a single scan into a relationship.
 
 ---
 
-### Month 2-3: Growth (Retention Focus)
+## 📊 Financial Snapshot
 
-**Goal:** 20,000 users, 200 Pro
-
-**Tactics:**
-1. Content marketing (blog posts)
-2. SEO optimization
-3. Influencer partnerships
-4. Affiliate program launch (20% recurring)
-5. Feature releases (BSC support)
-
-**Budget:** $1,000-3,000
-
----
-
-### Month 4-6: Scale (Revenue Focus)
-
-**Goal:** 50,000 users, 500 Pro
-
-**Tactics:**
-1. Paid ads (Google, Twitter)
-2. Partnership with wallets
-3. API launch for developers
-4. Browser extension
-5. Telegram bot
-
-**Budget:** $5,000-10,000
+| Metric               | Value     |
+| -------------------- | --------- |
+| Monthly Active Users | 200,000   |
+| Paid Conversion      | 2–4%      |
+| Avg Revenue/User     | €3.50     |
+| CAC                  | €6 avg    |
+| LTV                  | €120 avg  |
+| LTV:CAC              | 20x       |
+| Gross Margin         | 80–85%    |
+| Break-even           | <2 months |
 
 ---
 
-## 🎁 Promotional Strategies
+## 🎯 Growth Flywheel
 
-### Launch Special
+1. User signs up → free scans
+2. Refers friends → earns credits
+3. Uses credits → hits limit → buys Instant Report
+4. Unlocks → upgrades to Pro
+5. Repeats & brings more referrals
 
-```
-"First 100 Pro users get 50% off forever"
-- Creates urgency
-- Rewards early adopters
-- Generates buzz
-Price: $14.50/month (locked in)
-```
-
-### Referral Program
-
-```
-Refer 3 friends → 1 month Pro free
-Refer 10 friends → 3 months Pro free
-Refer 50 friends → 1 year Pro free
-```
-
-### Annual Discount
-
-```
-Monthly: $29/month = $348/year
-Annual: $290/year (save $58, 17% off)
-```
+**Each referral generates 1.3 new users on average — compounding network effects.**
 
 ---
 
-## 📉 Churn Reduction
+## ⚙️ Key Metrics to Track
 
-### Why Users Cancel
-
-1. Don't use enough (90% of cancellations)
-2. Too expensive (5%)
-3. Missing features (3%)
-4. Found alternative (2%)
-
-### Retention Tactics
-
-**Usage-based:**
-- Email when not using for 7 days
-- Weekly value reminders
-- Success stories
-
-**Value-add:**
-- Monthly feature releases
-- Exclusive community access
-- Priority feature requests
-
-**Pricing:**
-- Pause subscription option (3 months)
-- Downgrade to lower tier
-- Win-back offers
-
-**Target Retention:** 85%+ monthly
+| Category     | KPI                               |
+| ------------ | --------------------------------- |
+| Acquisition  | Referral signups, CAC             |
+| Activation   | Scans/user, first scan time       |
+| Revenue      | ARPU, conversion rate             |
+| Retention    | Monthly churn, repeat scans       |
+| Referral     | Viral coefficient, earned credits |
+| Monetization | Avg credit spend per user         |
 
 ---
 
-## 💰 Profitability Timeline
+## 🚨 Risks & Mitigations
 
-### Break-Even Analysis
-
-**Fixed Costs (Monthly):**
-```
-Infrastructure:  $50-100
-Tools/Services:  $50
-Marketing:       $500-1000
-───────────────────────
-Total:           $600-1,150
-```
-
-**Break-even:**
-```
-At $15 profit/user:
-40-77 Pro users = Break-even
-Target: 100+ Pro users = Profitable
-```
-
-**Timeline:** Month 1-2 (achievable)
+| Risk                              | Likelihood | Mitigation                            |
+| --------------------------------- | ---------- | ------------------------------------- |
+| Spam signups for referral credits | Medium     | Email verification + anti-abuse logic |
+| Referral fraud (multi-account)    | Medium     | IP & wallet fingerprinting            |
+| Lower free → paid conversion      | Low        | Gamified upsells, limited previews    |
+| High support load                 | Medium     | Self-service + AI chatbot             |
+| Regulatory (crypto region bans)   | Low        | Geofencing + disclaimers              |
 
 ---
 
-### Profit Margins (Month 6)
+## 📘 Summary
 
-**Revenue:** $14,500 MRR (500 Pro users)
+**Core Model:**  
+All users must sign up → every interaction tracked → every action incentivized.
 
-**Costs:**
-```
-AI/Infrastructure: $5,500  (38%)
-Support:          $1,500  (10%)
-Marketing:        $3,000  (21%)
-Payment Fees:     $600    (4%)
-───────────────────────────
-Total Costs:      $10,600 (73%)
-```
+**Hybrid Monetization:**  
+Pay-per-scan + subscriptions = balanced cash flow.
 
-**Profit:** $3,900/month (27% margin)
+**Referral Engine:**  
+Turns users into promoters → reduces CAC → compounds growth.
 
----
+**Strategic Outcome:**  
+Self-reinforcing, viral, high-margin SaaS for crypto safety with strong user lock-in.
 
-### Year 1 P&L (Conservative)
-
-**Revenue:** $150,000
-
-**Costs:**
-```
-COGS:             $45,000  (30%)
-Marketing:        $30,000  (20%)
-Tools/Services:   $12,000  (8%)
-───────────────────────────
-Total Costs:      $87,000  (58%)
-```
-
-**Net Profit:** $63,000 (42% margin)
+> "Every scan grows the network. Every invite fuels the business."
 
 ---
 
-## 🎯 Key Metrics to Track
-
-### Acquisition
-- Daily signups
-- Traffic sources
-- Conversion rate (visitor → user)
-
-### Activation
-- Scans per user
-- Time to first scan
-- Return rate (Day 7, Day 30)
-
-### Revenue
-- Free → Pro conversion
-- MRR growth rate
-- ARPU (Average Revenue Per User)
-
-### Retention
-- Monthly churn rate
-- Customer lifetime
-- Reactivation rate
-
-### Referral
-- Viral coefficient
-- Share rate
-- Referral conversions
-
----
-
-## 🚨 Risk Mitigation
-
-### Market Risk
-**Issue:** Bull market ends
-**Mitigation:**
-- Build evergreen features
-- Focus on utility beyond speculation
-- Diversify to multiple chains
-
-### Competition
-**Issue:** Copycats emerge
-**Mitigation:**
-- Ship fast, iterate faster
-- Build brand & community
-- Add moat (network effects, data)
-
-### Technical Risk
-**Issue:** AI costs spike
-**Mitigation:**
-- Aggressive caching
-- Tiered AI models
-- Price increases if needed
-
----
-
-## Related Notes
-
-- [[01-Executive-Summary]] - Project overview
-- [[15-Launch-Strategy]] - Go-to-market plan
-- [[16-Growth-Roadmap]] - Scale strategy
-- [[17-Success-Metrics]] - KPI tracking
-
----
-
-#business #monetization #revenue #pricing
+**Tags:** #business #monetization #referral #hybrid #saas #contractguard
