@@ -51,7 +51,7 @@ export class AccessValidationService {
   async validateAnonymousAccess(
     sessionId: string
   ): Promise<AccessValidationResult> {
-    const scanCount = getAnonymousScanCount(sessionId);
+    const scanCount = await getAnonymousScanCount(sessionId);
     const scansRemaining = Math.max(0, 3 - scanCount);
 
     if (scansRemaining > 0) {
@@ -280,7 +280,7 @@ export class AccessValidationService {
     try {
       // Handle anonymous consumption
       if (accessType === "anonymous" && anonymousSessionId) {
-        incrementAnonymousScanCount(anonymousSessionId);
+        await incrementAnonymousScanCount(anonymousSessionId);
         return true;
       }
 

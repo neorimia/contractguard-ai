@@ -38,8 +38,10 @@ export interface AccessStatus {
  * Automatically refreshes on auth state changes
  */
 export function useHasAccess(): AccessStatus {
-  const { user, isLoading: authLoading } = useUser();
-  const [accessStatus, setAccessStatus] = useState<Omit<AccessStatus, "refetch" | "isLoading">>({
+  const user = useUser();
+  const [accessStatus, setAccessStatus] = useState<
+    Omit<AccessStatus, "refetch" | "isLoading">
+  >({
     hasAccess: true,
     accessType: "free",
     scansRemaining: 3,
@@ -106,14 +108,12 @@ export function useHasAccess(): AccessStatus {
 
   // Fetch access status on mount and when auth state changes
   useEffect(() => {
-    if (!authLoading) {
-      fetchAccessStatus();
-    }
-  }, [user, authLoading]);
+    fetchAccessStatus();
+  }, [user]);
 
   return {
     ...accessStatus,
-    isLoading: isLoading || authLoading,
+    isLoading,
     error,
     refetch: fetchAccessStatus,
   };
@@ -151,7 +151,10 @@ export function useAccessStatusDisplay() {
       case "free":
         return `You have ${accessStatus.scansRemaining} free scan${accessStatus.scansRemaining !== 1 ? "s" : ""} remaining today`;
       default:
-        return accessStatus.reason || "Purchase instant reports or upgrade to Pro to continue";
+        return (
+          accessStatus.reason ||
+          "Purchase instant reports or upgrade to Pro to continue"
+        );
     }
   };
 
@@ -167,10 +170,16 @@ export function useAccessStatusDisplay() {
     if (accessStatus.accessType === "none") {
       return "Out of scans. Purchase instant reports or upgrade to Pro.";
     }
-    if (accessStatus.accessType === "free" && accessStatus.scansRemaining === 1) {
+    if (
+      accessStatus.accessType === "free" &&
+      accessStatus.scansRemaining === 1
+    ) {
       return "Last free scan! Upgrade to Pro for unlimited scans.";
     }
-    if (accessStatus.accessType === "instant_credit" && accessStatus.scansRemaining === 1) {
+    if (
+      accessStatus.accessType === "instant_credit" &&
+      accessStatus.scansRemaining === 1
+    ) {
       return "Last credit! Buy more or upgrade to Pro.";
     }
     return "";

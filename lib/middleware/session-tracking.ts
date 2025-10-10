@@ -5,11 +5,11 @@
  * Enables users to scan contracts without creating an account (up to 3 scans).
  */
 
-import { NextRequest, NextResponse } from 'next/server';
-import { cookies } from 'next/headers';
+import { NextRequest } from "next/server";
+import { cookies } from "next/headers";
 
-const ANONYMOUS_SESSION_COOKIE = 'anonymous_session_id';
-const ANONYMOUS_SCAN_COUNT_PREFIX = 'anon_scans_';
+const ANONYMOUS_SESSION_COOKIE = "anonymous_session_id";
+const ANONYMOUS_SCAN_COUNT_PREFIX = "anon_scans_";
 const SESSION_MAX_AGE = 60 * 60 * 24; // 24 hours in seconds
 const MAX_ANONYMOUS_SCANS = 3;
 
@@ -17,10 +17,12 @@ const MAX_ANONYMOUS_SCANS = 3;
  * Get or create an anonymous session ID
  * Creates a new UUID if no session exists
  *
- * @returns {string} Session ID (UUID)
+ * @returns {Promise<string>} Session ID (UUID)
  */
-export function getOrCreateAnonymousSession(req: NextRequest): string {
-  const cookieStore = cookies();
+export async function getOrCreateAnonymousSession(
+  req: NextRequest
+): Promise<string> {
+  const cookieStore = await cookies();
   let sessionId = cookieStore.get(ANONYMOUS_SESSION_COOKIE)?.value;
 
   if (!sessionId) {
@@ -28,10 +30,10 @@ export function getOrCreateAnonymousSession(req: NextRequest): string {
 
     cookieStore.set(ANONYMOUS_SESSION_COOKIE, sessionId, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax",
       maxAge: SESSION_MAX_AGE,
-      path: '/'
+      path: "/",
     });
   }
 
@@ -42,11 +44,15 @@ export function getOrCreateAnonymousSession(req: NextRequest): string {
  * Get the current anonymous scan count for a session
  *
  * @param {string} sessionId - Anonymous session UUID
- * @returns {number} Number of scans performed (0-3)
+ * @returns {Promise<number>} Number of scans performed (0-3)
  */
-export function getAnonymousScanCount(sessionId: string): number {
-  const cookieStore = cookies();
-  const countCookie = cookieStore.get(`${ANONYMOUS_SCAN_COUNT_PREFIX}${sessionId}`)?.value;
+export async function getAnonymousScanCount(
+  sessionId: string
+): Promise<number> {
+  const cookieStore = await cookies();
+  const countCookie = cookieStore.get(
+    `${ANONYMOUS_SCAN_COUNT_PREFIX}${sessionId}`
+  )?.value;
 
   if (!countCookie) {
     return 0;
@@ -60,20 +66,26 @@ export function getAnonymousScanCount(sessionId: string): number {
  * Increment the anonymous scan counter
  *
  * @param {string} sessionId - Anonymous session UUID
- * @returns {number} New scan count
+ * @returns {Promise<number>} New scan count
  */
-export function incrementAnonymousScanCount(sessionId: string): number {
-  const cookieStore = cookies();
-  const currentCount = getAnonymousScanCount(sessionId);
+export async function incrementAnonymousScanCount(
+  sessionId: string
+): Promise<number> {
+  const cookieStore = await cookies();
+  const currentCount = await getAnonymousScanCount(sessionId);
   const newCount = Math.min(currentCount + 1, MAX_ANONYMOUS_SCANS);
 
-  cookieStore.set(`${ANONYMOUS_SCAN_COUNT_PREFIX}${sessionId}`, newCount.toString(), {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
-    sameSite: 'lax',
-    maxAge: SESSION_MAX_AGE,
-    path: '/'
-  });
+  cookieStore.set(
+    `${ANONYMOUS_SCAN_COUNT_PREFIX}${sessionId}`,
+    newCount.toString(),
+    {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax",
+      maxAge: SESSION_MAX_AGE,
+      path: "/",
+    }
+  );
 
   return newCount;
 }
@@ -82,10 +94,12 @@ export function incrementAnonymousScanCount(sessionId: string): number {
  * Check if anonymous session has reached scan limit
  *
  * @param {string} sessionId - Anonymous session UUID
- * @returns {boolean} True if limit reached
+ * @returns {Promise<boolean>} True if limit reached
  */
-export function hasReachedAnonymousLimit(sessionId: string): boolean {
-  const count = getAnonymousScanCount(sessionId);
+export async function hasReachedAnonymousLimit(
+  sessionId: string
+): Promise<boolean> {
+  const count = await getAnonymousScanCount(sessionId);
   return count >= MAX_ANONYMOUS_SCANS;
 }
 
@@ -93,10 +107,12 @@ export function hasReachedAnonymousLimit(sessionId: string): boolean {
  * Get remaining scans for anonymous session
  *
  * @param {string} sessionId - Anonymous session UUID
- * @returns {number} Remaining scans (0-3)
+ * @returns {Promise<number>} Remaining scans (0-3)
  */
-export function getRemainingAnonymousScans(sessionId: string): number {
-  const count = getAnonymousScanCount(sessionId);
+export async function getRemainingAnonymousScans(
+  sessionId: string
+): Promise<number> {
+  const count = await getAnonymousScanCount(sessionId);
   return Math.max(0, MAX_ANONYMOUS_SCANS - count);
 }
 
@@ -105,8 +121,8 @@ export function getRemainingAnonymousScans(sessionId: string): number {
  *
  * @param {string} sessionId - Anonymous session UUID
  */
-export function clearAnonymousSession(sessionId: string): void {
-  const cookieStore = cookies();
+export async function clearAnonymousSession(sessionId: string): Promise<void> {
+  const cookieStore = await cookies();
 
   cookieStore.delete(ANONYMOUS_SESSION_COOKIE);
   cookieStore.delete(`${ANONYMOUS_SCAN_COUNT_PREFIX}${sessionId}`);
@@ -118,7 +134,9 @@ export function clearAnonymousSession(sessionId: string): void {
  * @param {NextRequest} req - Next.js request object
  * @returns {string | null} Session ID or null if not found
  */
-export function getAnonymousSessionFromRequest(req: NextRequest): string | null {
+export function getAnonymousSessionFromRequest(
+  req: NextRequest
+): string | null {
   const sessionCookie = req.cookies.get(ANONYMOUS_SESSION_COOKIE);
   return sessionCookie?.value || null;
 }
@@ -139,5 +157,5 @@ export function hasAnonymousSession(req: NextRequest): boolean {
 export const ANONYMOUS_SCAN_LIMITS = {
   MAX_SCANS: MAX_ANONYMOUS_SCANS,
   SESSION_DURATION_HOURS: SESSION_MAX_AGE / 3600,
-  PROMPT_SIGNUP_AFTER: 2 // Show signup prompt after 2 scans
+  PROMPT_SIGNUP_AFTER: 2, // Show signup prompt after 2 scans
 } as const;

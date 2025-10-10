@@ -439,11 +439,11 @@ export async function GET(req: NextRequest) {
 async function handleAnonymousScan(req: NextRequest) {
   try {
     // Get or create anonymous session
-    const sessionId = getOrCreateAnonymousSession(req);
-    const currentScanCount = getAnonymousScanCount(sessionId);
+    const sessionId = await getOrCreateAnonymousSession(req);
+    const currentScanCount = await getAnonymousScanCount(sessionId);
 
     // Check if limit reached
-    if (hasReachedAnonymousLimit(sessionId)) {
+    if (await hasReachedAnonymousLimit(sessionId)) {
       return NextResponse.json(
         {
           error: "Anonymous scan limit reached",
@@ -484,8 +484,8 @@ async function handleAnonymousScan(req: NextRequest) {
       console.log("Cache hit (Redis) - Anonymous user");
 
       // Increment scan count even for cached results
-      const newCount = incrementAnonymousScanCount(sessionId);
-      const remaining = getRemainingAnonymousScans(sessionId);
+      const newCount = await incrementAnonymousScanCount(sessionId);
+      const remaining = await getRemainingAnonymousScans(sessionId);
 
       return NextResponse.json(
         {
@@ -524,8 +524,8 @@ async function handleAnonymousScan(req: NextRequest) {
       await redis.set(cacheKey, existing, { ex: 300 });
 
       // Increment scan count
-      const newCount = incrementAnonymousScanCount(sessionId);
-      const remaining = getRemainingAnonymousScans(sessionId);
+      const newCount = await incrementAnonymousScanCount(sessionId);
+      const remaining = await getRemainingAnonymousScans(sessionId);
 
       return NextResponse.json(
         {
@@ -650,8 +650,8 @@ async function handleAnonymousScan(req: NextRequest) {
     await redis.set(cacheKey, auditResult, { ex: 300 });
 
     // Increment scan count
-    const newCount = incrementAnonymousScanCount(sessionId);
-    const remaining = getRemainingAnonymousScans(sessionId);
+    const newCount = await incrementAnonymousScanCount(sessionId);
+    const remaining = await getRemainingAnonymousScans(sessionId);
 
     // Return result with metadata
     return NextResponse.json(

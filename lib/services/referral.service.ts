@@ -529,7 +529,7 @@ export class ReferralService {
       const reward = await this.rewardsService.applyReward(
         referral.referrerId,
         {
-          type: "instant_credit" as const,
+          type: "credit" as const,
           amount: 1,
         },
         referral.id

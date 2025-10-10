@@ -8,7 +8,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/db";
 import { anonymousScans } from "@/db/schema";
-import { eq, gt } from "drizzle-orm";
+import { eq, gt, and, desc } from "drizzle-orm";
 import { getAnonymousSessionFromRequest } from "@/lib/middleware/session-tracking";
 
 export async function GET(req: NextRequest) {
@@ -32,9 +32,13 @@ export async function GET(req: NextRequest) {
     const scans = await db
       .select()
       .from(anonymousScans)
-      .where(eq(anonymousScans.sessionId, sessionId))
-      .where(gt(anonymousScans.expiresAt, now))
-      .orderBy(anonymousScans.createdAt);
+      .where(
+        and(
+          eq(anonymousScans.sessionId, sessionId),
+          gt(anonymousScans.expiresAt, now)
+        )
+      )
+      .orderBy(desc(anonymousScans.createdAt));
 
     return NextResponse.json({
       status: "success",
