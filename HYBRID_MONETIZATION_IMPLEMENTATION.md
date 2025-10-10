@@ -879,18 +879,18 @@ async processInstantPurchase(params: {
 // In handleInstantPurchase() function
 async function handleInstantPurchase(session: Stripe.Checkout.Session) {
   // ... existing purchase processing code ...
-  
+
   // After credits are applied, process referral reward
   try {
     console.log(`Processing referral reward for user ${user.id}`);
-    
+
     const referralService = new ReferralService();
     const rewardResult = await referralService.processInstantPurchase({
       referredUserId: user.id,
       purchaseAmount: session.amount_total || 0,
       purchaseId: purchase.id,
     });
-    
+
     if (rewardResult.success) {
       console.log(`✅ Referral reward processed successfully`);
       if (rewardResult.reward) {
@@ -933,22 +933,22 @@ export default function ReferralRewardEmail({
   return (
     <EmailLayout>
       <Heading>🎉 You Earned {rewardText}!</Heading>
-      
+
       <Text>
         Great news, {referrerName}! Someone you referred just made a purchase.
       </Text>
-      
+
       <Text>
         Your friend ({referredUserEmail}) purchased instant credits, and you've
         been rewarded with {rewardText}!
       </Text>
-      
+
       <Section>
         <Button href={`${process.env.NEXT_PUBLIC_SITE_URL}/audit`}>
           Use Your Credits
         </Button>
       </Section>
-      
+
       <Text>
         Keep sharing your referral link to earn more rewards!
       </Text>
@@ -972,7 +972,7 @@ curl -X POST http://localhost:3000/api/referrals/generate
 # 4. Verify User A received credit
 curl -X GET http://localhost:3000/api/user/access-status \
   -H "Authorization: Bearer <user-a-token>"
-  
+
 # Expected response:
 {
   "instantCredits": 1,
