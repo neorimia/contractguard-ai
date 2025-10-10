@@ -46,10 +46,10 @@ export class AccessValidationService {
       }
 
       // Priority 1: Check for Pro/Team subscription
-      if (user.subscriptionTier === "pro" || user.subscriptionTier === "team") {
+      if (user.tier === "pro" || user.tier === "enterprise") {
         return {
           hasAccess: true,
-          accessType: user.subscriptionTier as "pro" | "team",
+          accessType: user.tier === "enterprise" ? "team" : "pro",
           scansRemaining: -1, // -1 indicates unlimited
           instantCredits: user.instantCredits || 0,
         };
