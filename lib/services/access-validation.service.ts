@@ -101,7 +101,8 @@ export class AccessValidationService {
         accessType: "none",
         scansRemaining: 0,
         instantCredits: 0,
-        reason: "Daily limit reached. Purchase instant reports or upgrade to Pro.",
+        reason:
+          "Daily limit reached. Purchase instant reports or upgrade to Pro.",
       };
     } catch (error) {
       console.error("Access validation error:", error);
