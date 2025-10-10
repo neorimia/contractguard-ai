@@ -81,6 +81,15 @@ export const AnalyticsEvents = {
   FEATURE_USED: "feature_used",
   API_KEY_GENERATED: "api_key_generated",
   PDF_EXPORTED: "pdf_exported",
+
+  // Referral events
+  REFERRAL_LANDING: "referral_landing",
+  REFERRAL_SIGNUP: "referral_signup",
+  REFERRAL_CONFIRMED: "referral_confirmed",
+  REFERRAL_PAID_CONVERSION: "referral_paid_conversion",
+  REFERRAL_LINK_COPIED: "referral_link_copied",
+  REFERRAL_LINK_SHARED: "referral_link_shared",
+  REFERRAL_REWARD_EARNED: "referral_reward_earned",
 } as const;
 
 // Track custom event

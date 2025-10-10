@@ -3,6 +3,8 @@
 import { cn } from "@/lib/utils";
 import { Audit } from "@/db/schema";
 import { trackEvent, AnalyticsEvents } from "@/lib/analytics/posthog";
+import Image from "next/image";
+import { useTheme } from "next-themes";
 
 interface ShareOnXProps {
   result: Audit;
@@ -10,6 +12,7 @@ interface ShareOnXProps {
 }
 
 export default function ShareOnX({ result, contractAddress }: ShareOnXProps) {
+  const { theme } = useTheme();
   const getRiskEmoji = (score: number) => {
     if (score >= 70) return "🚫";
     if (score >= 40) return "⚠️";
@@ -73,8 +76,13 @@ Scan your contracts at`;
         >
           <div className="flex gap-3">
             <div className="shrink-0">
-              <div className="h-10 w-10 rounded-full overflow-hidden bg-gradient-to-br from-blue-600 to-purple-600 dark:from-blue-500 dark:to-purple-500 flex items-center justify-center shadow-md">
-                <span className="text-white font-bold text-lg">🛡️</span>
+              <div className="h-10 w-10 rounded-full overflow-hidden bg-foreground flex items-center justify-center shadow-md">
+                <Image
+                  src={theme === "dark" ? "/icon.svg" : "/icon-white.svg"}
+                  alt="ContractGuard AI"
+                  width={20}
+                  height={20}
+                />
               </div>
             </div>
 
@@ -94,7 +102,7 @@ Scan your contracts at`;
                     </svg>
                   </div>
                   <span className="text-gray-600 dark:text-gray-400 text-sm">
-                    @ContractGuardAI
+                    @contractGuard_
                   </span>
                 </div>
                 <button

@@ -10,10 +10,12 @@ import { NextRequest, NextResponse } from "next/server";
 import { stripeService } from "@/lib/services/stripe.service";
 import { AuthService } from "@/lib/services/auth.service";
 import { EmailService } from "@/lib/services/email.service";
+import { ReferralService } from "@/lib/services/referral.service";
 import Stripe from "stripe";
 
 const authService = new AuthService();
 const emailService = new EmailService();
+const referralService = new ReferralService();
 
 // Disable body parsing for webhook
 export const runtime = "nodejs";
@@ -152,6 +154,39 @@ async function handleSubscriptionCreated(subscription: Stripe.Subscription) {
   });
 
   console.log(`User ${user.id} upgraded to ${tier}`);
+
+  // ============================================================
+  // REFERRAL SYSTEM INTEGRATION
+  // Track paid conversion for referral rewards
+  // ============================================================
+  try {
+    console.log(`Checking for referral conversion for user ${user.id}`);
+
+    const conversionResult = await referralService.processPaidConversion({
+      referredUserId: user.id,
+      stripeInvoiceId: subscription.id,
+    });
+
+    if (conversionResult.success) {
+      console.log(`✅ Paid conversion tracked for user ${user.id}`);
+
+      if (conversionResult.reward) {
+        console.log(
+          `✅ Referrer rewarded: ${conversionResult.reward.type} x${conversionResult.reward.amount}`
+        );
+      }
+    } else if (conversionResult.error === "no_referral") {
+      console.log(`ℹ️ No referral found for user ${user.id} (not referred)`);
+    } else {
+      console.warn(
+        `⚠️ Referral conversion tracking failed for user ${user.id}: ${conversionResult.error}`
+      );
+    }
+  } catch (referralError) {
+    console.error("❌ Error tracking paid conversion:", referralError);
+    // Don't fail webhook - log error and continue
+  }
+  // ============================================================
 
   // Send payment confirmation email for initial subscription
   if (user.email) {
