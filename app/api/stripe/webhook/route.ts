@@ -162,10 +162,9 @@ async function handleSubscriptionCreated(subscription: Stripe.Subscription) {
   try {
     console.log(`Checking for referral conversion for user ${user.id}`);
 
-    const conversionResult = await referralService.trackPaidConversion({
-      userId: user.id,
-      tier,
-      subscriptionId: subscription.id,
+    const conversionResult = await referralService.processPaidConversion({
+      referredUserId: user.id,
+      stripeInvoiceId: subscription.id,
     });
 
     if (conversionResult.success) {

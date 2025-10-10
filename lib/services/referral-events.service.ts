@@ -1,7 +1,11 @@
 // lib/services/referral-events.service.ts
 
 import { db } from "@/db";
-import { referralEvents, type NewReferralEvent, type ReferralEvent } from "@/db/schema";
+import {
+  referralEvents,
+  type NewReferralEvent,
+  type ReferralEvent,
+} from "@/db/schema";
 import { eq, and, gte, lte, desc } from "drizzle-orm";
 import type { ClientInfo } from "@/lib/utils/client-info";
 
@@ -11,7 +15,13 @@ export class ReferralEventsService {
    */
   async logEvent(params: {
     referralId: string;
-    event: "landing" | "signup" | "first_audit" | "email_verified" | "paid" | "payout";
+    event:
+      | "landing"
+      | "signup"
+      | "first_audit"
+      | "email_verified"
+      | "paid"
+      | "payout";
     clientInfo: ClientInfo;
     metadata?: Record<string, any>;
   }): Promise<ReferralEvent> {
@@ -67,7 +77,13 @@ export class ReferralEventsService {
    * Get events by type with optional filters
    */
   async getEventsByType(
-    event: string,
+    event:
+      | "landing"
+      | "signup"
+      | "first_audit"
+      | "email_verified"
+      | "paid"
+      | "payout",
     filters?: {
       startDate?: Date;
       endDate?: Date;
@@ -107,7 +123,13 @@ export class ReferralEventsService {
    */
   async getEventCountByIp(
     ip: string,
-    event: string,
+    event:
+      | "landing"
+      | "signup"
+      | "first_audit"
+      | "email_verified"
+      | "paid"
+      | "payout",
     sinceDate: Date
   ): Promise<number> {
     try {
@@ -134,7 +156,13 @@ export class ReferralEventsService {
    */
   async getEventCountByFingerprint(
     fingerprint: string,
-    event: string,
+    event:
+      | "landing"
+      | "signup"
+      | "first_audit"
+      | "email_verified"
+      | "paid"
+      | "payout",
     sinceDate: Date
   ): Promise<number> {
     try {
@@ -174,7 +202,12 @@ export class ReferralEventsService {
       const fromEventData = events.find((e) => e.event === fromEvent);
       const toEventData = events.find((e) => e.event === toEvent);
 
-      if (!fromEventData || !toEventData) {
+      if (
+        !fromEventData ||
+        !toEventData ||
+        !fromEventData.createdAt ||
+        !toEventData.createdAt
+      ) {
         return null;
       }
 

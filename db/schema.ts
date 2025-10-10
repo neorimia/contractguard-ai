@@ -133,6 +133,7 @@ export const referrals = pgTable("referrals", {
     landingIp?: string;
     signupIp?: string;
     confirmIp?: string;
+    confirmTrigger?: string;
     source?: string;
   }>(),
 });
@@ -213,7 +214,10 @@ export const rewardsLedger = pgTable("rewards_ledger", {
   metadata: jsonb("metadata").$type<{
     description?: string;
     stripeInvoiceId?: string;
+    stripeBalanceTxnId?: string;
     promoCode?: string;
+    revokeReason?: string;
+    revokedAt?: string;
   }>(),
 
   // Timestamps

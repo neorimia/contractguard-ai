@@ -35,6 +35,10 @@ export const antifraudRules = {
   // Behavioral patterns
   requiredActionsForConfirmation: 1, // Min actions before confirming referral
 
+  // Referral limits
+  maxPendingReferrals: 50, // Max pending referrals per user
+  dailyInviteCap: 20, // Max invites per day per user
+
   // Risk score thresholds
   riskScoreThresholds: {
     low: 25,
@@ -66,10 +70,15 @@ export function calculateRiskScore(factors: {
 
   // Fingerprint-based risk (0-25 points)
   if (factors.sameFingerprintCount) {
-    if (factors.sameFingerprintCount >= antifraudRules.sameFingerprintThreshold) {
+    if (
+      factors.sameFingerprintCount >= antifraudRules.sameFingerprintThreshold
+    ) {
       score += 25;
     } else {
-      score += (factors.sameFingerprintCount / antifraudRules.sameFingerprintThreshold) * 25;
+      score +=
+        (factors.sameFingerprintCount /
+          antifraudRules.sameFingerprintThreshold) *
+        25;
     }
   }
 
@@ -80,9 +89,15 @@ export function calculateRiskScore(factors: {
 
   // Timing anomaly (0-15 points)
   if (factors.timeBetweenLandingAndSignup !== undefined) {
-    if (factors.timeBetweenLandingAndSignup < antifraudRules.minTimeBetweenLandingAndSignup) {
+    if (
+      factors.timeBetweenLandingAndSignup <
+      antifraudRules.minTimeBetweenLandingAndSignup
+    ) {
       score += 15; // Too fast = likely bot
-    } else if (factors.timeBetweenLandingAndSignup > antifraudRules.maxTimeBetweenLandingAndSignup) {
+    } else if (
+      factors.timeBetweenLandingAndSignup >
+      antifraudRules.maxTimeBetweenLandingAndSignup
+    ) {
       score += 5; // Too slow = suspicious
     }
   }
@@ -102,13 +117,17 @@ export function isDisposableEmail(email: string): boolean {
   const domain = email.split("@")[1]?.toLowerCase();
   if (!domain) return false;
 
-  return antifraudRules.disposableEmailDomains.includes(domain);
+  return (antifraudRules.disposableEmailDomains as readonly string[]).includes(
+    domain
+  );
 }
 
 /**
  * Get risk level from score
  */
-export function getRiskLevel(score: number): "low" | "medium" | "high" | "critical" {
+export function getRiskLevel(
+  score: number
+): "low" | "medium" | "high" | "critical" {
   if (score >= antifraudRules.riskScoreThresholds.high) return "critical";
   if (score >= antifraudRules.riskScoreThresholds.medium) return "high";
   if (score >= antifraudRules.riskScoreThresholds.low) return "medium";

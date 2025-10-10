@@ -5,10 +5,10 @@ import { ReferralService } from "@/lib/services/referral.service";
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { code: string } }
+  { params }: { params: Promise<{ code: string }> }
 ) {
   try {
-    const { code } = params;
+    const { code } = await params;
 
     const referralService = new ReferralService();
     const validation = await referralService.validateReferralCode(code);

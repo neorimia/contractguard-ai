@@ -66,7 +66,9 @@ export class RewardsService {
 
         case "credit":
           // Credit will be applied via Stripe
-          console.log(`Credit reward created for user ${userId}: $${reward.amount / 100}`);
+          console.log(
+            `Credit reward created for user ${userId}: $${reward.amount / 100}`
+          );
           break;
 
         case "pro_month":
@@ -77,7 +79,9 @@ export class RewardsService {
           console.warn(`Unknown reward type: ${reward.type}`);
       }
 
-      console.log(`Reward applied: ${reward.type} (${reward.amount}) to user ${userId}`);
+      console.log(
+        `Reward applied: ${reward.type} (${reward.amount}) to user ${userId}`
+      );
 
       return ledgerEntry;
     } catch (error) {
@@ -89,10 +93,7 @@ export class RewardsService {
   /**
    * Apply bonus scans to user account
    */
-  private async applyBonusScans(
-    userId: number,
-    amount: number
-  ): Promise<void> {
+  private async applyBonusScans(userId: number, amount: number): Promise<void> {
     try {
       const [user] = await db
         .select()
@@ -114,7 +115,9 @@ export class RewardsService {
         })
         .where(eq(users.id, userId));
 
-      console.log(`Added ${amount} bonus scans to user ${userId}. New total: ${newBonusScans}`);
+      console.log(
+        `Added ${amount} bonus scans to user ${userId}. New total: ${newBonusScans}`
+      );
     } catch (error) {
       console.error("Error applying bonus scans:", error);
       throw error;
@@ -174,7 +177,9 @@ export class RewardsService {
         })
         .where(eq(users.id, userId));
 
-      console.log(`Consumed 1 bonus scan for user ${userId}. Remaining: ${newBonusScans}`);
+      console.log(
+        `Consumed 1 bonus scan for user ${userId}. Remaining: ${newBonusScans}`
+      );
 
       return {
         success: true,
@@ -234,7 +239,7 @@ export class RewardsService {
       // Import Stripe dynamically to avoid errors if not configured
       const Stripe = (await import("stripe")).default;
       const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
-        apiVersion: "2024-12-18.acacia",
+        apiVersion: "2025-09-30.clover",
       });
 
       // Create customer balance transaction (credit)
@@ -382,7 +387,9 @@ export class RewardsService {
             })
             .where(eq(users.id, reward.userId));
 
-          console.log(`Revoked ${reward.amount} bonus scans from user ${reward.userId}`);
+          console.log(
+            `Revoked ${reward.amount} bonus scans from user ${reward.userId}`
+          );
         }
       }
 
