@@ -30,14 +30,17 @@ export function ScanOverview({
     isAnonymous,
   });
 
-  // For Pro/Team users with unlimited scans
-  const isUnlimited =
-    tier === "pro" || tier === "team" || tier === "enterprise";
+  // For Team/Enterprise users with unlimited scans (Pro has 100/day limit)
+  const isUnlimited = tier === "team" || tier === "enterprise";
 
   // Always show the component to create awareness
   // No early return - show for everyone
 
-  const percentage = isUnlimited ? 100 : (scansPerformed / maxScans) * 100;
+  const percentage = isUnlimited
+    ? 100
+    : tier === "pro"
+      ? (scansPerformed / 100) * 100
+      : (scansPerformed / maxScans) * 100;
   const isLimitReached =
     scansRemaining === 0 && !isUnlimited && instantCredits === 0;
 
@@ -61,23 +64,23 @@ export function ScanOverview({
             <span className="text-sm font-medium text-white/80 dark:text-black/80">
               {isUnlimited
                 ? "Unlimited Scans"
-                : instantCredits > 0
-                  ? "Instant Credits"
-                  : isAnonymous
-                    ? "Free Trial Scans"
-                    : "Free Scans Today"}
+                : tier === "pro"
+                  ? "Pro Scans Today"
+                  : instantCredits > 0
+                    ? "Instant Credits"
+                    : isAnonymous
+                      ? "Free Trial Scans"
+                      : "Free Scans Today"}
             </span>
           </div>
           <span className="text-sm font-semibold text-white dark:text-black">
             {isUnlimited ? (
               <span className="flex items-center gap-1">
                 <Infinity className="w-4 h-4" />
-                {tier === "pro"
-                  ? "Pro"
-                  : tier === "team"
-                    ? "Team"
-                    : "Unlimited"}
+                {tier === "team" ? "Team" : "Unlimited"}
               </span>
+            ) : tier === "pro" ? (
+              <span>{scansPerformed} / 100</span>
             ) : instantCredits > 0 ? (
               <span>{instantCredits} credits</span>
             ) : (
@@ -119,11 +122,7 @@ export function ScanOverview({
                 Scan as much as you want
               </span>
               <span className="text-white/40 dark:text-black/40">
-                {tier === "pro"
-                  ? "$29/mo"
-                  : tier === "team"
-                    ? "$99/mo"
-                    : "Premium"}
+                {tier === "team" ? "$99/mo" : "Premium"}
               </span>
             </>
           ) : instantCredits > 0 ? (

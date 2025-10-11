@@ -21,7 +21,7 @@ type PriceTier = {
 
 export default function PricingSection() {
   const [billingPeriod, setBillingPeriod] = useState<"monthly" | "yearly">(
-    "monthly",
+    "monthly"
   );
   const [loadingTier, setLoadingTier] = useState<string | null>(null);
   const user = useUser();
@@ -46,9 +46,9 @@ export default function PricingSection() {
     {
       name: "Pro Tier",
       price: billingPeriod === "monthly" ? "29" : "290",
-      description: "Unlimited scans with advanced security features",
+      description: "100 scans per day with advanced security features",
       features: [
-        "Unlimited scans",
+        "100 scans per day",
         "Advanced analysis",
         "API access (500 calls/day)",
         "Priority processing",
