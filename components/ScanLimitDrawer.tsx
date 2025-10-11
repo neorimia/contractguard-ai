@@ -74,6 +74,12 @@ export default function ScanLimitDrawer({
       const date = new Date(dateString);
       const now = new Date();
       const diff = date.getTime() - now.getTime();
+
+      // If the reset time has already passed, show "now"
+      if (diff <= 0) {
+        return "now";
+      }
+
       const hours = Math.floor(diff / (1000 * 60 * 60));
       const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
 
