@@ -77,6 +77,15 @@ export const users = pgTable("users", {
   bonusScans: integer("bonus_scans").default(0), // Accumulated bonus scans
   bonusScansUsedToday: integer("bonus_scans_used_today").default(0), // Track daily usage
 
+  // Referral Gamification
+  referralTier: text("referral_tier").default("none"), // none, bronze, iron, silver, gold, platinum, ambassador
+  referralCount: integer("referral_count").default(0), // Total confirmed referrals
+  paidReferrals: integer("paid_referrals").default(0), // Total paying referrals
+  referredRevenue: integer("referred_revenue").default(0), // Total revenue from referred users (in cents)
+  totalReferralEarnings: integer("total_referral_earnings").default(0), // Total earned from referrals (in cents)
+  lifetimeCommission: integer("lifetime_commission").default(0), // Total recurring commission earned (in cents)
+  lastReferralRewardAt: timestamp("last_referral_reward_at"), // Last reward claim timestamp for cooldown
+
   // Billing Integration
   stripeCustomerId: text("stripe_customer_id"),
   stripeSubscriptionId: text("stripe_subscription_id"),
@@ -304,6 +313,354 @@ export const anonymousScans = pgTable("anonymous_scans", {
   expiresAt: timestamp("expires_at").notNull(), // 24 hours from creation
 });
 
+// Banner Monetization Tables
+export const banners = pgTable("banners", {
+  id: text("id")
+    .primaryKey()
+    .$defaultFn(() => crypto.randomUUID()),
+
+  // Banner Identity
+  name: text("name").notNull(),
+  type: text("type", {
+    enum: [
+      "internal_upgrade",
+      "partner_ad",
+      "feature_education",
+      "social_proof",
+      "urgency",
+    ],
+  }).notNull(),
+  category: text("category", {
+    enum: ["upgrade", "educational", "winback", "paywall", "partnership"],
+  }).notNull(),
+
+  // Placement Configuration
+  placement: text("placement", {
+    enum: [
+      "top_leaderboard",
+      "sidebar_rectangle",
+      "bottom_sticky",
+      "inline_result",
+      "modal_overlay",
+    ],
+  }).notNull(),
+  priority: integer("priority").notNull().default(5),
+
+  // Targeting Rules
+  targetUserType: text("target_user_type", {
+    enum: ["anonymous", "soft", "free", "power_user", "churned", "all"],
+  }).notNull(),
+  minScans: integer("min_scans").default(0),
+  maxScans: integer("max_scans"),
+  targetTier: text("target_tier", {
+    enum: ["free", "pro", "enterprise", "all"],
+  }).default("all"),
+
+  // Content
+  headline: text("headline").notNull(),
+  body: text("body"),
+  ctaText: text("cta_text").notNull(),
+  ctaUrl: text("cta_url").notNull(),
+
+  // Design Specifications
+  format: text("format", {
+    enum: ["static", "animated", "html5", "video"],
+  })
+    .notNull()
+    .default("static"),
+  backgroundColor: text("background_color").default("#1F2937"),
+  textColor: text("text_color").default("#FFFFFF"),
+  assetUrl: text("asset_url"),
+  customCss: text("custom_css"),
+
+  // A/B Testing
+  variantGroup: text("variant_group"),
+  variantName: text("variant_name"),
+
+  // External Partner Configuration
+  isExternal: boolean("is_external").default(false),
+  partnerName: text("partner_name"),
+  partnerScriptUrl: text("partner_script_url"),
+  partnerAdUnitId: text("partner_ad_unit_id"),
+  cpmRate: integer("cpm_rate"),
+
+  // Status & Scheduling
+  isActive: boolean("is_active").default(true),
+  startDate: timestamp("start_date", { withTimezone: true }),
+  endDate: timestamp("end_date", { withTimezone: true }),
+
+  // Performance Tracking
+  impressions: integer("impressions").default(0),
+  clicks: integer("clicks").default(0),
+  conversions: integer("conversions").default(0),
+  revenue: integer("revenue").default(0),
+
+  // Metadata
+  metadata: jsonb("metadata").$type<{
+    frequencyCap?: number;
+    showAfterScan?: number;
+    dismissible?: boolean;
+    requiresConsent?: boolean;
+    notes?: string;
+  }>(),
+
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow(),
+});
+
+export const bannerImpressions = pgTable("banner_impressions", {
+  id: text("id")
+    .primaryKey()
+    .$defaultFn(() => crypto.randomUUID()),
+
+  // Relationships
+  bannerId: text("banner_id")
+    .notNull()
+    .references(() => banners.id, { onDelete: "cascade" }),
+  userId: integer("user_id").references(() => users.id, {
+    onDelete: "set null",
+  }),
+  sessionId: text("session_id").notNull(),
+
+  // Context
+  contractAddress: text("contract_address"),
+  scanCount: integer("scan_count"),
+  userTier: text("user_tier"),
+  placement: text("placement").notNull(),
+
+  // Interaction
+  wasClicked: boolean("was_clicked").default(false),
+  clickedAt: timestamp("clicked_at", { withTimezone: true }),
+  converted: boolean("converted").default(false),
+  convertedAt: timestamp("converted_at", { withTimezone: true }),
+  revenueGenerated: integer("revenue_generated").default(0),
+
+  // Technical Metadata
+  userAgent: text("user_agent"),
+  ipAddress: text("ip_address"),
+  referrer: text("referrer"),
+  deviceType: text("device_type", {
+    enum: ["desktop", "mobile", "tablet"],
+  }),
+
+  // A/B Testing Context
+  variantGroup: text("variant_group"),
+  variantName: text("variant_name"),
+
+  // Timestamps
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
+});
+
+export const bannerAnalytics = pgTable("banner_analytics", {
+  id: text("id")
+    .primaryKey()
+    .$defaultFn(() => crypto.randomUUID()),
+
+  // Aggregation Period
+  bannerId: text("banner_id")
+    .notNull()
+    .references(() => banners.id, { onDelete: "cascade" }),
+  date: timestamp("date", { withTimezone: true }).notNull(),
+  period: text("period", {
+    enum: ["hourly", "daily", "weekly", "monthly"],
+  }).notNull(),
+
+  // Core Metrics
+  impressions: integer("impressions").default(0),
+  clicks: integer("clicks").default(0),
+  conversions: integer("conversions").default(0),
+  ctr: integer("ctr").default(0),
+  conversionRate: integer("conversion_rate").default(0),
+  revenue: integer("revenue").default(0),
+  revenuePerImpression: integer("revenue_per_impression").default(0),
+
+  // Segmentation
+  userType: text("user_type"),
+  placement: text("placement"),
+  deviceType: text("device_type"),
+
+  // Quality Metrics
+  averageTimeToClick: integer("average_time_to_click"),
+  bounceRate: integer("bounce_rate"),
+
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
+});
+
+// Referral Commissions table for 10% recurring rewards
+export const referralCommissions = pgTable("referral_commissions", {
+  id: text("id")
+    .primaryKey()
+    .$defaultFn(() => crypto.randomUUID()),
+
+  // Relationships
+  referrerId: integer("referrer_id")
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
+  referredUserId: integer("referred_user_id")
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
+
+  // Commission Details
+  subscriptionTier: text("subscription_tier", {
+    enum: ["pro", "team"],
+  }).notNull(),
+  monthlyCommission: integer("monthly_commission").notNull(), // 10% in cents
+  totalEarned: integer("total_earned").default(0), // Lifetime total in cents
+
+  // Status Tracking
+  status: text("status", {
+    enum: ["active", "paused", "ended"],
+  })
+    .notNull()
+    .default("active"),
+
+  // Payout Management
+  nextPayoutDate: timestamp("next_payout_date", { withTimezone: true }),
+  lastPayoutDate: timestamp("last_payout_date", { withTimezone: true }),
+
+  // Stripe Integration
+  stripeSubscriptionId: text("stripe_subscription_id"),
+
+  // Metadata
+  metadata: jsonb("metadata").$type<{
+    payoutHistory?: Array<{
+      date: string;
+      amount: number;
+      stripeTransferId?: string;
+    }>;
+    notes?: string;
+  }>(),
+
+  // Timestamps
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow(),
+});
+
+// Referral Tier Achievements for gamification
+export const referralTierAchievements = pgTable("referral_tier_achievements", {
+  id: text("id")
+    .primaryKey()
+    .$defaultFn(() => crypto.randomUUID()),
+
+  // Relationship
+  userId: integer("user_id")
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
+
+  // Tier Information
+  tier: text("tier", {
+    enum: ["bronze", "iron", "silver", "gold", "platinum", "ambassador"],
+  }).notNull(),
+  referralsRequired: integer("referrals_required").notNull(),
+  rewardType: text("reward_type").notNull(),
+  rewardDescription: text("reward_description").notNull(),
+
+  // Achievement Tracking
+  achievedAt: timestamp("achieved_at", { withTimezone: true }).defaultNow(),
+
+  // Metadata
+  metadata: jsonb("metadata").$type<{
+    badge?: string;
+    announcement?: string;
+    specialPerks?: string[];
+  }>(),
+});
+
+// Reward Audit Log for tracking reward decisions and ROI validation
+export const referralRewards = pgTable("referral_rewards", {
+  id: text("id")
+    .primaryKey()
+    .$defaultFn(() => crypto.randomUUID()),
+
+  // Relationships
+  userId: integer("user_id")
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
+  achievementId: text("achievement_id").references(
+    () => referralTierAchievements.id,
+    { onDelete: "set null" }
+  ),
+
+  // Tier Information
+  tier: text("tier", {
+    enum: ["bronze", "iron", "silver", "gold", "platinum", "ambassador"],
+  }).notNull(),
+  rewardType: text("reward_type", {
+    enum: ["trial", "subscription", "lifetime", "commission"],
+  }).notNull(),
+
+  // Reward Decision
+  status: text("status", {
+    enum: ["granted", "denied", "pending"],
+  })
+    .notNull()
+    .default("pending"),
+  denialReason: text("denial_reason"),
+
+  // Financial Tracking
+  rewardValue: integer("reward_value").notNull(), // Reward cost in cents
+  revenueAtTime: integer("revenue_at_time").default(0), // User's referred revenue at time of decision (cents)
+  roiRatio: integer("roi_ratio"), // ROI ratio × 100 (e.g., 500 = 5.0×)
+
+  // Referral Context
+  totalReferrals: integer("total_referrals").notNull(),
+  paidReferrals: integer("paid_referrals").notNull(),
+
+  // Cooldown Information
+  wasInCooldown: boolean("was_in_cooldown").default(false),
+  cooldownDaysRemaining: integer("cooldown_days_remaining"),
+
+  // Timestamps
+  issuedAt: timestamp("issued_at", { withTimezone: true }).defaultNow(),
+
+  // Metadata
+  metadata: jsonb("metadata").$type<{
+    rewardDetails?: string;
+    scanCredits?: number;
+    commissionRate?: number;
+    validationChecks?: {
+      cooldown: boolean;
+      tierUnlocked: boolean;
+      roiProfitable: boolean | null;
+    };
+    notes?: string;
+  }>(),
+});
+
+// Social Proof Stats for viral marketing
+export const socialProofStats = pgTable("social_proof_stats", {
+  id: text("id")
+    .primaryKey()
+    .$defaultFn(() => crypto.randomUUID()),
+
+  // Time Period
+  date: timestamp("date", { withTimezone: true }).notNull(),
+  period: text("period", {
+    enum: ["daily", "weekly", "monthly", "all_time"],
+  }).notNull(),
+
+  // Viral Metrics
+  totalUsersJoined: integer("total_users_joined").default(0),
+  totalScamsAvoided: integer("total_scams_avoided").default(0),
+  estimatedSavingsUsd: integer("estimated_savings_usd").default(0), // in cents
+  totalReferrals: integer("total_referrals").default(0),
+  topReferrerCount: integer("top_referrer_count").default(0),
+
+  // Metadata
+  metadata: jsonb("metadata").$type<{
+    topSavings?: Array<{
+      userId: number;
+      amount: number;
+      percentage: number;
+    }>;
+    viralCoefficient?: number;
+    growthRate?: number;
+  }>(),
+
+  // Timestamp
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
+});
+
 // Types
 export interface Issue {
   severity: "CRITICAL" | "HIGH" | "MEDIUM" | "LOW";
@@ -329,3 +686,19 @@ export type Purchase = typeof purchases.$inferSelect;
 export type NewPurchase = typeof purchases.$inferInsert;
 export type AnonymousScan = typeof anonymousScans.$inferSelect;
 export type NewAnonymousScan = typeof anonymousScans.$inferInsert;
+export type Banner = typeof banners.$inferSelect;
+export type NewBanner = typeof banners.$inferInsert;
+export type BannerImpression = typeof bannerImpressions.$inferSelect;
+export type NewBannerImpression = typeof bannerImpressions.$inferInsert;
+export type BannerAnalytics = typeof bannerAnalytics.$inferSelect;
+export type NewBannerAnalytics = typeof bannerAnalytics.$inferInsert;
+export type ReferralCommission = typeof referralCommissions.$inferSelect;
+export type NewReferralCommission = typeof referralCommissions.$inferInsert;
+export type ReferralTierAchievement =
+  typeof referralTierAchievements.$inferSelect;
+export type NewReferralTierAchievement =
+  typeof referralTierAchievements.$inferInsert;
+export type ReferralReward = typeof referralRewards.$inferSelect;
+export type NewReferralReward = typeof referralRewards.$inferInsert;
+export type SocialProofStat = typeof socialProofStats.$inferSelect;
+export type NewSocialProofStat = typeof socialProofStats.$inferInsert;

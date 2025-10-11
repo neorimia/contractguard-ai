@@ -22,13 +22,15 @@
         "test:cache": "tsx scripts/test-caching.ts",
         "test:all": "tsx scripts/test-audit-flow.ts && tsx scripts/test-caching.ts",
         "test:emails": "tsx scripts/test-emails.ts",
-        "email:dev": "email dev"
+        "email:dev": "email dev",
+        "seed:banners": "tsx scripts/seed-banners.ts"
     },
     "dependencies": {
         "@neondatabase/serverless": "^1.0.2",
         "@number-flow/react": "^0.5.9",
         "@radix-ui/react-dialog": "^1.1.15",
         "@radix-ui/react-label": "^2.1.7",
+        "@radix-ui/react-progress": "^1.1.7",
         "@radix-ui/react-slot": "^1.2.3",
         "@radix-ui/react-tabs": "^1.1.13",
         "@react-email/components": "^0.5.6",

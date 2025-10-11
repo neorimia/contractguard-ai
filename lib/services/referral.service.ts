@@ -19,18 +19,21 @@ import { RewardsService } from "./rewards.service";
 import { AntiFraudService } from "./antifraud.service";
 import { ReferralEventsService } from "./referral-events.service";
 import { EmailService } from "./email.service";
+import { ReferralGamificationService } from "./referral-gamification.service";
 
 export class ReferralService {
   private rewardsService: RewardsService;
   private antifraudService: AntiFraudService;
   private eventsService: ReferralEventsService;
   private emailService: EmailService;
+  private gamificationService: ReferralGamificationService;
 
   constructor() {
     this.rewardsService = new RewardsService();
     this.antifraudService = new AntiFraudService();
     this.eventsService = new ReferralEventsService();
     this.emailService = new EmailService();
+    this.gamificationService = new ReferralGamificationService();
   }
 
   /**
@@ -474,6 +477,13 @@ export class ReferralService {
 
       console.log(`Referral ${referral.id} confirmed and rewarded`);
 
+      // Update referrer's gamification tier
+      try {
+        await this.gamificationService.updateUserTier(referral.referrerId);
+      } catch (error) {
+        console.error("Failed to update referrer tier:", error);
+      }
+
       return {
         success: true,
         reward,
@@ -544,16 +554,14 @@ export class ReferralService {
 
       // Send instant purchase reward notification email (non-blocking)
       if (referrer) {
-        this.sendReferralRewardEmail(
-          referrer,
-          1,
-          "credit"
-        ).catch((error) => {
+        this.sendReferralRewardEmail(referrer, 1, "credit").catch((error) => {
           console.error("Failed to send instant purchase reward email:", error);
         });
       }
 
-      console.log(`Instant purchase reward applied for referral ${referral.id}`);
+      console.log(
+        `Instant purchase reward applied for referral ${referral.id}`
+      );
 
       return {
         success: true,

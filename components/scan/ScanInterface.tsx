@@ -7,20 +7,12 @@ import { ArrowRight } from "lucide-react";
 import ScanResults from "@/components/ScanResults";
 import ScanLimitDrawer from "@/components/ScanLimitDrawer";
 import { SoftSignupPrompt } from "@/components/auth/SoftSignupPrompt";
-import { CompleteAccountPrompt } from "@/components/auth/CompleteAccountPrompt";
 import { AccountUpgradeModal } from "@/components/auth/AccountUpgradeModal";
 import { ScanOverview } from "@/components/scan/ScanOverview";
-import { MagicLinkSignIn, useUser } from "@stackframe/stack";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+import { BannerManager } from "@/components/banners/BannerManager";
+import { useUser } from "@stackframe/stack";
 import { trackEvent, AnalyticsEvents } from "@/lib/analytics/posthog";
 import { AILoadingState } from "./AILoadingState";
-import Link from "next/link";
 
 interface ScanLimitError {
   error: string;
@@ -406,6 +398,47 @@ export function ScanInterface() {
         <div ref={resultsRef}>
           <ScanResults result={result} contractAddress={address} />
         </div>
+      )}
+
+      {/* Top Leaderboard Banner - Show after scan results */}
+      {!user && (result || userAccessStatus?.scansRemaining === 0) && (
+        <div className="max-w-6xl mx-auto mt-8 px-4">
+          <BannerManager
+            placement="top_leaderboard"
+            scanCount={
+              user
+                ? 3 - (userAccessStatus?.scansRemaining || 0)
+                : anonymousScansPerformed
+            }
+            contractAddress={address}
+          />
+        </div>
+      )}
+
+      {/* Sidebar Rectangle Banner - Desktop Only, Fixed to Right */}
+      {(result || userAccessStatus?.scansRemaining === 0) && (
+        <aside className="hidden lg:block fixed right-4 top-32 w-[300px] z-10">
+          <BannerManager
+            placement="sidebar_rectangle"
+            scanCount={
+              user
+                ? 3 - (userAccessStatus?.scansRemaining || 0)
+                : anonymousScansPerformed
+            }
+          />
+        </aside>
+      )}
+
+      {/* Bottom Sticky Banner - Mobile Only, Fixed to Bottom */}
+      {(result || userAccessStatus?.scansRemaining === 0) && (
+        <BannerManager
+          placement="bottom_sticky"
+          scanCount={
+            user
+              ? 3 - (userAccessStatus?.scansRemaining || 0)
+              : anonymousScansPerformed
+          }
+        />
       )}
 
       {/* Scan Limit Drawer */}

@@ -40,6 +40,7 @@ export interface AccessValidationResult {
   accountType?: AccountType;
   reason?: string;
   upgradePrompt?: string;
+  resetAt?: Date;
 }
 
 export class AccessValidationService {
@@ -188,20 +189,70 @@ export class AccessValidationService {
         return this.validateSoftAccess(userId);
       }
 
-      // Priority 1: Check for Pro/Team subscription (unlimited)
+      // Priority 1: Check for Pro/Team subscription
       if (
         user.tier === "pro" ||
         user.tier === "enterprise" ||
         user.tier === "team"
       ) {
-        return {
-          hasAccess: true,
-          accessType:
-            user.tier === "enterprise" ? "team" : (user.tier as AccessType),
-          scansRemaining: -1, // -1 indicates unlimited
-          instantCredits: user.instantCredits || 0,
-          accountType: (user.accountType as AccountType) || "full",
-        };
+        // Check daily scan limit for Pro (100/day), Team/Enterprise unlimited
+        if (user.tier === "pro") {
+          const now = new Date();
+          const resetAt = user.scansResetAt
+            ? new Date(user.scansResetAt)
+            : null;
+
+          // Reset daily counter if needed
+          if (!resetAt || now >= resetAt) {
+            await this.resetDailyScans(userId);
+            return {
+              hasAccess: true,
+              accessType: "pro",
+              scansRemaining: 100, // Pro tier limit
+              instantCredits: user.instantCredits || 0,
+              accountType: (user.accountType as AccountType) || "full",
+              resetAt: new Date(Date.now() + 24 * 60 * 60 * 1000), // Next day reset
+            };
+          }
+
+          // Check if Pro scans available
+          const scansUsed = user.scansToday || 0;
+          const proLimit = 100; // Pro tier daily limit
+          const scansRemaining = Math.max(0, proLimit - scansUsed);
+
+          if (scansRemaining > 0) {
+            return {
+              hasAccess: true,
+              accessType: "pro",
+              scansRemaining,
+              instantCredits: user.instantCredits || 0,
+              accountType: (user.accountType as AccountType) || "full",
+              resetAt: resetAt,
+            };
+          }
+
+          // Pro limit reached
+          return {
+            hasAccess: false,
+            accessType: "pro",
+            scansRemaining: 0,
+            instantCredits: user.instantCredits || 0,
+            accountType: (user.accountType as AccountType) || "full",
+            reason:
+              "Pro daily limit reached (100 scans). Upgrade to Team for unlimited.",
+            resetAt: resetAt || new Date(Date.now() + 24 * 60 * 60 * 1000),
+          };
+        } else {
+          // Team/Enterprise - unlimited
+          return {
+            hasAccess: true,
+            accessType:
+              user.tier === "enterprise" ? "team" : (user.tier as AccessType),
+            scansRemaining: -1, // -1 indicates unlimited
+            instantCredits: user.instantCredits || 0,
+            accountType: (user.accountType as AccountType) || "full",
+          };
+        }
       }
 
       // Priority 2: Check for instant credits
@@ -256,6 +307,7 @@ export class AccessValidationService {
         accountType: (user.accountType as AccountType) || "full",
         reason:
           "Daily limit reached. Purchase instant reports or upgrade to Pro.",
+        resetAt: resetAt || new Date(Date.now() + 24 * 60 * 60 * 1000), // Next day reset
       };
     } catch (error) {
       console.error("Access validation error:", error);

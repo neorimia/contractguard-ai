@@ -12,6 +12,7 @@ import {
   LogOut,
   MessageCircle,
   CreditCard,
+  Gift,
 } from "lucide-react";
 import { useTheme } from "next-themes";
 import { useRouter } from "next/navigation";
@@ -208,6 +209,16 @@ export function Header() {
                           <button
                             onClick={() => {
                               setShowUserMenu(false);
+                              router.push("/referrals");
+                            }}
+                            className="w-full text-left px-4 py-2 text-sm text-black dark:text-white hover:bg-black/5 dark:hover:bg-white/5 rounded-md transition-colors flex items-center gap-2"
+                          >
+                            <Gift className="h-4 w-4" />
+                            Referrals
+                          </button>
+                          <button
+                            onClick={() => {
+                              setShowUserMenu(false);
                               router.push("/billing");
                             }}
                             className="w-full text-left px-4 py-2 text-sm text-black dark:text-white hover:bg-black/5 dark:hover:bg-white/5 rounded-md transition-colors flex items-center gap-2"
@@ -340,6 +351,18 @@ export function Header() {
                     >
                       <User className="h-4 w-4 mr-2" />
                       Account Settings
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="w-full justify-start px-0 text-black dark:text-white hover:bg-black/5 dark:hover:bg-white/5"
+                      onClick={() => {
+                        setIsMobileMenuOpen(false);
+                        router.push("/referrals");
+                      }}
+                    >
+                      <Gift className="h-4 w-4 mr-2" />
+                      Referrals
                     </Button>
                     <Button
                       variant="ghost"
