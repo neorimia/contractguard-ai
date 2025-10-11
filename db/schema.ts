@@ -78,10 +78,13 @@ export const users = pgTable("users", {
   bonusScansUsedToday: integer("bonus_scans_used_today").default(0), // Track daily usage
 
   // Referral Gamification
-  referralTier: text("referral_tier").default("none"), // none, bronze, silver, gold, platinum, ambassador
+  referralTier: text("referral_tier").default("none"), // none, bronze, iron, silver, gold, platinum, ambassador
   referralCount: integer("referral_count").default(0), // Total confirmed referrals
+  paidReferrals: integer("paid_referrals").default(0), // Total paying referrals
+  referredRevenue: integer("referred_revenue").default(0), // Total revenue from referred users (in cents)
   totalReferralEarnings: integer("total_referral_earnings").default(0), // Total earned from referrals (in cents)
   lifetimeCommission: integer("lifetime_commission").default(0), // Total recurring commission earned (in cents)
+  lastReferralRewardAt: timestamp("last_referral_reward_at"), // Last reward claim timestamp for cooldown
 
   // Billing Integration
   stripeCustomerId: text("stripe_customer_id"),
@@ -546,7 +549,7 @@ export const referralTierAchievements = pgTable("referral_tier_achievements", {
 
   // Tier Information
   tier: text("tier", {
-    enum: ["bronze", "silver", "gold", "platinum", "ambassador"],
+    enum: ["bronze", "iron", "silver", "gold", "platinum", "ambassador"],
   }).notNull(),
   referralsRequired: integer("referrals_required").notNull(),
   rewardType: text("reward_type").notNull(),
@@ -560,6 +563,67 @@ export const referralTierAchievements = pgTable("referral_tier_achievements", {
     badge?: string;
     announcement?: string;
     specialPerks?: string[];
+  }>(),
+});
+
+// Reward Audit Log for tracking reward decisions and ROI validation
+export const referralRewards = pgTable("referral_rewards", {
+  id: text("id")
+    .primaryKey()
+    .$defaultFn(() => crypto.randomUUID()),
+
+  // Relationships
+  userId: integer("user_id")
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
+  achievementId: text("achievement_id").references(
+    () => referralTierAchievements.id,
+    { onDelete: "set null" }
+  ),
+
+  // Tier Information
+  tier: text("tier", {
+    enum: ["bronze", "iron", "silver", "gold", "platinum", "ambassador"],
+  }).notNull(),
+  rewardType: text("reward_type", {
+    enum: ["trial", "subscription", "lifetime", "commission"],
+  }).notNull(),
+
+  // Reward Decision
+  status: text("status", {
+    enum: ["granted", "denied", "pending"],
+  })
+    .notNull()
+    .default("pending"),
+  denialReason: text("denial_reason"),
+
+  // Financial Tracking
+  rewardValue: integer("reward_value").notNull(), // Reward cost in cents
+  revenueAtTime: integer("revenue_at_time").default(0), // User's referred revenue at time of decision (cents)
+  roiRatio: integer("roi_ratio"), // ROI ratio × 100 (e.g., 500 = 5.0×)
+
+  // Referral Context
+  totalReferrals: integer("total_referrals").notNull(),
+  paidReferrals: integer("paid_referrals").notNull(),
+
+  // Cooldown Information
+  wasInCooldown: boolean("was_in_cooldown").default(false),
+  cooldownDaysRemaining: integer("cooldown_days_remaining"),
+
+  // Timestamps
+  issuedAt: timestamp("issued_at", { withTimezone: true }).defaultNow(),
+
+  // Metadata
+  metadata: jsonb("metadata").$type<{
+    rewardDetails?: string;
+    scanCredits?: number;
+    commissionRate?: number;
+    validationChecks?: {
+      cooldown: boolean;
+      tierUnlocked: boolean;
+      roiProfitable: boolean | null;
+    };
+    notes?: string;
   }>(),
 });
 
@@ -634,5 +698,7 @@ export type ReferralTierAchievement =
   typeof referralTierAchievements.$inferSelect;
 export type NewReferralTierAchievement =
   typeof referralTierAchievements.$inferInsert;
+export type ReferralReward = typeof referralRewards.$inferSelect;
+export type NewReferralReward = typeof referralRewards.$inferInsert;
 export type SocialProofStat = typeof socialProofStats.$inferSelect;
 export type NewSocialProofStat = typeof socialProofStats.$inferInsert;

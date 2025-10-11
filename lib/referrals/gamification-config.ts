@@ -1,9 +1,10 @@
 // lib/referrals/gamification-config.ts
 
 export interface ReferralTier {
-  id: "none" | "bronze" | "silver" | "gold" | "platinum" | "ambassador";
+  id: "none" | "bronze" | "iron" | "silver" | "gold" | "platinum" | "ambassador";
   name: string;
   referralsRequired: number;
+  paidReferralsRequired: number; // NEW: Required paid referrals
   badge: string;
   color: string;
   bgGradient: string;
@@ -21,6 +22,7 @@ export const REFERRAL_TIERS: Record<string, ReferralTier> = {
     id: "none",
     name: "Starter",
     referralsRequired: 0,
+    paidReferralsRequired: 0,
     badge: "🌱",
     color: "#9CA3AF",
     bgGradient: "from-gray-500 to-gray-600",
@@ -34,85 +36,116 @@ export const REFERRAL_TIERS: Record<string, ReferralTier> = {
   bronze: {
     id: "bronze",
     name: "Bronze",
-    referralsRequired: 3,
+    referralsRequired: 15,
+    paidReferralsRequired: 0,
     badge: "🥉",
     color: "#CD7F32",
     bgGradient: "from-orange-600 to-orange-700",
     reward: {
       type: "trial",
-      description: "1 Week Pro Trial",
-      details: "Get 1 week of Pro access free",
+      description: "7 Day Pro Trial",
+      details: "Invite 15 paying users to unlock a 7-day Pro trial",
     },
-    perks: ["1 week Pro trial", "Priority support", "Bronze badge"],
+    perks: ["7 day Pro trial", "Priority support", "Bronze badge"],
+  },
+  iron: {
+    id: "iron",
+    name: "Iron",
+    referralsRequired: 25,
+    paidReferralsRequired: 3,
+    badge: "⚙️",
+    color: "#A19D94",
+    bgGradient: "from-gray-600 to-gray-700",
+    reward: {
+      type: "trial",
+      description: "14 Day Pro Trial",
+      details: "Invite 25 users (3 paying) to earn a 14-day Pro trial",
+    },
+    perks: [
+      "14 day Pro trial",
+      "Featured on leaderboard",
+      "Iron badge",
+      "Priority support",
+    ],
   },
   silver: {
     id: "silver",
     name: "Silver",
-    referralsRequired: 10,
+    referralsRequired: 50,
+    paidReferralsRequired: 5,
     badge: "🥈",
     color: "#C0C0C0",
     bgGradient: "from-gray-400 to-gray-500",
     reward: {
       type: "subscription",
-      description: "1 Month Pro Free",
-      details: "Full month of Pro subscription",
+      description: "1 Month Pro + 5% Commission",
+      details: "Reach 50 referrals (5 paying) for 1 month Pro + 5% commission",
     },
     perks: [
       "1 month Pro free",
+      "5% recurring commission",
       "Featured on leaderboard",
       "Silver badge",
       "Early features access",
     ],
+    commissionRate: 0.05,
   },
   gold: {
     id: "gold",
     name: "Gold",
-    referralsRequired: 25,
+    referralsRequired: 100,
+    paidReferralsRequired: 7,
     badge: "🥇",
     color: "#FFD700",
     bgGradient: "from-yellow-500 to-yellow-600",
     reward: {
       type: "subscription",
-      description: "3 Months Pro Free",
-      details: "Quarter of free Pro access",
+      description: "2 Months Pro + 10% Commission",
+      details: "Invite 100 users (7 paying) for 2 months Pro + 10% commission",
     },
     perks: [
-      "3 months Pro free",
+      "2 months Pro free",
+      "10% recurring commission",
       "Top leaderboard spot",
       "Gold badge",
       "Personal success manager",
     ],
+    commissionRate: 0.1,
   },
   platinum: {
     id: "platinum",
     name: "Platinum",
-    referralsRequired: 50,
+    referralsRequired: 150,
+    paidReferralsRequired: 15,
     badge: "💎",
     color: "#E5E4E2",
     bgGradient: "from-blue-400 to-blue-500",
     reward: {
       type: "lifetime",
-      description: "Lifetime Pro Access",
-      details: "Pro subscription forever",
+      description: "3 Months Pro + 10% Commission",
+      details: "Bring 150 users (15 paying) for 3 months Pro + 10% recurring commission",
     },
     perks: [
-      "Lifetime Pro free",
+      "3 months Pro free",
+      "10% recurring commission",
       "Exclusive Discord",
       "Platinum badge",
       "Quarterly swag",
     ],
+    commissionRate: 0.1,
   },
   ambassador: {
     id: "ambassador",
     name: "Ambassador",
-    referralsRequired: 100,
+    referralsRequired: 250,
+    paidReferralsRequired: 30,
     badge: "👑",
     color: "#9333EA",
     bgGradient: "from-purple-600 to-purple-700",
     reward: {
       type: "commission",
       description: "Lifetime Pro + 20% Commission",
-      details: "Earn 20% recurring commission on all referrals",
+      details: "250 referrals (30 paying) unlock Lifetime Pro + 20% recurring commission",
     },
     perks: [
       "Lifetime Pro free",
@@ -130,20 +163,27 @@ export const REFERRAL_TIERS: Record<string, ReferralTier> = {
 export const TIER_ORDER: Array<ReferralTier["id"]> = [
   "none",
   "bronze",
+  "iron",
   "silver",
   "gold",
   "platinum",
   "ambassador",
 ];
 
-// Get tier based on referral count
-export function getTierFromCount(referralCount: number): ReferralTier {
+// Get tier based on referral count AND paid referral count
+export function getTierFromCount(
+  referralCount: number,
+  paidReferralCount: number = 0
+): ReferralTier {
   const tiers = Object.values(REFERRAL_TIERS).sort(
     (a, b) => b.referralsRequired - a.referralsRequired
   );
 
   for (const tier of tiers) {
-    if (referralCount >= tier.referralsRequired) {
+    if (
+      referralCount >= tier.referralsRequired &&
+      paidReferralCount >= tier.paidReferralsRequired
+    ) {
       return tier;
     }
   }
@@ -152,13 +192,17 @@ export function getTierFromCount(referralCount: number): ReferralTier {
 }
 
 // Get next tier and progress
-export function getNextTier(currentCount: number): {
+export function getNextTier(
+  currentCount: number,
+  paidCount: number = 0
+): {
   currentTier: ReferralTier;
   nextTier: ReferralTier | null;
   progress: number;
   referralsNeeded: number;
+  paidReferralsNeeded: number;
 } {
-  const currentTier = getTierFromCount(currentCount);
+  const currentTier = getTierFromCount(currentCount, paidCount);
   const currentIndex = TIER_ORDER.indexOf(currentTier.id);
 
   if (currentIndex >= TIER_ORDER.length - 1) {
@@ -168,20 +212,37 @@ export function getNextTier(currentCount: number): {
       nextTier: null,
       progress: 100,
       referralsNeeded: 0,
+      paidReferralsNeeded: 0,
     };
   }
 
   const nextTierId = TIER_ORDER[currentIndex + 1];
   const nextTier = REFERRAL_TIERS[nextTierId];
 
-  const referralsNeeded = nextTier.referralsRequired - currentCount;
-  const progress = (currentCount / nextTier.referralsRequired) * 100;
+  const referralsNeeded = Math.max(
+    0,
+    nextTier.referralsRequired - currentCount
+  );
+  const paidReferralsNeeded = Math.max(
+    0,
+    nextTier.paidReferralsRequired - paidCount
+  );
+
+  // Calculate progress based on both metrics
+  const referralProgress =
+    (currentCount / nextTier.referralsRequired) * 100 * 0.6; // 60% weight
+  const paidProgress =
+    nextTier.paidReferralsRequired > 0
+      ? (paidCount / nextTier.paidReferralsRequired) * 100 * 0.4
+      : 40; // 40% weight
+  const progress = referralProgress + paidProgress;
 
   return {
     currentTier,
     nextTier,
     progress: Math.min(progress, 100),
     referralsNeeded,
+    paidReferralsNeeded,
   };
 }
 

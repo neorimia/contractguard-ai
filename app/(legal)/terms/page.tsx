@@ -1,13 +1,5 @@
-import { Geist } from "next/font/google";
-import { Footer } from "@/components/footer";
-import { Header } from "@/components/Header";
 import type { Metadata } from "next";
 import { siteConfig } from "@/config/site";
-
-const geist = Geist({
-  weight: ["400", "600"],
-  subsets: ["latin"],
-});
 
 export const metadata: Metadata = {
   title: "Terms of Service",
