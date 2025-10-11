@@ -90,6 +90,12 @@ export const AnalyticsEvents = {
   REFERRAL_LINK_COPIED: "referral_link_copied",
   REFERRAL_LINK_SHARED: "referral_link_shared",
   REFERRAL_REWARD_EARNED: "referral_reward_earned",
+
+  // Banner events
+  BANNER_IMPRESSION: "banner_impression",
+  BANNER_CLICK: "banner_click",
+  BANNER_CONVERSION: "banner_conversion",
+  BANNER_DISMISSED: "banner_dismissed",
 } as const;
 
 // Track custom event

@@ -7,20 +7,12 @@ import { ArrowRight } from "lucide-react";
 import ScanResults from "@/components/ScanResults";
 import ScanLimitDrawer from "@/components/ScanLimitDrawer";
 import { SoftSignupPrompt } from "@/components/auth/SoftSignupPrompt";
-import { CompleteAccountPrompt } from "@/components/auth/CompleteAccountPrompt";
 import { AccountUpgradeModal } from "@/components/auth/AccountUpgradeModal";
 import { ScanOverview } from "@/components/scan/ScanOverview";
-import { MagicLinkSignIn, useUser } from "@stackframe/stack";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+import { BannerManager } from "@/components/banners/BannerManager";
+import { useUser } from "@stackframe/stack";
 import { trackEvent, AnalyticsEvents } from "@/lib/analytics/posthog";
 import { AILoadingState } from "./AILoadingState";
-import Link from "next/link";
 
 interface ScanLimitError {
   error: string;
@@ -58,7 +50,7 @@ export function ScanInterface() {
   const [scanMetadata, setScanMetadata] = useState<ScanMetadata | null>(null);
   const [anonymousScansPerformed, setAnonymousScansPerformed] = useState(0);
   const [anonymousSessionId, setAnonymousSessionId] = useState<string | null>(
-    null
+    null,
   );
   const [showSoftSignupPrompt, setShowSoftSignupPrompt] = useState(false);
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
@@ -129,7 +121,7 @@ export function ScanInterface() {
 
       setShowSoftSignupPrompt(true);
       setError(
-        "You've used your free scans. Sign up to continue with 3 free scans daily!"
+        "You've used your free scans. Sign up to continue with 3 free scans daily!",
       );
       return;
     }
@@ -187,7 +179,7 @@ export function ScanInterface() {
 
           setShowSoftSignupPrompt(true);
           setError(
-            "You've used your free scans. Sign up to continue with 3 free scans daily!"
+            "You've used your free scans. Sign up to continue with 3 free scans daily!",
           );
           return;
         }
@@ -406,6 +398,47 @@ export function ScanInterface() {
         <div ref={resultsRef}>
           <ScanResults result={result} contractAddress={address} />
         </div>
+      )}
+
+      {/* Top Leaderboard Banner - Show after scan results */}
+      {result && (
+        <div className="max-w-6xl mx-auto mt-8 px-4">
+          <BannerManager
+            placement="top_leaderboard"
+            scanCount={
+              user
+                ? 3 - (userAccessStatus?.scansRemaining || 0)
+                : anonymousScansPerformed
+            }
+            contractAddress={address}
+          />
+        </div>
+      )}
+
+      {/* Sidebar Rectangle Banner - Desktop Only, Fixed to Right */}
+      {result && (
+        <aside className="hidden lg:block fixed right-4 top-32 w-[300px] z-10">
+          <BannerManager
+            placement="sidebar_rectangle"
+            scanCount={
+              user
+                ? 3 - (userAccessStatus?.scansRemaining || 0)
+                : anonymousScansPerformed
+            }
+          />
+        </aside>
+      )}
+
+      {/* Bottom Sticky Banner - Mobile Only, Fixed to Bottom */}
+      {result && (
+        <BannerManager
+          placement="bottom_sticky"
+          scanCount={
+            user
+              ? 3 - (userAccessStatus?.scansRemaining || 0)
+              : anonymousScansPerformed
+          }
+        />
       )}
 
       {/* Scan Limit Drawer */}

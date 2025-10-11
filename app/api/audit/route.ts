@@ -152,6 +152,9 @@ export async function POST(req: NextRequest) {
           accessType: accessStatus.accessType,
           scansRemaining: 0,
           instantCredits: accessStatus.instantCredits,
+          resetAt: accessStatus.resetAt
+            ? accessStatus.resetAt.toISOString()
+            : new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(), // Next day reset
           upgradeUrl: "/pricing",
           status: "error",
         },

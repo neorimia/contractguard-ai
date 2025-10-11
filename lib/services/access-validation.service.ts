@@ -40,6 +40,7 @@ export interface AccessValidationResult {
   accountType?: AccountType;
   reason?: string;
   upgradePrompt?: string;
+  resetAt?: Date;
 }
 
 export class AccessValidationService {
@@ -256,6 +257,7 @@ export class AccessValidationService {
         accountType: (user.accountType as AccountType) || "full",
         reason:
           "Daily limit reached. Purchase instant reports or upgrade to Pro.",
+        resetAt: resetAt || new Date(Date.now() + 24 * 60 * 60 * 1000), // Next day reset
       };
     } catch (error) {
       console.error("Access validation error:", error);

@@ -304,6 +304,179 @@ export const anonymousScans = pgTable("anonymous_scans", {
   expiresAt: timestamp("expires_at").notNull(), // 24 hours from creation
 });
 
+// Banner Monetization Tables
+export const banners = pgTable("banners", {
+  id: text("id")
+    .primaryKey()
+    .$defaultFn(() => crypto.randomUUID()),
+
+  // Banner Identity
+  name: text("name").notNull(),
+  type: text("type", {
+    enum: [
+      "internal_upgrade",
+      "partner_ad",
+      "feature_education",
+      "social_proof",
+      "urgency",
+    ],
+  }).notNull(),
+  category: text("category", {
+    enum: ["upgrade", "educational", "winback", "paywall", "partnership"],
+  }).notNull(),
+
+  // Placement Configuration
+  placement: text("placement", {
+    enum: [
+      "top_leaderboard",
+      "sidebar_rectangle",
+      "bottom_sticky",
+      "inline_result",
+      "modal_overlay",
+    ],
+  }).notNull(),
+  priority: integer("priority").notNull().default(5),
+
+  // Targeting Rules
+  targetUserType: text("target_user_type", {
+    enum: ["anonymous", "soft", "free", "power_user", "churned", "all"],
+  }).notNull(),
+  minScans: integer("min_scans").default(0),
+  maxScans: integer("max_scans"),
+  targetTier: text("target_tier", {
+    enum: ["free", "pro", "enterprise", "all"],
+  }).default("all"),
+
+  // Content
+  headline: text("headline").notNull(),
+  body: text("body"),
+  ctaText: text("cta_text").notNull(),
+  ctaUrl: text("cta_url").notNull(),
+
+  // Design Specifications
+  format: text("format", {
+    enum: ["static", "animated", "html5", "video"],
+  })
+    .notNull()
+    .default("static"),
+  backgroundColor: text("background_color").default("#1F2937"),
+  textColor: text("text_color").default("#FFFFFF"),
+  assetUrl: text("asset_url"),
+  customCss: text("custom_css"),
+
+  // A/B Testing
+  variantGroup: text("variant_group"),
+  variantName: text("variant_name"),
+
+  // External Partner Configuration
+  isExternal: boolean("is_external").default(false),
+  partnerName: text("partner_name"),
+  partnerScriptUrl: text("partner_script_url"),
+  partnerAdUnitId: text("partner_ad_unit_id"),
+  cpmRate: integer("cpm_rate"),
+
+  // Status & Scheduling
+  isActive: boolean("is_active").default(true),
+  startDate: timestamp("start_date", { withTimezone: true }),
+  endDate: timestamp("end_date", { withTimezone: true }),
+
+  // Performance Tracking
+  impressions: integer("impressions").default(0),
+  clicks: integer("clicks").default(0),
+  conversions: integer("conversions").default(0),
+  revenue: integer("revenue").default(0),
+
+  // Metadata
+  metadata: jsonb("metadata").$type<{
+    frequencyCap?: number;
+    showAfterScan?: number;
+    dismissible?: boolean;
+    requiresConsent?: boolean;
+    notes?: string;
+  }>(),
+
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow(),
+});
+
+export const bannerImpressions = pgTable("banner_impressions", {
+  id: text("id")
+    .primaryKey()
+    .$defaultFn(() => crypto.randomUUID()),
+
+  // Relationships
+  bannerId: text("banner_id")
+    .notNull()
+    .references(() => banners.id, { onDelete: "cascade" }),
+  userId: integer("user_id").references(() => users.id, {
+    onDelete: "set null",
+  }),
+  sessionId: text("session_id").notNull(),
+
+  // Context
+  contractAddress: text("contract_address"),
+  scanCount: integer("scan_count"),
+  userTier: text("user_tier"),
+  placement: text("placement").notNull(),
+
+  // Interaction
+  wasClicked: boolean("was_clicked").default(false),
+  clickedAt: timestamp("clicked_at", { withTimezone: true }),
+  converted: boolean("converted").default(false),
+  convertedAt: timestamp("converted_at", { withTimezone: true }),
+  revenueGenerated: integer("revenue_generated").default(0),
+
+  // Technical Metadata
+  userAgent: text("user_agent"),
+  ipAddress: text("ip_address"),
+  referrer: text("referrer"),
+  deviceType: text("device_type", {
+    enum: ["desktop", "mobile", "tablet"],
+  }),
+
+  // A/B Testing Context
+  variantGroup: text("variant_group"),
+  variantName: text("variant_name"),
+
+  // Timestamps
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
+});
+
+export const bannerAnalytics = pgTable("banner_analytics", {
+  id: text("id")
+    .primaryKey()
+    .$defaultFn(() => crypto.randomUUID()),
+
+  // Aggregation Period
+  bannerId: text("banner_id")
+    .notNull()
+    .references(() => banners.id, { onDelete: "cascade" }),
+  date: timestamp("date", { withTimezone: true }).notNull(),
+  period: text("period", {
+    enum: ["hourly", "daily", "weekly", "monthly"],
+  }).notNull(),
+
+  // Core Metrics
+  impressions: integer("impressions").default(0),
+  clicks: integer("clicks").default(0),
+  conversions: integer("conversions").default(0),
+  ctr: integer("ctr").default(0),
+  conversionRate: integer("conversion_rate").default(0),
+  revenue: integer("revenue").default(0),
+  revenuePerImpression: integer("revenue_per_impression").default(0),
+
+  // Segmentation
+  userType: text("user_type"),
+  placement: text("placement"),
+  deviceType: text("device_type"),
+
+  // Quality Metrics
+  averageTimeToClick: integer("average_time_to_click"),
+  bounceRate: integer("bounce_rate"),
+
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
+});
+
 // Types
 export interface Issue {
   severity: "CRITICAL" | "HIGH" | "MEDIUM" | "LOW";
@@ -329,3 +502,9 @@ export type Purchase = typeof purchases.$inferSelect;
 export type NewPurchase = typeof purchases.$inferInsert;
 export type AnonymousScan = typeof anonymousScans.$inferSelect;
 export type NewAnonymousScan = typeof anonymousScans.$inferInsert;
+export type Banner = typeof banners.$inferSelect;
+export type NewBanner = typeof banners.$inferInsert;
+export type BannerImpression = typeof bannerImpressions.$inferSelect;
+export type NewBannerImpression = typeof bannerImpressions.$inferInsert;
+export type BannerAnalytics = typeof bannerAnalytics.$inferSelect;
+export type NewBannerAnalytics = typeof bannerAnalytics.$inferInsert;

@@ -22,7 +22,8 @@
         "test:cache": "tsx scripts/test-caching.ts",
         "test:all": "tsx scripts/test-audit-flow.ts && tsx scripts/test-caching.ts",
         "test:emails": "tsx scripts/test-emails.ts",
-        "email:dev": "email dev"
+        "email:dev": "email dev",
+        "seed:banners": "tsx scripts/seed-banners.ts"
     },
     "dependencies": {
         "@neondatabase/serverless": "^1.0.2",
