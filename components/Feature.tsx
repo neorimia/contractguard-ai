@@ -3,6 +3,7 @@
 import { Button } from "@/components/ui/button";
 import { motion } from "motion/react";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
 
 export default function FeaturesSection() {
   const router = useRouter();
@@ -51,22 +52,16 @@ export default function FeaturesSection() {
             whileInView={{ opacity: 1, x: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 0.5, delay: 0.2 }}
-            className="relative h-full min-h-[300px] rounded-xl bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 flex items-center justify-center group hover:border-black/15 dark:hover:border-white/15 transition-all duration-300"
+            className="relative h-full min-h-[300px] rounded-xl overflow-hidden bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 flex items-center justify-center group hover:border-black/15 dark:hover:border-white/15 transition-all duration-300"
           >
-            <div className="text-center space-y-4 p-6">
-              <div className="w-16 h-16 mx-auto bg-black/5 dark:bg-white/5 rounded-full flex items-center justify-center border border-black/10 dark:border-white/10">
-                <span className="text-2xl">⚠️</span>
-              </div>
-              <h3 className="text-lg font-semibold tracking-tight text-black dark:text-white">
-                Security Alert
-              </h3>
-              <p className="text-sm tracking-tight text-black/70 dark:text-white/70">
-                Honeypot detected
-              </p>
-              <div className="text-xs tracking-tight text-black/60 dark:text-white/60">
-                Only owner can sell
-              </div>
-            </div>
+            {/* Security Analysis Demo */}
+            <Image
+              src="/images/security-analysis.jpg"
+              alt="Security Analysis"
+              width={560}
+              height={315}
+              className="object-center object-cover block h-full w-full"
+            />
           </motion.div>
 
           {/* Right: Content */}
@@ -228,22 +223,16 @@ export default function FeaturesSection() {
             whileInView={{ opacity: 1, x: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 0.5, delay: 0.3 }}
-            className="relative h-full min-h-[300px] rounded-xl bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 flex items-center justify-center group hover:border-black/15 dark:hover:border-white/15 transition-all duration-300"
+            className="relative h-full min-h-[300px] rounded-xl overflow-hidden bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 flex items-center justify-center group hover:border-black/15 dark:hover:border-white/15 transition-all duration-300"
           >
-            <div className="text-center space-y-4 p-6">
-              <div className="w-16 h-16 mx-auto bg-black/5 dark:bg-white/5 rounded-full flex items-center justify-center border border-black/10 dark:border-white/10">
-                <span className="text-2xl text-green-500">✓</span>
-              </div>
-              <h3 className="text-lg font-semibold tracking-tight text-black dark:text-white">
-                Security Passed
-              </h3>
-              <p className="text-sm tracking-tight text-black/70 dark:text-white/70">
-                No issues detected
-              </p>
-              <div className="text-xs tracking-tight text-black/60 dark:text-white/60">
-                Safe to invest
-              </div>
-            </div>
+            {/* Security Success Demo */}
+            <Image
+              src="/images/security-success.jpg"
+              alt="Security Success"
+              width={560}
+              height={315}
+              className="object-cover h-full w-full text-center align-middle"
+            />
           </motion.div>
         </div>
       </div>

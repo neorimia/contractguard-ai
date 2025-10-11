@@ -11,14 +11,16 @@ import { stripeService } from "@/lib/services/stripe.service";
 import { AuthService } from "@/lib/services/auth.service";
 import { EmailService } from "@/lib/services/email.service";
 import { ReferralService } from "@/lib/services/referral.service";
+import { ReferralGamificationService } from "@/lib/services/referral-gamification.service";
 import { db } from "@/db";
-import { purchases, users } from "@/db/schema";
+import { purchases, users, referrals } from "@/db/schema";
 import { eq, sql } from "drizzle-orm";
 import Stripe from "stripe";
 
 const authService = new AuthService();
 const emailService = new EmailService();
 const referralService = new ReferralService();
+const gamificationService = new ReferralGamificationService();
 
 // Disable body parsing for webhook
 export const runtime = "nodejs";
@@ -263,8 +265,7 @@ async function handleInstantPurchase(session: Stripe.Checkout.Session) {
       await db.insert(users).values({
         stackUserId: `guest_${purchase.guestSessionId}`,
         email:
-          purchase.guestEmail ||
-          `guest_${purchase.guestSessionId}@temp.local`,
+          purchase.guestEmail || `guest_${purchase.guestSessionId}@temp.local`,
         isGuest: true,
         guestSessionId: purchase.guestSessionId,
         tier: "free",
@@ -340,6 +341,36 @@ async function handleSubscriptionCreated(subscription: Stripe.Subscription) {
         console.log(
           `✅ Referrer rewarded: ${conversionResult.reward.type} x${conversionResult.reward.amount}`
         );
+      }
+
+      // Create commission record for recurring rewards (10% or 20% for ambassador)
+      const [referral] = await db
+        .select()
+        .from(referrals)
+        .where(eq(referrals.referredId, user.id))
+        .limit(1);
+
+      if (referral) {
+        // Get subscription amount from first invoice
+        const subscriptionAmount =
+          subscription.items.data[0]?.price.unit_amount || 0;
+
+        const commission = await gamificationService.createCommission({
+          referrerId: referral.referrerId,
+          referredUserId: user.id,
+          subscriptionTier: tier as "pro" | "team",
+          stripeSubscriptionId: subscription.id,
+          subscriptionAmount: subscriptionAmount,
+        });
+
+        if (commission) {
+          console.log(
+            `✅ Commission created: ${referral.referrerId} earns 10-20% from ${user.id}'s subscription`
+          );
+        }
+
+        // Update referrer's tier based on referral count
+        await gamificationService.updateUserTier(referral.referrerId);
       }
     } else if (conversionResult.error === "no_referral") {
       console.log(`ℹ️ No referral found for user ${user.id} (not referred)`);
@@ -470,6 +501,14 @@ async function handleSubscriptionDeleted(subscription: Stripe.Subscription) {
   });
 
   console.log(`User ${user.id} downgraded to free tier`);
+
+  // End any active commissions for this subscription
+  try {
+    await gamificationService.endCommission(subscription.id);
+    console.log(`✅ Ended commission for subscription ${subscription.id}`);
+  } catch (error) {
+    console.error("Failed to end commission:", error);
+  }
 
   // Send cancellation email
   if (user.email) {
@@ -731,8 +770,7 @@ async function handlePaymentIntentSucceeded(
       await db.insert(users).values({
         stackUserId: `guest_${purchase.guestSessionId}`,
         email:
-          purchase.guestEmail ||
-          `guest_${purchase.guestSessionId}@temp.local`,
+          purchase.guestEmail || `guest_${purchase.guestSessionId}@temp.local`,
         isGuest: true,
         guestSessionId: purchase.guestSessionId,
         tier: "free",

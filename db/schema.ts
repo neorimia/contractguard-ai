@@ -77,6 +77,12 @@ export const users = pgTable("users", {
   bonusScans: integer("bonus_scans").default(0), // Accumulated bonus scans
   bonusScansUsedToday: integer("bonus_scans_used_today").default(0), // Track daily usage
 
+  // Referral Gamification
+  referralTier: text("referral_tier").default("none"), // none, bronze, silver, gold, platinum, ambassador
+  referralCount: integer("referral_count").default(0), // Total confirmed referrals
+  totalReferralEarnings: integer("total_referral_earnings").default(0), // Total earned from referrals (in cents)
+  lifetimeCommission: integer("lifetime_commission").default(0), // Total recurring commission earned (in cents)
+
   // Billing Integration
   stripeCustomerId: text("stripe_customer_id"),
   stripeSubscriptionId: text("stripe_subscription_id"),
@@ -477,6 +483,120 @@ export const bannerAnalytics = pgTable("banner_analytics", {
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
 });
 
+// Referral Commissions table for 10% recurring rewards
+export const referralCommissions = pgTable("referral_commissions", {
+  id: text("id")
+    .primaryKey()
+    .$defaultFn(() => crypto.randomUUID()),
+
+  // Relationships
+  referrerId: integer("referrer_id")
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
+  referredUserId: integer("referred_user_id")
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
+
+  // Commission Details
+  subscriptionTier: text("subscription_tier", {
+    enum: ["pro", "team"],
+  }).notNull(),
+  monthlyCommission: integer("monthly_commission").notNull(), // 10% in cents
+  totalEarned: integer("total_earned").default(0), // Lifetime total in cents
+
+  // Status Tracking
+  status: text("status", {
+    enum: ["active", "paused", "ended"],
+  })
+    .notNull()
+    .default("active"),
+
+  // Payout Management
+  nextPayoutDate: timestamp("next_payout_date", { withTimezone: true }),
+  lastPayoutDate: timestamp("last_payout_date", { withTimezone: true }),
+
+  // Stripe Integration
+  stripeSubscriptionId: text("stripe_subscription_id"),
+
+  // Metadata
+  metadata: jsonb("metadata").$type<{
+    payoutHistory?: Array<{
+      date: string;
+      amount: number;
+      stripeTransferId?: string;
+    }>;
+    notes?: string;
+  }>(),
+
+  // Timestamps
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow(),
+});
+
+// Referral Tier Achievements for gamification
+export const referralTierAchievements = pgTable("referral_tier_achievements", {
+  id: text("id")
+    .primaryKey()
+    .$defaultFn(() => crypto.randomUUID()),
+
+  // Relationship
+  userId: integer("user_id")
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
+
+  // Tier Information
+  tier: text("tier", {
+    enum: ["bronze", "silver", "gold", "platinum", "ambassador"],
+  }).notNull(),
+  referralsRequired: integer("referrals_required").notNull(),
+  rewardType: text("reward_type").notNull(),
+  rewardDescription: text("reward_description").notNull(),
+
+  // Achievement Tracking
+  achievedAt: timestamp("achieved_at", { withTimezone: true }).defaultNow(),
+
+  // Metadata
+  metadata: jsonb("metadata").$type<{
+    badge?: string;
+    announcement?: string;
+    specialPerks?: string[];
+  }>(),
+});
+
+// Social Proof Stats for viral marketing
+export const socialProofStats = pgTable("social_proof_stats", {
+  id: text("id")
+    .primaryKey()
+    .$defaultFn(() => crypto.randomUUID()),
+
+  // Time Period
+  date: timestamp("date", { withTimezone: true }).notNull(),
+  period: text("period", {
+    enum: ["daily", "weekly", "monthly", "all_time"],
+  }).notNull(),
+
+  // Viral Metrics
+  totalUsersJoined: integer("total_users_joined").default(0),
+  totalScamsAvoided: integer("total_scams_avoided").default(0),
+  estimatedSavingsUsd: integer("estimated_savings_usd").default(0), // in cents
+  totalReferrals: integer("total_referrals").default(0),
+  topReferrerCount: integer("top_referrer_count").default(0),
+
+  // Metadata
+  metadata: jsonb("metadata").$type<{
+    topSavings?: Array<{
+      userId: number;
+      amount: number;
+      percentage: number;
+    }>;
+    viralCoefficient?: number;
+    growthRate?: number;
+  }>(),
+
+  // Timestamp
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
+});
+
 // Types
 export interface Issue {
   severity: "CRITICAL" | "HIGH" | "MEDIUM" | "LOW";
@@ -508,3 +628,11 @@ export type BannerImpression = typeof bannerImpressions.$inferSelect;
 export type NewBannerImpression = typeof bannerImpressions.$inferInsert;
 export type BannerAnalytics = typeof bannerAnalytics.$inferSelect;
 export type NewBannerAnalytics = typeof bannerAnalytics.$inferInsert;
+export type ReferralCommission = typeof referralCommissions.$inferSelect;
+export type NewReferralCommission = typeof referralCommissions.$inferInsert;
+export type ReferralTierAchievement =
+  typeof referralTierAchievements.$inferSelect;
+export type NewReferralTierAchievement =
+  typeof referralTierAchievements.$inferInsert;
+export type SocialProofStat = typeof socialProofStats.$inferSelect;
+export type NewSocialProofStat = typeof socialProofStats.$inferInsert;

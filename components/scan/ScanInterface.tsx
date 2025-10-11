@@ -50,7 +50,7 @@ export function ScanInterface() {
   const [scanMetadata, setScanMetadata] = useState<ScanMetadata | null>(null);
   const [anonymousScansPerformed, setAnonymousScansPerformed] = useState(0);
   const [anonymousSessionId, setAnonymousSessionId] = useState<string | null>(
-    null,
+    null
   );
   const [showSoftSignupPrompt, setShowSoftSignupPrompt] = useState(false);
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
@@ -121,7 +121,7 @@ export function ScanInterface() {
 
       setShowSoftSignupPrompt(true);
       setError(
-        "You've used your free scans. Sign up to continue with 3 free scans daily!",
+        "You've used your free scans. Sign up to continue with 3 free scans daily!"
       );
       return;
     }
@@ -179,7 +179,7 @@ export function ScanInterface() {
 
           setShowSoftSignupPrompt(true);
           setError(
-            "You've used your free scans. Sign up to continue with 3 free scans daily!",
+            "You've used your free scans. Sign up to continue with 3 free scans daily!"
           );
           return;
         }
@@ -401,7 +401,7 @@ export function ScanInterface() {
       )}
 
       {/* Top Leaderboard Banner - Show after scan results */}
-      {result && (
+      {!user && (result || userAccessStatus?.scansRemaining === 0) && (
         <div className="max-w-6xl mx-auto mt-8 px-4">
           <BannerManager
             placement="top_leaderboard"
@@ -416,7 +416,7 @@ export function ScanInterface() {
       )}
 
       {/* Sidebar Rectangle Banner - Desktop Only, Fixed to Right */}
-      {result && (
+      {(result || userAccessStatus?.scansRemaining === 0) && (
         <aside className="hidden lg:block fixed right-4 top-32 w-[300px] z-10">
           <BannerManager
             placement="sidebar_rectangle"
@@ -430,7 +430,7 @@ export function ScanInterface() {
       )}
 
       {/* Bottom Sticky Banner - Mobile Only, Fixed to Bottom */}
-      {result && (
+      {(result || userAccessStatus?.scansRemaining === 0) && (
         <BannerManager
           placement="bottom_sticky"
           scanCount={
