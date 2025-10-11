@@ -9,6 +9,7 @@ import ScanLimitDrawer from "@/components/ScanLimitDrawer";
 import { SoftSignupPrompt } from "@/components/auth/SoftSignupPrompt";
 import { CompleteAccountPrompt } from "@/components/auth/CompleteAccountPrompt";
 import { AccountUpgradeModal } from "@/components/auth/AccountUpgradeModal";
+import { ScanOverview } from "@/components/scan/ScanOverview";
 import { MagicLinkSignIn, useUser } from "@stackframe/stack";
 import {
   Dialog,
@@ -37,6 +38,16 @@ interface ScanMetadata {
   sessionId?: string;
 }
 
+interface AnonymousLimitError {
+  error: string;
+  message: string;
+  action: string;
+  scansPerformed: number;
+  maxScans: number;
+  sessionId: string;
+  status: string;
+}
+
 export function ScanInterface() {
   const [address, setAddress] = useState("");
   const [loading, setLoading] = useState(false);
@@ -44,17 +55,42 @@ export function ScanInterface() {
   const [error, setError] = useState("");
   const [showLimitDrawer, setShowLimitDrawer] = useState(false);
   const [limitError, setLimitError] = useState<ScanLimitError | null>(null);
-  const [showLoginModal, setShowLoginModal] = useState(false);
   const [scanMetadata, setScanMetadata] = useState<ScanMetadata | null>(null);
   const [anonymousScansPerformed, setAnonymousScansPerformed] = useState(0);
+  const [anonymousSessionId, setAnonymousSessionId] = useState<string | null>(
+    null
+  );
   const [showSoftSignupPrompt, setShowSoftSignupPrompt] = useState(false);
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
   const [upgradeData, setUpgradeData] = useState<{
     email: string;
     scansRemaining: number;
   } | null>(null);
+  const [userAccessStatus, setUserAccessStatus] = useState<{
+    accessType: string;
+    scansRemaining: number;
+    instantCredits: number;
+    accountType?: string;
+  } | null>(null);
   const user = useUser();
   const resultsRef = useRef<HTMLDivElement>(null);
+
+  // Fetch user access status for authenticated users
+  useEffect(() => {
+    if (user) {
+      fetch("/api/user/access-status")
+        .then((res) => res.json())
+        .then((data) => {
+          setUserAccessStatus({
+            accessType: data.accessType || "free",
+            scansRemaining: data.scansRemaining || 0,
+            instantCredits: data.instantCredits || 0,
+            accountType: data.accountType,
+          });
+        })
+        .catch((err) => console.error("Failed to fetch access status:", err));
+    }
+  }, [user]);
 
   // Auto-scroll to results when they're available
   useEffect(() => {
@@ -71,6 +107,32 @@ export function ScanInterface() {
 
   const analyzeContract = async () => {
     if (!address) return;
+
+    // Check if anonymous user has only 1 scan remaining (2 scans performed)
+    // Show soft signup prompt before consuming the last scan
+    if (!user && anonymousScansPerformed >= 2) {
+      // Track early intervention to prevent last scan
+      trackEvent(AnalyticsEvents.SCAN_LIMIT_REACHED, {
+        contractAddress: address,
+        scansPerformed: anonymousScansPerformed,
+        scansRemaining: 1,
+        accessType: "anonymous",
+        intervention: "before_last_scan",
+      });
+
+      // Update scan metadata to show current state
+      setScanMetadata({
+        accessType: "anonymous",
+        scansRemaining: 1,
+        sessionId: anonymousSessionId || undefined,
+      });
+
+      setShowSoftSignupPrompt(true);
+      setError(
+        "You've used your free scans. Sign up to continue with 3 free scans daily!"
+      );
+      return;
+    }
 
     // Track scan initiated (works for both anonymous and authenticated)
     trackEvent(AnalyticsEvents.SCAN_INITIATED, {
@@ -104,12 +166,29 @@ export function ScanInterface() {
           // Track anonymous limit reached
           trackEvent(AnalyticsEvents.SCAN_LIMIT_REACHED, {
             contractAddress: address,
-            scansPerformed: data.scansPerformed,
+            scansPerformed: data.scansPerformed || 3,
             accessType: "anonymous",
           });
 
-          setLimitError(data);
-          setShowLimitDrawer(true);
+          // Update state from error response
+          if (data.scansPerformed) {
+            setAnonymousScansPerformed(data.scansPerformed);
+          }
+          if (data.sessionId) {
+            setAnonymousSessionId(data.sessionId);
+          }
+
+          // Update scan metadata to show 0 remaining
+          setScanMetadata({
+            accessType: "anonymous",
+            scansRemaining: 0,
+            sessionId: data.sessionId,
+          });
+
+          setShowSoftSignupPrompt(true);
+          setError(
+            "You've used your free scans. Sign up to continue with 3 free scans daily!"
+          );
           return;
         }
 
@@ -178,10 +257,25 @@ export function ScanInterface() {
           const scansPerformed = 3 - (data.metadata.scansRemaining || 0);
           setAnonymousScansPerformed(scansPerformed);
 
-          // Show soft signup prompt after 2nd scan
-          if (scansPerformed >= 2) {
+          // Save sessionId for later use (when limit is reached)
+          if (data.metadata.sessionId) {
+            setAnonymousSessionId(data.metadata.sessionId);
+          }
+
+          // Show soft signup prompt after 1st scan (early capture)
+          if (scansPerformed >= 1) {
             setShowSoftSignupPrompt(true);
           }
+        }
+
+        // Update authenticated user access status after scan
+        if (user && data.metadata.scansRemaining !== undefined) {
+          setUserAccessStatus((prev) => ({
+            accessType: prev?.accessType || "free",
+            scansRemaining: data.metadata.scansRemaining,
+            instantCredits: prev?.instantCredits || 0,
+            accountType: prev?.accountType,
+          }));
         }
       }
     } catch (err: any) {
@@ -207,6 +301,42 @@ export function ScanInterface() {
             AI-powered security analysis that detects scams, honeypots, and rug
             pulls. Get instant results in plain English.
           </p>
+
+          {/* Scan Overview (for all users) */}
+          {/* Always visible to create awareness of scan limits */}
+          {(() => {
+            console.log("Scan Overview Check:", {
+              hasUser: !!user,
+              anonymousScansPerformed,
+              userAccessStatus,
+              scanMetadata,
+            });
+
+            if (!user) {
+              // Anonymous user - always show
+              return (
+                <ScanOverview
+                  scansPerformed={anonymousScansPerformed}
+                  scansRemaining={scanMetadata?.scansRemaining ?? 3}
+                  maxScans={3}
+                  isAnonymous={true}
+                />
+              );
+            } else if (user && userAccessStatus) {
+              // Authenticated user
+              return (
+                <ScanOverview
+                  scansPerformed={3 - userAccessStatus.scansRemaining}
+                  scansRemaining={userAccessStatus.scansRemaining}
+                  maxScans={3}
+                  tier={userAccessStatus.accessType}
+                  instantCredits={userAccessStatus.instantCredits}
+                  isAnonymous={false}
+                />
+              );
+            }
+            return null;
+          })()}
 
           {/* Input Section or Loading State */}
           {loading ? (
@@ -257,20 +387,19 @@ export function ScanInterface() {
         </div>
       </section>
 
-      {/* Soft Signup Prompt (for anonymous users after 2+ scans) */}
-      {showSoftSignupPrompt &&
-        !user &&
-        scanMetadata?.accessType === "anonymous" &&
-        scanMetadata?.sessionId && (
-          <div className="max-w-4xl mx-auto px-4 mb-6">
-            <SoftSignupPrompt
-              scansPerformed={anonymousScansPerformed}
-              scansRemaining={scanMetadata.scansRemaining || 0}
-              anonymousSessionId={scanMetadata.sessionId}
-              onClose={() => setShowSoftSignupPrompt(false)}
-            />
-          </div>
-        )}
+      {/* Soft Signup Drawer (for anonymous users after 1+ scans) */}
+      {/* Shows after completing scans, becomes mandatory before 3rd scan */}
+      {!user && (anonymousSessionId || scanMetadata?.sessionId) && (
+        <SoftSignupPrompt
+          isOpen={showSoftSignupPrompt}
+          onClose={() => setShowSoftSignupPrompt(false)}
+          scansPerformed={anonymousScansPerformed}
+          scansRemaining={scanMetadata?.scansRemaining || 0}
+          anonymousSessionId={
+            anonymousSessionId || scanMetadata?.sessionId || ""
+          }
+        />
+      )}
 
       {/* Results Section */}
       {result && (
@@ -289,30 +418,6 @@ export function ScanInterface() {
           upgradeUrl={limitError.upgradeUrl || "/pricing"}
         />
       )}
-
-      {/* Login Modal */}
-      <Dialog open={showLoginModal} onOpenChange={setShowLoginModal}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle className="text-2xl font-semibold">
-              Sign in to scan contracts
-            </DialogTitle>
-            <DialogDescription>
-              Create an account or sign in to start scanning smart contracts.
-              Free tier includes 3 scans per day.
-              <br />
-              By using the application, you agree to our{" "}
-              <Link href="/terms">Terms of Service</Link> and{" "}
-              <Link href="/privacy">Privacy Policy</Link>.
-              <br />
-              <Link href="/faq">Learn more about ContractGuard AI</Link>
-            </DialogDescription>
-          </DialogHeader>
-          <div className="mt-4">
-            <MagicLinkSignIn />
-          </div>
-        </DialogContent>
-      </Dialog>
 
       {/* Account Upgrade Modal (for soft accounts) */}
       {showUpgradeModal && upgradeData && (

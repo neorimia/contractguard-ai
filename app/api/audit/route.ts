@@ -452,6 +452,7 @@ async function handleAnonymousScan(req: NextRequest) {
           action: "signup_required",
           scansPerformed: currentScanCount,
           maxScans: ANONYMOUS_SCAN_LIMITS.MAX_SCANS,
+          sessionId, // Include sessionId for soft signup drawer
           status: "error",
         },
         {

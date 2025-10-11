@@ -76,14 +76,15 @@ export async function POST(req: NextRequest) {
     const expiresAt = new Date(Date.now() + 60 * 60 * 1000); // 1 hour
 
     // Store token in Redis temporarily (Stack Auth will create the actual user)
+    // Upstash Redis automatically serializes objects, so no need for JSON.stringify()
     const tokenKey = `magic_token:${magicToken}`;
     await redis.set(
       tokenKey,
-      JSON.stringify({
+      {
         email: normalizedEmail,
         anonymousSessionId,
         expiresAt: expiresAt.toISOString(),
-      }),
+      },
       { ex: 3600 } // 1 hour
     );
 

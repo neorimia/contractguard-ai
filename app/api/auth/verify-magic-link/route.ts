@@ -7,6 +7,12 @@ const redis = new Redis({
   token: process.env.UPSTASH_REDIS_TOKEN!,
 });
 
+interface MagicTokenData {
+  email: string;
+  anonymousSessionId?: string;
+  expiresAt: string;
+}
+
 /**
  * Verify Magic Link API
  * Called when user clicks the magic link from their email
@@ -25,15 +31,16 @@ export async function GET(req: NextRequest) {
 
     // Retrieve token data from Redis
     const tokenKey = `magic_token:${token}`;
-    const tokenDataStr = await redis.get(tokenKey);
+    const tokenData = await redis.get<MagicTokenData>(tokenKey);
 
-    if (!tokenDataStr) {
+    if (!tokenData) {
       return NextResponse.redirect(
         `${process.env.NEXT_PUBLIC_SITE_URL}/auth/error?reason=expired_token`
       );
     }
 
-    const tokenData = JSON.parse(tokenDataStr as string);
+    // Upstash Redis automatically deserializes JSON, so tokenData is already an object
+    // No need to JSON.parse()
 
     // Check if token is expired
     const expiresAt = new Date(tokenData.expiresAt);

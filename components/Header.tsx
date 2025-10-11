@@ -245,10 +245,18 @@ export function Header() {
                 <>
                   <Button
                     size="lg"
-                    className="h-7 sm:h-9 px-3 sm:px-4 text-white dark:text-black tracking-tight group dark:bg-white/95 bg-black rounded-lg dark:hover:bg-white dark:hover:text-black transition-all duration-300"
+                    variant="outline"
+                    className="h-7 sm:h-9 px-3 sm:px-4  rounded-lg transition-all duration-300"
                     onClick={() => handleScanContract()}
                   >
                     Scan Contract
+                  </Button>
+                  <Button
+                    size="lg"
+                    className="h-7 sm:h-9 px-3 sm:px-4 text-white dark:text-black tracking-tight group dark:bg-white/95 bg-black rounded-lg dark:hover:bg-white dark:hover:text-black transition-all duration-300"
+                    onClick={() => handleSignup()}
+                  >
+                    Sign Up
                   </Button>
                 </>
               )}
@@ -375,13 +383,24 @@ export function Header() {
                   <div className="flex gap-2 mt-2 px-2">
                     <Button
                       size="sm"
-                      className="flex-1 bg-black dark:bg-white text-white dark:text-black"
+                      variant="outline"
+                      className="flex-1"
                       onClick={() => {
                         setIsMobileMenuOpen(false);
                         handleScanContract();
                       }}
                     >
                       Scan Contract
+                    </Button>
+                    <Button
+                      size="sm"
+                      className="flex-1 bg-black dark:bg-white text-white dark:text-black"
+                      onClick={() => {
+                        setIsMobileMenuOpen(false);
+                        handleSignup();
+                      }}
+                    >
+                      Sign Up
                     </Button>
                   </div>
                 )}
