@@ -7,6 +7,8 @@ import { Progress } from "@/components/ui/progress";
 import { Share2, Trophy, TrendingUp, Gift, Copy, Check } from "lucide-react";
 import { motion } from "framer-motion";
 import { REFERRAL_TIERS } from "@/lib/referrals/gamification-config";
+import { ReferralStats } from "./ReferralStats";
+import { ReferralDashboardSkeleton } from "./ReferralDashboardSkeleton";
 
 interface DashboardData {
   currentTier: {
@@ -45,11 +47,20 @@ interface DashboardData {
   }>;
 }
 
+interface Referral {
+  id: string;
+  status: string;
+  createdAt: Date | string;
+  confirmedAt?: Date | string | null;
+  rewardAmount?: number | null;
+}
+
 export function ReferralDashboard({ userId }: { userId?: number }) {
   const [data, setData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
   const [copied, setCopied] = useState(false);
   const [referralCode, setReferralCode] = useState<string>("");
+  const [recentReferrals, setRecentReferrals] = useState<Referral[]>([]);
 
   useEffect(() => {
     fetchDashboard();
@@ -74,8 +85,11 @@ export function ReferralDashboard({ userId }: { userId?: number }) {
     try {
       const response = await fetch("/api/referrals/stats");
       const result = await response.json();
-      if (result.success && result.data.referralCode) {
-        setReferralCode(result.data.referralCode);
+      if (result.referralCode) {
+        setReferralCode(result.referralCode);
+      }
+      if (result.recentReferrals) {
+        setRecentReferrals(result.recentReferrals);
       }
     } catch (error) {
       console.error("Failed to fetch referral code:", error);
@@ -97,17 +111,15 @@ export function ReferralDashboard({ userId }: { userId?: number }) {
   };
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600" />
-      </div>
-    );
+    return <ReferralDashboardSkeleton />;
   }
 
   if (!data) {
     return (
       <div className="text-center py-12">
-        <p className="text-gray-400">Failed to load dashboard data</p>
+        <p className="text-black/60 dark:text-white/60">
+          Failed to load dashboard data
+        </p>
       </div>
     );
   }
@@ -115,7 +127,7 @@ export function ReferralDashboard({ userId }: { userId?: number }) {
   return (
     <div className="space-y-6">
       {/* Tier Badge Section */}
-      <Card className="p-6 bg-gradient-to-br from-gray-900 to-gray-800 border-gray-700">
+      <div className="bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 rounded-xl p-6">
         <div className="flex items-start justify-between">
           <div className="flex items-center gap-4">
             <motion.div
@@ -127,21 +139,23 @@ export function ReferralDashboard({ userId }: { userId?: number }) {
               {data.currentTier.badge}
             </motion.div>
             <div>
-              <h2 className="text-2xl font-bold text-white">
+              <h2 className="text-2xl font-semibold text-black dark:text-white">
                 {data.currentTier.name} Tier
               </h2>
-              <p className="text-gray-400 mt-1">
+              <p className="text-black/60 dark:text-white/60 mt-1">
                 {data.totalReferrals} successful referrals
               </p>
             </div>
           </div>
           <div className="text-right">
-            <div className="text-sm text-gray-400">Total Earnings</div>
-            <div className="text-2xl font-bold text-green-400">
+            <div className="text-sm text-black/60 dark:text-white/60">
+              Total Earnings
+            </div>
+            <div className="text-2xl font-semibold text-green-600 dark:text-green-400">
               ${(data.totalEarnings / 100).toFixed(2)}
             </div>
             {data.activeCommissions > 0 && (
-              <div className="text-sm text-purple-400 mt-1">
+              <div className="text-sm text-purple-600 dark:text-purple-400 mt-1">
                 {data.activeCommissions} active commission
                 {data.activeCommissions !== 1 ? "s" : ""}
               </div>
@@ -154,52 +168,52 @@ export function ReferralDashboard({ userId }: { userId?: number }) {
           {data.currentTier.perks.map((perk, index) => (
             <div
               key={index}
-              className="flex items-center gap-2 text-sm text-gray-300"
+              className="flex items-center gap-2 text-sm text-black/70 dark:text-white/70"
             >
-              <div className="w-1.5 h-1.5 rounded-full bg-green-400" />
+              <div className="w-1.5 h-1.5 rounded-full bg-green-600 dark:bg-green-400" />
               {perk}
             </div>
           ))}
         </div>
-      </Card>
+      </div>
 
       {/* Progress to Next Tier */}
       {data.nextTier && (
-        <Card className="p-6 bg-gray-900 border-gray-700">
+        <div className="bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 rounded-xl p-6">
           <div className="flex items-center justify-between mb-4">
             <div>
-              <h3 className="text-lg font-semibold text-white">
+              <h3 className="text-lg font-semibold text-black dark:text-white">
                 Next: {data.nextTier.badge} {data.nextTier.name}
               </h3>
-              <p className="text-sm text-gray-400">
+              <p className="text-sm text-black/60 dark:text-white/60">
                 {data.referralsNeeded} more referral
                 {data.referralsNeeded !== 1 ? "s" : ""} needed
               </p>
             </div>
             <div className="text-right">
-              <div className="text-2xl font-bold text-white">
+              <div className="text-2xl font-semibold text-black dark:text-white">
                 {Math.round(data.progress)}%
               </div>
             </div>
           </div>
           <Progress value={data.progress} className="h-3" />
-        </Card>
+        </div>
       )}
 
       {/* Referral Link Section */}
-      <Card className="p-6 bg-gray-900 border-gray-700">
-        <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+      <div className="bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 rounded-xl p-6">
+        <h3 className="text-lg font-semibold text-black dark:text-white mb-4 flex items-center gap-2">
           <Share2 className="w-5 h-5" />
           Your Referral Link
         </h3>
-        <div className="flex gap-2">
-          <div className="flex-1 bg-gray-800 rounded-lg px-4 py-3 text-gray-300 font-mono text-sm">
+        <div className="flex flex-col md:flex-row gap-2">
+          <div className="flex-1 bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 rounded-lg px-4 py-3 text-black/70 dark:text-white/70 font-mono text-sm">
             {window.location.origin}/ref/{referralCode}
           </div>
           <Button
             onClick={copyReferralLink}
             variant="outline"
-            className="bg-gray-800 border-gray-700 hover:bg-gray-700"
+            className="bg-black/5 dark:bg-white/5 border-black/10 dark:border-white/10 hover:bg-black/10 dark:hover:bg-white/10"
           >
             {copied ? (
               <Check className="w-4 h-4" />
@@ -209,93 +223,73 @@ export function ReferralDashboard({ userId }: { userId?: number }) {
           </Button>
           <Button
             onClick={shareOnTwitter}
-            className="bg-blue-600 hover:bg-blue-700"
+            className="bg-black dark:bg-white text-white dark:text-black hover:bg-black/90 dark:hover:bg-white/90"
           >
             <Share2 className="w-4 h-4 mr-2" />
             Share
           </Button>
         </div>
-      </Card>
+      </div>
 
       {/* Stats Grid */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Card className="p-6 bg-gray-900 border-gray-700">
+        <div className="bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 rounded-xl p-6">
           <div className="flex items-center gap-3">
             <div className="w-12 h-12 rounded-full bg-purple-600/20 flex items-center justify-center">
-              <Trophy className="w-6 h-6 text-purple-400" />
+              <Trophy className="w-6 h-6 text-purple-600 dark:text-purple-400" />
             </div>
             <div>
-              <div className="text-sm text-gray-400">Total Referrals</div>
-              <div className="text-2xl font-bold text-white">
+              <div className="text-sm text-black/60 dark:text-white/60">
+                Total Referrals
+              </div>
+              <div className="text-2xl font-semibold text-black dark:text-white">
                 {data.totalReferrals}
               </div>
             </div>
           </div>
-        </Card>
+        </div>
 
-        <Card className="p-6 bg-gray-900 border-gray-700">
+        <div className="bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 rounded-xl p-6">
           <div className="flex items-center gap-3">
             <div className="w-12 h-12 rounded-full bg-green-600/20 flex items-center justify-center">
-              <TrendingUp className="w-6 h-6 text-green-400" />
+              <TrendingUp className="w-6 h-6 text-green-600 dark:text-green-400" />
             </div>
             <div>
-              <div className="text-sm text-gray-400">Total Earned</div>
-              <div className="text-2xl font-bold text-white">
+              <div className="text-sm text-black/60 dark:text-white/60">
+                Total Earned
+              </div>
+              <div className="text-2xl font-semibold text-black dark:text-white">
                 ${(data.totalEarnings / 100).toFixed(0)}
               </div>
             </div>
           </div>
-        </Card>
+        </div>
 
-        <Card className="p-6 bg-gray-900 border-gray-700">
+        <div className="bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 rounded-xl p-6">
           <div className="flex items-center gap-3">
             <div className="w-12 h-12 rounded-full bg-blue-600/20 flex items-center justify-center">
-              <Gift className="w-6 h-6 text-blue-400" />
+              <Gift className="w-6 h-6 text-blue-600 dark:text-blue-400" />
             </div>
             <div>
-              <div className="text-sm text-gray-400">Commissions</div>
-              <div className="text-2xl font-bold text-white">
+              <div className="text-sm text-black/60 dark:text-white/60">
+                Commissions
+              </div>
+              <div className="text-2xl font-semibold text-black dark:text-white">
                 ${(data.lifetimeCommission / 100).toFixed(0)}
               </div>
             </div>
           </div>
-        </Card>
+        </div>
       </div>
 
       {/* Recent Referrals */}
-      {data.recentReferrals.length > 0 && (
-        <Card className="p-6 bg-gray-900 border-gray-700">
-          <h3 className="text-lg font-semibold text-white mb-4">
-            Recent Referrals
-          </h3>
-          <div className="space-y-3">
-            {data.recentReferrals.slice(0, 5).map((referral, index) => (
-              <div
-                key={index}
-                className="flex items-center justify-between py-2 border-b border-gray-800 last:border-0"
-              >
-                <div>
-                  <div className="text-sm text-gray-300">
-                    {new Date(referral.date).toLocaleDateString()}
-                  </div>
-                  <div className="text-xs text-gray-500">
-                    Status: {referral.status}
-                  </div>
-                </div>
-                <div className="text-sm font-medium text-green-400">
-                  {referral.reward}
-                </div>
-              </div>
-            ))}
-          </div>
-        </Card>
-      )}
+      <ReferralStats referrals={recentReferrals} />
 
       {/* Achievements */}
       {data.achievements.length > 0 && (
-        <Card className="p-6 bg-gray-900 border-gray-700">
-          <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
-            <Trophy className="w-5 h-5 text-yellow-400" />
+        <div className="bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 rounded-xl p-6">
+          <h3 className="text-lg font-semibold text-black dark:text-white mb-4 flex items-center gap-2">
+            <Trophy className="w-5 h-5 text-yellow-600 dark:text-yellow-400" />
             Achievements
           </h3>
           <div className="space-y-3">
@@ -307,25 +301,25 @@ export function ReferralDashboard({ userId }: { userId?: number }) {
                   initial={{ opacity: 0, x: -20 }}
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ delay: index * 0.1 }}
-                  className="flex items-center gap-3 p-3 rounded-lg bg-gray-800"
+                  className="flex items-center gap-3 p-3 rounded-lg bg-black/5 dark:bg-white/5"
                 >
                   <div className="text-3xl">{tier?.badge || "🏆"}</div>
                   <div className="flex-1">
-                    <div className="font-medium text-white">
+                    <div className="font-medium text-black dark:text-white">
                       {tier?.name || achievement.tier} Tier Unlocked
                     </div>
-                    <div className="text-sm text-gray-400">
+                    <div className="text-sm text-black/60 dark:text-white/60">
                       {achievement.rewardDescription}
                     </div>
                   </div>
-                  <div className="text-xs text-gray-500">
+                  <div className="text-xs text-black/50 dark:text-white/50">
                     {new Date(achievement.achievedAt).toLocaleDateString()}
                   </div>
                 </motion.div>
               );
             })}
           </div>
-        </Card>
+        </div>
       )}
     </div>
   );

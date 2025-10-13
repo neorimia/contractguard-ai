@@ -88,6 +88,7 @@ export async function GET(request: NextRequest) {
         status: r.status,
         createdAt: r.createdAt,
         confirmedAt: r.confirmedAt,
+        rewardAmount: r.rewardAmount,
       })),
     };
 

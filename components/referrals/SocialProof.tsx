@@ -98,12 +98,12 @@ export function SocialProof({
       <motion.div
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="bg-gradient-to-r from-purple-600/20 to-blue-600/20 border border-purple-500/30 rounded-lg p-4"
+        className="bg-gradient-to-r from-purple-600/10 to-blue-600/10 dark:from-purple-600/20 dark:to-blue-600/20 border border-purple-500/30 dark:border-purple-500/50 rounded-xl p-4"
       >
         <div className="flex items-center justify-between gap-4 flex-wrap">
           <div className="flex items-center gap-2">
-            <Sparkles className="w-5 h-5 text-yellow-400" />
-            <span className="font-semibold text-white">
+            <Sparkles className="w-5 h-5 text-yellow-600 dark:text-yellow-400" />
+            <span className="font-semibold text-black dark:text-white">
               ContractGuard Community Impact
             </span>
           </div>
@@ -128,8 +128,12 @@ export function SocialProof({
                         <Icon className={`w-4 h-4 ${stat.color}`} />
                       </div>
                       <div className="text-sm">
-                        <div className="text-gray-400">{stat.label}</div>
-                        <div className="font-bold text-white">{stat.value}</div>
+                        <div className="text-black/60 dark:text-white/60">
+                          {stat.label}
+                        </div>
+                        <div className="font-semibold text-black dark:text-white">
+                          {stat.value}
+                        </div>
                       </div>
                     </>
                   );
@@ -153,17 +157,19 @@ export function SocialProof({
               initial={{ opacity: 0, scale: 0.8 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ delay: index * 0.1 }}
-              className="bg-gray-900 border border-gray-700 rounded-lg p-4"
+              className="bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 rounded-xl p-4"
             >
               <div
                 className={`w-12 h-12 rounded-full ${stat.bgColor} flex items-center justify-center mb-3`}
               >
                 <Icon className={`w-6 h-6 ${stat.color}`} />
               </div>
-              <div className="text-2xl font-bold text-white mb-1">
+              <div className="text-2xl font-semibold text-black dark:text-white mb-1">
                 {stat.value}
               </div>
-              <div className="text-sm text-gray-400">{stat.label}</div>
+              <div className="text-sm text-black/60 dark:text-white/60">
+                {stat.label}
+              </div>
             </motion.div>
           );
         })}
@@ -173,7 +179,7 @@ export function SocialProof({
 
   if (variant === "footer") {
     return (
-      <div className="bg-gray-900/50 border border-gray-800 rounded-lg p-6">
+      <div className="bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 rounded-xl p-6">
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
           {stats.map((stat, index) => {
             const Icon = stat.icon;
@@ -181,11 +187,13 @@ export function SocialProof({
               <div key={index}>
                 <div className="flex items-center justify-center gap-2 mb-2">
                   <Icon className={`w-5 h-5 ${stat.color}`} />
-                  <div className="text-2xl font-bold text-white">
+                  <div className="text-2xl font-semibold text-black dark:text-white">
                     {stat.value}
                   </div>
                 </div>
-                <div className="text-sm text-gray-400">{stat.label}</div>
+                <div className="text-sm text-black/60 dark:text-white/60">
+                  {stat.label}
+                </div>
               </div>
             );
           })}
@@ -196,12 +204,12 @@ export function SocialProof({
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            className="mt-4 pt-4 border-t border-gray-800 text-center"
+            className="mt-4 pt-4 border-t border-black/10 dark:border-white/10 text-center"
           >
-            <div className="text-sm text-gray-400">
+            <div className="text-sm text-black/60 dark:text-white/60">
               <span className="inline-flex items-center gap-1">
-                <div className="w-2 h-2 rounded-full bg-green-400 animate-pulse" />
-                <span className="font-semibold text-green-400">
+                <div className="w-2 h-2 rounded-full bg-green-600 dark:bg-green-400 animate-pulse" />
+                <span className="font-semibold text-green-600 dark:text-green-400">
                   {data.recentUsers24h}
                 </span>{" "}
                 new users joined in the last 24 hours
@@ -212,13 +220,13 @@ export function SocialProof({
 
         {/* Top Referrer */}
         {data.topReferrerCount > 0 && (
-          <div className="mt-3 text-center text-sm text-gray-400">
+          <div className="mt-3 text-center text-sm text-black/60 dark:text-white/60">
             🏆 Top referrer:{" "}
-            <span className="text-white font-medium">
+            <span className="text-black dark:text-white font-medium">
               {data.topReferrerName}
             </span>{" "}
             with{" "}
-            <span className="text-purple-400 font-semibold">
+            <span className="text-purple-600 dark:text-purple-400 font-semibold">
               {data.topReferrerCount}
             </span>{" "}
             referrals

@@ -1,9 +1,8 @@
 "use client";
 
-import { Plus, Minus, ArrowRight } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { motion, AnimatePresence } from "motion/react";
-import { useState } from "react";
+import { FAQItem } from "@/components/ui/faq-item";
 
 type FAQ = {
   question: string;
@@ -11,12 +10,6 @@ type FAQ = {
 };
 
 export default function FAQSection() {
-  const [activeIndex, setActiveIndex] = useState<number | null>(null);
-
-  const handleToggle = (index: number) => {
-    setActiveIndex(activeIndex === index ? null : index);
-  };
-
   // FAQ data
   const faqs: FAQ[] = [
     {
@@ -75,78 +68,13 @@ export default function FAQSection() {
 
         <div className="space-y-2.5">
           {faqs.map((faq, index) => (
-            <motion.div
+            <FAQItem
               key={`faq-${faq.question.toLowerCase().replace(/\s+/g, "-")}`}
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{
-                duration: 0.3,
-                delay: index * 0.05,
-              }}
-              className="backdrop-blur-sm border border-white/10 dark:border-black/10 bg-white/[0.03] dark:bg-black/[0.03] rounded-lg overflow-hidden shadow-sm shadow-white/5 dark:shadow-black/5 hover:border-white/15 dark:hover:border-black/15 transition-colors"
-            >
-              <button
-                onClick={() => handleToggle(index)}
-                className="flex items-center justify-between w-full px-5 py-4 text-left"
-                aria-expanded={activeIndex === index}
-                aria-controls={`faq-answer-${index}`}
-                tabIndex={0}
-                onKeyDown={(e) => e.key === "Enter" && handleToggle(index)}
-                type="button"
-              >
-                <h3 className="text-base font-medium text-white dark:text-black">
-                  {faq.question}
-                </h3>
-                <div className="flex-shrink-0 ml-4 flex items-center justify-center h-6 w-6 rounded-full bg-white/5 dark:bg-black/5 border border-white/10 dark:border-black/10 transition-colors">
-                  {activeIndex === index ? (
-                    <Minus className="h-3.5 w-3.5 text-white/80 dark:text-black/80" />
-                  ) : (
-                    <Plus className="h-3.5 w-3.5 text-white/80 dark:text-black/80" />
-                  )}
-                </div>
-              </button>
-
-              <AnimatePresence initial={false}>
-                {activeIndex === index && (
-                  <motion.div
-                    id={`faq-answer-${index}`}
-                    initial={{ height: 0, opacity: 0 }}
-                    animate={{
-                      height: "auto",
-                      opacity: 1,
-                      transition: {
-                        height: {
-                          duration: 0.3,
-                          ease: "easeInOut",
-                        },
-                        opacity: {
-                          duration: 0.2,
-                          delay: 0.1,
-                        },
-                      },
-                    }}
-                    exit={{
-                      height: 0,
-                      opacity: 0,
-                      transition: {
-                        height: {
-                          duration: 0.3,
-                          ease: "easeInOut",
-                        },
-                        opacity: { duration: 0.2 },
-                      },
-                    }}
-                  >
-                    <div className="px-5 pb-4">
-                      <div className="w-10 h-px border-t border-dashed border-white/10 dark:border-black/10 mb-3" />
-                      <p className="text-white/70 dark:text-black/70 text-sm">
-                        {faq.answer}
-                      </p>
-                    </div>
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </motion.div>
+              question={faq.question}
+              answer={faq.answer}
+              index={index}
+              variant="inverted"
+            />
           ))}
         </div>
 
