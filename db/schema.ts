@@ -7,6 +7,10 @@ import {
   jsonb,
   boolean,
   serial,
+  varchar,
+  numeric,
+  index,
+  uniqueIndex,
 } from "drizzle-orm/pg-core";
 
 export const audits = pgTable("audits", {
@@ -661,7 +665,98 @@ export const socialProofStats = pgTable("social_proof_stats", {
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
 });
 
-// Types
+// ============================================================================
+// CRYPTOGUARD TABLES - Smart Contract Security Analysis Module
+// ============================================================================
+
+// CryptoGuard Audits - Smart contract risk analysis results
+export const cryptoAudits = pgTable(
+  "crypto_audits",
+  {
+    id: serial("id").primaryKey(),
+    contractAddress: varchar("contract_address", { length: 255 }).notNull(),
+    chain: varchar("chain", { length: 50 }).notNull(), // 'ethereum', 'bsc', 'solana'
+    riskScore: integer("risk_score").notNull(), // 0-100
+    riskCategory: varchar("risk_category", { length: 50 }), // 'very_low', 'low', 'medium', 'high', 'critical'
+
+    // Analysis results
+    flags: jsonb("flags").$type<RiskFlag[]>(), // Array of red flags
+    metadata: jsonb("metadata").$type<ContractMetadata>(),
+    confidence: integer("confidence").default(0), // 0-100
+
+    // Enrichment data
+    holderCount: integer("holder_count"),
+    topHolderConcentration: integer("top_holder_concentration"), // %
+    liquidityUsd: numeric("liquidity_usd"),
+    isVerified: boolean("is_verified").default(false),
+
+    // Tracking
+    views: integer("views").default(0),
+    shares: integer("shares").default(0),
+    createdAt: timestamp("created_at").defaultNow(),
+    expiresAt: timestamp("expires_at"), // Cache TTL (24 hours)
+  },
+  (table) => ({
+    contractIdx: uniqueIndex("contract_chain_idx").on(
+      table.contractAddress,
+      table.chain
+    ),
+    riskScoreIdx: index("risk_score_idx").on(table.riskScore),
+  })
+);
+
+// Risk Heuristics - Configurable risk detection rules
+export const riskHeuristics = pgTable("risk_heuristics", {
+  id: serial("id").primaryKey(),
+  name: varchar("name", { length: 255 }).notNull().unique(),
+  category: varchar("category", { length: 50 }).notNull(), // 'code', 'liquidity', 'tokenomics', 'transparency'
+  weight: integer("weight").default(10), // 1-100
+  threshold: jsonb("threshold"), // Custom threshold config
+  enabled: boolean("enabled").default(true),
+  description: text("description"),
+  rule: jsonb("rule").$type<HeuristicRule>(),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// CryptoGuard Type Definitions
+export interface RiskFlag {
+  type: string;
+  severity: "low" | "medium" | "high" | "critical";
+  title: string;
+  description: string;
+  evidence: string;
+  confidence: number;
+}
+
+export interface ContractMetadata {
+  deployer: string;
+  deployDate: string;
+  sourceCode?: string;
+  compiler?: string;
+  txCount?: number;
+  socialLinks?: {
+    github?: string;
+    twitter?: string;
+    telegram?: string;
+    website?: string;
+  };
+}
+
+export interface HeuristicRule {
+  type: string;
+  parameters: Record<string, any>;
+  conditions: Array<{
+    field: string;
+    operator: string;
+    value: any;
+  }>;
+}
+
+// ============================================================================
+// LEGACY TYPES
+// ============================================================================
+
 export interface Issue {
   severity: "CRITICAL" | "HIGH" | "MEDIUM" | "LOW";
   type: string;
@@ -702,3 +797,9 @@ export type ReferralReward = typeof referralRewards.$inferSelect;
 export type NewReferralReward = typeof referralRewards.$inferInsert;
 export type SocialProofStat = typeof socialProofStats.$inferSelect;
 export type NewSocialProofStat = typeof socialProofStats.$inferInsert;
+
+// CryptoGuard Type Exports
+export type CryptoAudit = typeof cryptoAudits.$inferSelect;
+export type NewCryptoAudit = typeof cryptoAudits.$inferInsert;
+export type RiskHeuristic = typeof riskHeuristics.$inferSelect;
+export type NewRiskHeuristic = typeof riskHeuristics.$inferInsert;

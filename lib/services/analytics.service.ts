@@ -1,6 +1,6 @@
 // lib/services/analytics.service.ts
 import { db } from "@/db";
-import { purchases, users, audits } from "@/db/schema";
+import { purchases, users, cryptoAudits } from "@/db/schema";
 import { eq, and, gte, lte, sql, count, sum } from "drizzle-orm";
 
 export interface RevenueStats {
@@ -376,9 +376,12 @@ export class AnalyticsService {
     // Total audits performed (proxy for report views)
     const reportViews = await db
       .select({ count: count() })
-      .from(audits)
+      .from(cryptoAudits)
       .where(
-        and(gte(audits.createdAt, startDate), lte(audits.createdAt, endDate))
+        and(
+          gte(cryptoAudits.createdAt, startDate),
+          lte(cryptoAudits.createdAt, endDate)
+        )
       );
 
     // Instant purchases

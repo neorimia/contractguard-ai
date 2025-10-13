@@ -22,13 +22,13 @@ const TEST_ADDRESS = "0xdac17f958d2ee523a2206206994597c13d831ec7"; // USDT
 
 // Import database modules dynamically after env is loaded
 let db: any;
-let audits: any;
+let cryptoAudits: any;
 
 async function initDb() {
   const dbModule = await import("@/db");
   const schemaModule = await import("@/db/schema");
   db = dbModule.db;
-  audits = schemaModule.audits;
+  cryptoAudits = schemaModule.cryptoAudits;
 }
 
 async function testRedisCache() {
@@ -91,26 +91,46 @@ async function testDatabaseCache() {
     const auditData = {
       contractAddress: testAddress,
       chain: "ethereum",
-      sourceCode: "test code",
-      isVerified: true,
       riskScore: 30,
-      summary: "Test audit",
-      issues: [],
-      recommendation: "CAUTION" as const,
+      riskCategory: "low",
+      flags: [
+        {
+          type: "test",
+          severity: "low" as const,
+          title: "Test Flag",
+          description: "Test description",
+          evidence: "Test evidence",
+          confidence: 85,
+        },
+      ],
+      metadata: {
+        deployer: "Test",
+        deployDate: new Date().toISOString(),
+        sourceCode: "test code",
+        compiler: "0.8.0",
+        txCount: 100,
+      },
+      confidence: 85,
       holderCount: 100,
-      liquidity: "$100K",
-      ownerBalance: "0.5",
+      topHolderConcentration: null,
+      liquidityUsd: "100000",
+      isVerified: true,
       views: 1,
       shares: 0,
+      expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000),
     };
 
-    await db.insert(audits).values(auditData);
+    await db.insert(cryptoAudits).values(auditData);
     console.log("  - Audit inserted successfully");
 
     // Test 2: Query audit
     console.log("\n✓ Test 2: Querying audit record");
-    const result = await db.query.audits.findFirst({
-      where: eq(audits.contractAddress, testAddress),
+    const { and: andFn } = await import("drizzle-orm");
+    const result = await db.query.cryptoAudits.findFirst({
+      where: andFn(
+        eq(cryptoAudits.contractAddress, testAddress),
+        eq(cryptoAudits.chain, "ethereum")
+      ),
     });
 
     console.log("  - Audit found:", result ? "✓" : "✗");
@@ -120,17 +140,25 @@ async function testDatabaseCache() {
     }
 
     console.log(`  - Risk Score: ${result.riskScore}`);
-    console.log(`  - Summary: ${result.summary}`);
+    console.log(`  - Risk Category: ${result.riskCategory}`);
 
     // Test 3: Update audit (views)
     console.log("\n✓ Test 3: Updating audit views");
     await db
-      .update(audits)
+      .update(cryptoAudits)
       .set({ views: (result.views || 0) + 1 })
-      .where(eq(audits.contractAddress, testAddress));
+      .where(
+        andFn(
+          eq(cryptoAudits.contractAddress, testAddress),
+          eq(cryptoAudits.chain, "ethereum")
+        )
+      );
 
-    const updated = await db.query.audits.findFirst({
-      where: eq(audits.contractAddress, testAddress),
+    const updated = await db.query.cryptoAudits.findFirst({
+      where: andFn(
+        eq(cryptoAudits.contractAddress, testAddress),
+        eq(cryptoAudits.chain, "ethereum")
+      ),
     });
 
     console.log(`  - Views before: ${result.views}, after: ${updated?.views}`);
