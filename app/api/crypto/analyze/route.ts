@@ -108,8 +108,12 @@ export async function POST(request: NextRequest) {
       metadata: analysisData.metadata,
       confidence: assessment.confidence,
       holderCount: analysisData.holderData?.holderCount,
-      topHolderConcentration: analysisData.holderData?.topHolderConcentration,
-      liquidityUsd: analysisData.liquidityData?.totalLiquidityUsd,
+      topHolderConcentration: analysisData.holderData?.topHolderConcentration
+        ? String(analysisData.holderData.topHolderConcentration)
+        : null,
+      liquidityUsd: analysisData.liquidityData?.totalLiquidityUsd
+        ? String(analysisData.liquidityData.totalLiquidityUsd)
+        : null,
       isVerified: analysisData.sourceCode?.isVerified ?? false,
       expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000), // 24 hours
     };
