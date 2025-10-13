@@ -294,6 +294,20 @@ export function ScanInterface() {
             pulls. Get instant results in plain English.
           </p>
 
+          {/* Crypto.com Affiliate Banner - Show before scanning for free/anonymous users */}
+          {!result && (!user || userAccessStatus?.accessType === "free") && (
+            <div className="max-w-4xl mx-auto mt-6">
+              <BannerManager
+                placement="top_leaderboard"
+                scanCount={
+                  user
+                    ? 3 - (userAccessStatus?.scansRemaining || 0)
+                    : anonymousScansPerformed
+                }
+              />
+            </div>
+          )}
+
           {/* Scan Overview (for all users) */}
           {/* Always visible to create awareness of scan limits */}
           {(() => {

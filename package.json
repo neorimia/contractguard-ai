@@ -23,7 +23,8 @@
         "test:all": "tsx scripts/test-audit-flow.ts && tsx scripts/test-caching.ts",
         "test:emails": "tsx scripts/test-emails.ts",
         "email:dev": "email dev",
-        "seed:banners": "tsx scripts/seed-banners.ts"
+        "seed:banners": "tsx scripts/seed-banners.ts",
+        "seed:referrals": "tsx scripts/seed-referral-leaderboard.ts"
     },
     "dependencies": {
         "@neondatabase/serverless": "^1.0.2",
