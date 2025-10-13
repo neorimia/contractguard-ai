@@ -98,7 +98,20 @@ export function ScanInterface() {
   }, [result]);
 
   const analyzeContract = async () => {
-    if (!address) return;
+    // Validate address is not empty
+    if (!address.trim()) {
+      setError("Please enter a contract address");
+      return;
+    }
+
+    // Validate EVM address format (0x + 40 hex characters)
+    const trimmedAddress = address.trim();
+    if (!/^0x[a-fA-F0-9]{40}$/.test(trimmedAddress)) {
+      setError(
+        "Invalid Ethereum contract address format (must be 0x followed by 40 hex characters)"
+      );
+      return;
+    }
 
     // Check if anonymous user has only 1 scan remaining (2 scans performed)
     // Show soft signup prompt before consuming the last scan
