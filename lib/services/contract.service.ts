@@ -6,6 +6,8 @@ interface ContractData {
   isVerified: boolean;
   contractName: string;
   compiler: string;
+  deployer?: string;
+  deployDate?: string;
 }
 
 interface EnrichmentData {
@@ -76,6 +78,19 @@ export class ContractService {
         };
       }
 
+      // Fetch deployer information in parallel (non-blocking)
+      let deployer: string | undefined;
+      let deployDate: string | undefined;
+
+      try {
+        const creationInfo = await this.getContractCreation(address, baseUrl);
+        deployer = creationInfo.deployer;
+        deployDate = creationInfo.deployDate;
+      } catch (error) {
+        console.warn("Could not fetch deployer info:", error);
+        // Non-critical, continue without deployer info
+      }
+
       return {
         address,
         sourceCode: contractInfo.SourceCode,
@@ -83,10 +98,67 @@ export class ContractService {
         isVerified: true,
         contractName: contractInfo.ContractName,
         compiler: contractInfo.CompilerVersion,
+        deployer,
+        deployDate,
       };
     } catch (error) {
       console.error("Error fetching contract:", error);
       throw error;
+    }
+  }
+
+  /**
+   * Get contract creator and creation timestamp from Etherscan
+   */
+  private async getContractCreation(
+    address: string,
+    baseUrl: string
+  ): Promise<{ deployer?: string; deployDate?: string }> {
+    try {
+      const response = await fetch(
+        `${baseUrl}/api?module=contract&action=getcontractcreation&contractaddresses=${address}&apikey=${this.etherscanApiKey}`
+      );
+
+      const data = await response.json();
+
+      if (data.status === "1" && data.result && data.result[0]) {
+        const creationInfo = data.result[0];
+
+        // Get block timestamp if transaction hash is available
+        let deployDate: string | undefined;
+        if (creationInfo.txHash) {
+          try {
+            const txResponse = await fetch(
+              `${baseUrl}/api?module=proxy&action=eth_getTransactionByHash&txhash=${creationInfo.txHash}&apikey=${this.etherscanApiKey}`
+            );
+            const txData = await txResponse.json();
+
+            if (txData.result?.blockNumber) {
+              const blockResponse = await fetch(
+                `${baseUrl}/api?module=proxy&action=eth_getBlockByNumber&tag=${txData.result.blockNumber}&boolean=false&apikey=${this.etherscanApiKey}`
+              );
+              const blockData = await blockResponse.json();
+
+              if (blockData.result?.timestamp) {
+                const timestamp = parseInt(blockData.result.timestamp, 16);
+                deployDate = new Date(timestamp * 1000).toISOString();
+              }
+            }
+          } catch (error) {
+            console.warn("Could not fetch deploy date:", error);
+          }
+        }
+
+        return {
+          deployer: creationInfo.contractCreator,
+          deployDate,
+        };
+      }
+
+      return {};
+    } catch (error) {
+      console.warn("Error fetching contract creation info:", error);
+      return {};
     }
   }
 

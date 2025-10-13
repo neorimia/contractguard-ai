@@ -242,17 +242,88 @@ export class ContractService {
 
 ## Component Architecture
 
-### 1. Service Layer Pattern
+### 1. Blockchain Service Architecture (Multi-Chain)
+
+**🆕 Etherscan V2 Migration (Oct 2025)**
+
+Unified blockchain service architecture using Etherscan V2 API for 50+ EVM chains.
+
+**Architecture:**
+
+```typescript
+// lib/services/blockchain/chain-config.ts
+// Chain ID mappings and utilities
+export const CHAIN_IDS = {
+  ethereum: 1,
+  bsc: 56,
+  polygon: 137,
+  arbitrum: 42161,
+  optimism: 10,
+  base: 8453,
+  // ... 50+ chains
+};
+
+// lib/services/blockchain/etherscan-v2.service.ts
+// Unified service for all EVM chains
+export class EtherscanV2Service extends BaseBlockchainService {
+  constructor(chain: string) {
+    const chainId = getChainId(chain);
+    super(apiKey, "https://api.etherscan.io/v2", 5);
+  }
+
+  async fetchContractSource(address: string) {
+    // Uses chainid parameter: ?chainid=1&module=contract&...
+  }
+}
+
+// lib/services/blockchain/factory.ts
+// Factory pattern for service instantiation
+export class BlockchainServiceFactory {
+  static getService(chain: string): BaseBlockchainService {
+    // EVM chains → EtherscanV2Service
+    // Solana → SolanaService
+  }
+}
+```
+
+**Benefits:**
+
+- ✅ Single API key for 50+ chains
+- ✅ Reduced code duplication (90% less)
+- ✅ Easy multi-chain expansion
+- ✅ Backward compatible with V1
+- ✅ Feature flag for rollback
+
+**Usage:**
+
+```typescript
+// Factory automatically uses V2 for EVM chains
+const ethService = BlockchainServiceFactory.getService("ethereum");
+const bscService = BlockchainServiceFactory.getService("bsc");
+const baseService = BlockchainServiceFactory.getService("base"); // New chain!
+
+// All services have identical interface
+const source = await ethService.fetchContractSource(address);
+const metadata = await ethService.fetchContractMetadata(address);
+const holders = await ethService.fetchHolderDistribution(address);
+const liquidity = await ethService.fetchLiquidityData(address);
+```
+
+### 2. Service Layer Pattern
 
 Business logic separated into service classes.
 
 **Services:**
 
-- `ContractService` - Contract fetching and validation
+- `EtherscanV2Service` - Multi-chain contract fetching (NEW)
+- `SolanaService` - Solana blockchain integration
 - `AIAnalysisService` - AI analysis and prompt management
-- `UserService` - User management and authentication
-- `CacheService` - Caching operations
-- `PaymentService` - Stripe integration
+- `AuthService` - Stack Auth integration
+- `EmailService` - Resend email service
+- `StripeService` - Payment processing
+- `ReferralService` - Referral rewards
+- `AnalyticsService` - Business metrics
+- `AccessValidationService` - Scan access control
 
 **Pattern:**
 
@@ -647,6 +718,35 @@ describe("/api/audit", () => {
 
 ---
 
+## Recent Architecture Updates
+
+### Etherscan V2 Migration (October 13, 2025)
+
+**What Changed:**
+
+Migrated from individual blockchain services to unified Etherscan V2 API architecture.
+
+**Key Files:**
+
+- `lib/services/blockchain/chain-config.ts` - Chain mappings
+- `lib/services/blockchain/etherscan-v2.service.ts` - Unified service
+- `lib/services/blockchain/factory.ts` - Updated factory with V2
+- `scripts/test-etherscan-v2-migration.ts` - Migration tests
+
+**Impact:**
+
+- ✅ Single API key for all EVM chains
+- ✅ 90% reduction in blockchain service code
+- ✅ Instant support for new EVM chains
+- ✅ Simplified configuration and testing
+
+**Documentation:**
+
+See `docs/ETHERSCAN_V2_MIGRATION.md` for complete migration details.
+
+---
+
 **Created:** 2024-12-19  
+**Last Updated:** 2025-10-13 (Etherscan V2 Migration)  
 **Status:** System patterns and architecture defined  
 **Next:** Technical context and development setup

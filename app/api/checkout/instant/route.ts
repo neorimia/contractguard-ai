@@ -60,13 +60,24 @@ export async function POST(req: NextRequest) {
 
     // Validate package
     const pkg = getInstantPackageByIndex(packageIndex);
-    if (!pkg || !pkg.stripePriceId) {
+    if (!pkg) {
       return NextResponse.json(
         {
           error: "Invalid package",
           details: "Please select a valid instant report package",
         },
         { status: 400 }
+      );
+    }
+
+    // Validate price ID is configured
+    if (!pkg.stripePriceId || pkg.stripePriceId.trim() === "") {
+      return NextResponse.json(
+        {
+          error: "Package not configured",
+          details: `The ${pkg.credits}-credit package is not properly configured. Please contact support.`,
+        },
+        { status: 500 }
       );
     }
 

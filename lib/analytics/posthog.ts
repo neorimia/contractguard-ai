@@ -96,6 +96,14 @@ export const AnalyticsEvents = {
   BANNER_CLICK: "banner_click",
   BANNER_CONVERSION: "banner_conversion",
   BANNER_DISMISSED: "banner_dismissed",
+
+  // Crypto analysis events
+  CRYPTO_SCAN_STARTED: "crypto_scan_started",
+  CRYPTO_SCAN_COMPLETED: "crypto_scan_completed",
+  CRYPTO_SCAN_FAILED: "crypto_scan_failed",
+  CRYPTO_RESULT_SHARED: "crypto_result_shared",
+  CRYPTO_FLAG_EXPANDED: "crypto_flag_expanded",
+  CRYPTO_CHAIN_SWITCHED: "crypto_chain_switched",
 } as const;
 
 // Track custom event

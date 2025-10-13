@@ -1,8 +1,8 @@
 // app/api/audit/route.ts
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/db";
-import { audits, anonymousScans } from "@/db/schema";
-import { eq } from "drizzle-orm";
+import { cryptoAudits, anonymousScans, Issue, type RiskFlag } from "@/db/schema";
+import { eq, and } from "drizzle-orm";
 import { ContractService } from "@/lib/services/contract.service";
 import { AIAnalysisService } from "@/lib/services/ai.service";
 import { AuthService } from "@/lib/services/auth.service";
@@ -28,6 +28,50 @@ const redis = new Redis({
 const contractService = new ContractService();
 const aiService = new AIAnalysisService();
 const authService = new AuthService();
+
+// ============================================================================
+// DATA TRANSFORMATION HELPERS - Old audits schema → New cryptoAudits schema
+// ============================================================================
+
+/**
+ * Transform Issue objects to RiskFlag objects
+ */
+function mapIssueToRiskFlag(issue: Issue, confidence: number): RiskFlag {
+  return {
+    type: issue.type,
+    severity: issue.severity.toLowerCase() as "low" | "medium" | "high" | "critical",
+    title: issue.type,
+    description: issue.description,
+    evidence: `${issue.impact}${issue.code ? `\n\nCode:\n${issue.code}` : ""}`,
+    confidence,
+  };
+}
+
+/**
+ * Calculate risk category from risk score
+ */
+function getRiskCategory(riskScore: number): string {
+  if (riskScore >= 80) return "critical";
+  if (riskScore >= 60) return "high";
+  if (riskScore >= 40) return "medium";
+  if (riskScore >= 20) return "low";
+  return "very_low";
+}
+
+/**
+ * Parse liquidity string to numeric value
+ * Handles formats like "$1,234.56" or "1234.56"
+ */
+function parseLiquidity(liquidity: string | null | undefined): string | null {
+  if (!liquidity) return null;
+  try {
+    const cleaned = liquidity.replace(/[$,]/g, "");
+    const parsed = parseFloat(cleaned);
+    return isNaN(parsed) ? null : parsed.toString();
+  } catch {
+    return null;
+  }
+}
 
 export async function POST(req: NextRequest) {
   try {
@@ -208,8 +252,11 @@ export async function POST(req: NextRequest) {
     }
 
     // 2. Check database cache (24 hour TTL)
-    const existing = await db.query.audits.findFirst({
-      where: eq(audits.contractAddress, normalizedAddress),
+    const existing = await db.query.cryptoAudits.findFirst({
+      where: and(
+        eq(cryptoAudits.contractAddress, normalizedAddress),
+        eq(cryptoAudits.chain, chain)
+      ),
     });
 
     if (existing && isRecent(existing.createdAt, 24 * 60 * 60 * 1000)) {
@@ -217,9 +264,14 @@ export async function POST(req: NextRequest) {
 
       // Update view count
       await db
-        .update(audits)
+        .update(cryptoAudits)
         .set({ views: (existing.views || 0) + 1 })
-        .where(eq(audits.contractAddress, normalizedAddress));
+        .where(
+          and(
+            eq(cryptoAudits.contractAddress, normalizedAddress),
+            eq(cryptoAudits.chain, chain)
+          )
+        );
 
       await redis.set(cacheKey, existing, { ex: 300 }); // 5 min cache
 
@@ -292,33 +344,52 @@ export async function POST(req: NextRequest) {
           )
         : analysis.riskScore;
 
-    // 7. Save to database
+    // 7. Transform and save to database (new cryptoAudits schema)
+    const flags: RiskFlag[] = allIssues.map((issue) =>
+      mapIssueToRiskFlag(issue, analysis.confidence)
+    );
+
     const auditData = {
       contractAddress: normalizedAddress,
       chain,
-      sourceCode: contractData.sourceCode.slice(0, 10000), // Store partial
-      isVerified: contractData.isVerified,
       riskScore: finalRiskScore,
-      summary: analysis.summary,
-      issues: allIssues,
-      recommendation: analysis.recommendation,
+      riskCategory: getRiskCategory(finalRiskScore),
+      flags,
+      metadata: {
+        deployer: contractData.deployer || "Unknown",
+        deployDate: contractData.deployDate || new Date().toISOString(),
+        sourceCode: contractData.sourceCode.slice(0, 10000), // Store partial
+        compiler: contractData.compiler,
+        txCount: enrichmentData.recentTransactions,
+      },
+      confidence: analysis.confidence,
       holderCount: enrichmentData.holderCount,
-      liquidity: enrichmentData.liquidity,
-      ownerBalance: enrichmentData.ownerBalance,
+      topHolderConcentration: null, // Not available yet (future enhancement)
+      liquidityUsd: parseLiquidity(enrichmentData.liquidity),
+      isVerified: contractData.isVerified,
       views: 1,
       shares: 0,
+      expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000), // 24h cache TTL
     };
 
     let result;
     if (existing) {
       const [updated] = await db
-        .update(audits)
-        .set({ ...auditData, updatedAt: new Date() })
-        .where(eq(audits.contractAddress, normalizedAddress))
+        .update(cryptoAudits)
+        .set(auditData)
+        .where(
+          and(
+            eq(cryptoAudits.contractAddress, normalizedAddress),
+            eq(cryptoAudits.chain, chain)
+          )
+        )
         .returning();
       result = updated;
     } else {
-      const [inserted] = await db.insert(audits).values(auditData).returning();
+      const [inserted] = await db
+        .insert(cryptoAudits)
+        .values(auditData)
+        .returning();
       result = inserted;
     }
 
@@ -419,13 +490,17 @@ function isRecent(timestamp: Date | null, maxAge: number): boolean {
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
   const address = searchParams.get("address");
+  const chain = searchParams.get("chain") || "ethereum";
 
   if (!address) {
     return NextResponse.json({ error: "Address required" }, { status: 400 });
   }
 
-  const audit = await db.query.audits.findFirst({
-    where: eq(audits.contractAddress, address.toLowerCase()),
+  const audit = await db.query.cryptoAudits.findFirst({
+    where: and(
+      eq(cryptoAudits.contractAddress, address.toLowerCase()),
+      eq(cryptoAudits.chain, chain)
+    ),
   });
 
   if (!audit) {
@@ -511,8 +586,11 @@ async function handleAnonymousScan(req: NextRequest) {
     }
 
     // Check database cache (24 hour TTL)
-    const existing = await db.query.audits.findFirst({
-      where: eq(audits.contractAddress, normalizedAddress),
+    const existing = await db.query.cryptoAudits.findFirst({
+      where: and(
+        eq(cryptoAudits.contractAddress, normalizedAddress),
+        eq(cryptoAudits.chain, chain)
+      ),
     });
 
     if (existing && isRecent(existing.createdAt, 24 * 60 * 60 * 1000)) {
@@ -520,9 +598,14 @@ async function handleAnonymousScan(req: NextRequest) {
 
       // Update view count
       await db
-        .update(audits)
+        .update(cryptoAudits)
         .set({ views: (existing.views || 0) + 1 })
-        .where(eq(audits.contractAddress, normalizedAddress));
+        .where(
+          and(
+            eq(cryptoAudits.contractAddress, normalizedAddress),
+            eq(cryptoAudits.chain, chain)
+          )
+        );
 
       // Cache in Redis
       await redis.set(cacheKey, existing, { ex: 300 });
@@ -616,37 +699,59 @@ async function handleAnonymousScan(req: NextRequest) {
       .values(anonymousScanData)
       .returning();
 
-    // Also save to main audits table for caching
+    // Also save to main crypto_audits table for caching
+    const flags: RiskFlag[] = allIssues.map((issue) =>
+      mapIssueToRiskFlag(issue, analysis.confidence)
+    );
+
     const auditData = {
       contractAddress: normalizedAddress,
       chain,
-      sourceCode: contractData.sourceCode.slice(0, 10000),
-      isVerified: contractData.isVerified,
       riskScore: finalRiskScore,
-      summary: analysis.summary,
-      issues: allIssues,
-      recommendation: analysis.recommendation,
+      riskCategory: getRiskCategory(finalRiskScore),
+      flags,
+      metadata: {
+        deployer: contractData.deployer || "Unknown",
+        deployDate: contractData.deployDate || new Date().toISOString(),
+        sourceCode: contractData.sourceCode.slice(0, 10000),
+        compiler: contractData.compiler,
+        txCount: enrichmentData.recentTransactions,
+      },
+      confidence: analysis.confidence,
       holderCount: enrichmentData.holderCount,
-      liquidity: enrichmentData.liquidity,
-      ownerBalance: enrichmentData.ownerBalance,
+      topHolderConcentration: null,
+      liquidityUsd: parseLiquidity(enrichmentData.liquidity),
+      isVerified: contractData.isVerified,
       views: 1,
       shares: 0,
+      expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000),
     };
 
     let auditResult;
-    const existingAudit = await db.query.audits.findFirst({
-      where: eq(audits.contractAddress, normalizedAddress),
+    const existingAudit = await db.query.cryptoAudits.findFirst({
+      where: and(
+        eq(cryptoAudits.contractAddress, normalizedAddress),
+        eq(cryptoAudits.chain, chain)
+      ),
     });
 
     if (existingAudit) {
       const [updated] = await db
-        .update(audits)
-        .set({ ...auditData, updatedAt: new Date() })
-        .where(eq(audits.contractAddress, normalizedAddress))
+        .update(cryptoAudits)
+        .set(auditData)
+        .where(
+          and(
+            eq(cryptoAudits.contractAddress, normalizedAddress),
+            eq(cryptoAudits.chain, chain)
+          )
+        )
         .returning();
       auditResult = updated;
     } else {
-      const [inserted] = await db.insert(audits).values(auditData).returning();
+      const [inserted] = await db
+        .insert(cryptoAudits)
+        .values(auditData)
+        .returning();
       auditResult = inserted;
     }
 

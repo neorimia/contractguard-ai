@@ -9,7 +9,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { stackServerApp } from "@/stack/server";
 import { AuthService } from "@/lib/services/auth.service";
 import { db } from "@/db";
-import { audits } from "@/db/schema";
+import { cryptoAudits } from "@/db/schema";
 import { sql, gte } from "drizzle-orm";
 
 const authService = new AuthService();
@@ -50,16 +50,16 @@ export async function GET(req: NextRequest) {
     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
 
     // Query daily scan counts (simplified for MVP)
-    // Note: This queries all audits - in production, you'd want to track per-user scans
+    // Note: This queries all crypto audits - in production, you'd want to track per-user scans
     const historicalScans = await db
       .select({
-        date: sql<string>`DATE(${audits.createdAt})`,
+        date: sql<string>`DATE(${cryptoAudits.createdAt})`,
         count: sql<number>`COUNT(*)::int`,
       })
-      .from(audits)
-      .where(gte(audits.createdAt, thirtyDaysAgo))
-      .groupBy(sql`DATE(${audits.createdAt})`)
-      .orderBy(sql`DATE(${audits.createdAt}) DESC`)
+      .from(cryptoAudits)
+      .where(gte(cryptoAudits.createdAt, thirtyDaysAgo))
+      .groupBy(sql`DATE(${cryptoAudits.createdAt})`)
+      .orderBy(sql`DATE(${cryptoAudits.createdAt}) DESC`)
       .limit(30);
 
     // Calculate this month's total
@@ -76,8 +76,8 @@ export async function GET(req: NextRequest) {
       .select({
         count: sql<number>`COUNT(*)::int`,
       })
-      .from(audits)
-      .where(gte(audits.createdAt, sixtyDaysAgo))
+      .from(cryptoAudits)
+      .where(gte(cryptoAudits.createdAt, sixtyDaysAgo))
       .limit(1);
 
     const response = {

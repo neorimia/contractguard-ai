@@ -150,7 +150,7 @@ Scan your contracts at`;
                 {result.recommendation}
               </strong>
             </p>
-            {contractAddress && (
+            {contractAddress && contractAddress.length >= 18 && (
               <p className="text-gray-600 dark:text-gray-400 text-xs font-mono truncate bg-gray-50 dark:bg-zinc-900 px-2 py-1 rounded">
                 {contractAddress.slice(0, 10)}...{contractAddress.slice(-8)}
               </p>

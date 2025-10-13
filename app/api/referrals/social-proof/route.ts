@@ -2,7 +2,7 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/db";
-import { users, referrals, audits } from "@/db/schema";
+import { users, referrals, cryptoAudits } from "@/db/schema";
 import { count, sql, desc, gte } from "drizzle-orm";
 
 export async function GET(request: NextRequest) {
@@ -16,15 +16,17 @@ export async function GET(request: NextRequest) {
       .from(referrals)
       .where(sql`${referrals.status} IN ('confirmed', 'rewarded')`);
 
-    // Get total scans (audits)
-    const [scansResult] = await db.select({ count: count() }).from(audits);
+    // Get total scans (crypto audits)
+    const [scansResult] = await db
+      .select({ count: count() })
+      .from(cryptoAudits);
 
     // Calculate estimated savings (assume $5000 per scam avoided)
     // Get high-risk audits (risk score > 70)
     const [highRiskResult] = await db
       .select({ count: count() })
-      .from(audits)
-      .where(gte(audits.riskScore, 70));
+      .from(cryptoAudits)
+      .where(gte(cryptoAudits.riskScore, 70));
 
     const scamsAvoided = highRiskResult?.count || 0;
     const estimatedSavings = scamsAvoided * 5000; // $5000 per scam

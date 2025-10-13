@@ -8,7 +8,10 @@ import { NextRequest, NextResponse } from "next/server";
 import { stackServerApp } from "@/stack/server";
 import { stripeService, STRIPE_PRICES } from "@/lib/services/stripe.service";
 import { AuthService } from "@/lib/services/auth.service";
-import { getSubscriptionPlan, isValidSubscriptionTier } from "@/lib/config/pricing";
+import {
+  getSubscriptionPlan,
+  isValidSubscriptionTier,
+} from "@/lib/config/pricing";
 
 const authService = new AuthService();
 
@@ -58,6 +61,18 @@ export async function POST(req: NextRequest) {
 
     // Map tier to price ID (support custom priceId override)
     const stripePriceId = priceId || pricingPlan.stripePriceId;
+
+    // Validate price ID is not empty
+    if (!stripePriceId || stripePriceId.trim() === "") {
+      return NextResponse.json(
+        {
+          error: "Subscription not configured",
+          details: `The ${normalizedTier} plan is not properly configured. Please contact support.`,
+          status: "error",
+        },
+        { status: 500 }
+      );
+    }
 
     // 4. Get or create Stripe customer
     const customer = await stripeService.getOrCreateCustomer({
