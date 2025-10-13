@@ -158,7 +158,11 @@ export function ComparisonTable({ results }: ComparisonTableProps) {
                       Contract {idx + 1}
                     </span>
                     <code className="text-xs font-mono">
-                      {r.address.slice(0, 6)}...{r.address.slice(-4)}
+                      {r.address &&
+                      r.address.startsWith("0x") &&
+                      r.address.length >= 10
+                        ? `${r.address.slice(0, 6)}...${r.address.slice(-4)}`
+                        : r.address || "Unknown"}
                     </code>
                   </div>
                 </th>

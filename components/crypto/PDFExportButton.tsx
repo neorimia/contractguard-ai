@@ -25,7 +25,7 @@ interface PDFExportButtonProps {
 
 export function PDFExportButton({
   result,
-  variant = "outline",
+  variant = "default",
   size = "default",
   className,
 }: PDFExportButtonProps) {

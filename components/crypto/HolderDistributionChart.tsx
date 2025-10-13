@@ -53,6 +53,20 @@ export function HolderDistributionChart({
   totalSupply,
   className,
 }: HolderDistributionChartProps) {
+  // Handle empty or undefined holders
+  if (!holders || holders.length === 0) {
+    return (
+      <Card className={`p-6 bg-gray-900 border-gray-800 ${className || ""}`}>
+        <h3 className="text-lg font-semibold text-white mb-4">
+          Holder Distribution
+        </h3>
+        <p className="text-gray-400 text-center py-8">
+          No holder data available
+        </p>
+      </Card>
+    );
+  }
+
   // Take top 10 holders
   const topHolders = holders.slice(0, 10);
 
@@ -82,7 +96,10 @@ export function HolderDistributionChart({
   const barData = topHolders.map((h, idx) => ({
     name: `#${idx + 1}`,
     percentage: h.percentage,
-    address: `${h.address.slice(0, 6)}...${h.address.slice(-4)}`,
+    address:
+      h.address && h.address.startsWith("0x") && h.address.length >= 10
+        ? `${h.address.slice(0, 6)}...${h.address.slice(-4)}`
+        : h.address || "Unknown",
   }));
 
   // Custom tooltip
@@ -206,7 +223,7 @@ export function HolderDistributionChart({
           <div className="space-y-2 max-h-60 overflow-y-auto">
             {topHolders.map((holder, idx) => (
               <div
-                key={holder.address}
+                key={`holder-${idx}-${holder.address || idx}`}
                 className="flex items-center justify-between p-2 rounded-lg bg-gray-800/50 hover:bg-gray-800 transition-colors"
               >
                 <div className="flex items-center gap-3">
@@ -216,7 +233,11 @@ export function HolderDistributionChart({
                   />
                   <span className="text-sm text-gray-400">#{idx + 1}</span>
                   <code className="text-sm text-cyan-400 font-mono">
-                    {holder.address.slice(0, 8)}...{holder.address.slice(-6)}
+                    {holder.address &&
+                    holder.address.startsWith("0x") &&
+                    holder.address.length >= 10
+                      ? `${holder.address.slice(0, 8)}...${holder.address.slice(-6)}`
+                      : holder.address || "Unknown"}
                   </code>
                 </div>
                 <div className="flex items-center gap-4">

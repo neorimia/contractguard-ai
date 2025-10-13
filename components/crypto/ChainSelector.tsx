@@ -27,6 +27,10 @@ const SUPPORTED_CHAINS: Chain[] = [
   { id: "bsc", name: "BNB Chain", icon: "💎" },
   { id: "polygon", name: "Polygon", icon: "⬡" },
   { id: "arbitrum", name: "Arbitrum", icon: "🔷" },
+  { id: "optimism", name: "Optimism", icon: "🔴" },
+  { id: "base", name: "Base", icon: "🔵" },
+  { id: "avalanche", name: "Avalanche", icon: "🔺" },
+  { id: "solana", name: "Solana", icon: "◎" },
 ];
 
 interface ChainSelectorProps {

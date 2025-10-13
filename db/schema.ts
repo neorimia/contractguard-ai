@@ -686,7 +686,7 @@ export const cryptoAudits = pgTable(
 
     // Enrichment data
     holderCount: integer("holder_count"),
-    topHolderConcentration: integer("top_holder_concentration"), // %
+    topHolderConcentration: numeric("top_holder_concentration"), // % (decimal precision)
     liquidityUsd: numeric("liquidity_usd"),
     isVerified: boolean("is_verified").default(false),
 

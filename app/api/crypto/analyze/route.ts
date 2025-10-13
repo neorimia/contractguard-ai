@@ -36,7 +36,7 @@ export async function POST(request: NextRequest) {
     if (cached) {
       console.log("Cache hit (Redis):", cacheKey);
       return NextResponse.json({
-        data: JSON.parse(cached as string),
+        data: cached, // Upstash Redis auto-deserializes JSON
         status: "success",
         cached: true,
       });
@@ -61,8 +61,8 @@ export async function POST(request: NextRequest) {
     ) {
       console.log("Cache hit (Database):", cacheKey);
 
-      // Refresh Redis cache
-      await redis.setex(cacheKey, 300, JSON.stringify(dbCached[0])); // 5 min
+      // Refresh Redis cache (Upstash Redis auto-serializes JSON)
+      await redis.setex(cacheKey, 300, dbCached[0]); // 5 min
 
       return NextResponse.json({
         data: dbCached[0],
@@ -140,8 +140,8 @@ export async function POST(request: NextRequest) {
       },
     };
 
-    // Cache in Redis (5 min)
-    await redis.setex(cacheKey, 300, JSON.stringify(extendedResponse));
+    // Cache in Redis (5 min - Upstash Redis auto-serializes JSON)
+    await redis.setex(cacheKey, 300, extendedResponse);
 
     return NextResponse.json({
       data: extendedResponse,
@@ -181,7 +181,7 @@ export async function GET(request: NextRequest) {
 
     if (cached) {
       return NextResponse.json({
-        data: JSON.parse(cached as string),
+        data: cached, // Upstash Redis auto-deserializes JSON
         status: "success",
         cached: true,
       });
@@ -206,8 +206,8 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Refresh Redis cache
-    await redis.setex(cacheKey, 300, JSON.stringify(result[0]));
+    // Refresh Redis cache (Upstash Redis auto-serializes JSON)
+    await redis.setex(cacheKey, 300, result[0]);
 
     return NextResponse.json({
       data: result[0],

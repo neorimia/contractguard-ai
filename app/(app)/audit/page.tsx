@@ -1,10 +1,10 @@
-import { ScanInterface } from "@/components/scan";
+import { CryptoScanInterface } from "@/components/crypto";
 import { ReferralBannerContainer } from "@/components/referrals/ReferralBannerContainer";
 
 export default function Home() {
   return (
     <>
-      <ScanInterface />
+      <CryptoScanInterface />
       <ReferralBannerContainer />
     </>
   );

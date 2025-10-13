@@ -10,6 +10,8 @@ import { ContractMetadataCard } from "./ContractMetadataCard";
 import { HeuristicsBreakdown } from "./HeuristicsBreakdown";
 import { HolderDistributionChart } from "./HolderDistributionChart";
 import { LiquidityTimelineChart } from "./LiquidityTimelineChart";
+import { LiquidityPoolsDisplay } from "./LiquidityPoolsDisplay";
+import { PDFExportButton } from "./PDFExportButton";
 import ShareOnX from "@/components/ShareOnX";
 import {
   Shield,
@@ -63,8 +65,8 @@ export function CryptoResultsDisplay({
     },
     {
       id: "liquidity-timeline",
-      title: "Liquidity Timeline",
-      icon: <TrendingUp className="h-5 w-5" />,
+      title: "Liquidity Analysis",
+      icon: <Droplet className="h-5 w-5" />,
     },
     {
       id: "heuristics",
@@ -85,7 +87,7 @@ export function CryptoResultsDisplay({
   return (
     <div className="space-y-8">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex items-start justify-between gap-4">
         <div>
           <div className="flex items-center gap-2 mb-2">
             <div className="flex h-2 w-2 rounded-full bg-white" />
@@ -94,10 +96,16 @@ export function CryptoResultsDisplay({
           <h2 className="text-4xl font-semibold tracking-tight">
             Results<span className="text-neutral-500">.</span>
           </h2>
+          <PDFExportButton className="mt-4" result={result} />
         </div>
-        {contractAddress && (
-          <ShareOnX result={result as any} contractAddress={contractAddress} />
-        )}
+        <div className="flex items-center gap-3">
+          {contractAddress && (
+            <ShareOnX
+              result={result as any}
+              contractAddress={contractAddress}
+            />
+          )}
+        </div>
       </div>
 
       {/* Risk Score Card */}
@@ -212,7 +220,23 @@ export function CryptoResultsDisplay({
 
                   {section.id === "liquidity-timeline" && (
                     <>
-                      {(result as any).liquidityData?.events ? (
+                      {(result as any).liquidityData?.liquidityPairs &&
+                      (result as any).liquidityData.liquidityPairs.length >
+                        0 ? (
+                        <LiquidityPoolsDisplay
+                          totalLiquidityUsd={
+                            (result as any).liquidityData.totalLiquidityUsd ||
+                            result.liquidityUsd ||
+                            "0"
+                          }
+                          liquidityPairs={
+                            (result as any).liquidityData.liquidityPairs
+                          }
+                          isLocked={(result as any).liquidityData.isLocked}
+                          poolCount={(result as any).liquidityData.poolCount}
+                        />
+                      ) : (result as any).liquidityData?.events &&
+                        (result as any).liquidityData.events.length > 0 ? (
                         <LiquidityTimelineChart
                           events={(result as any).liquidityData.events}
                           currentLiquidity={Number(result.liquidityUsd) || 0}
@@ -223,9 +247,9 @@ export function CryptoResultsDisplay({
                       ) : (
                         <div className="text-center py-8 text-neutral-500">
                           <TrendingUp className="h-12 w-12 mx-auto mb-3 opacity-50" />
-                          <p>Liquidity timeline data not available</p>
+                          <p>Liquidity data not available</p>
                           <p className="text-sm mt-1">
-                            This feature requires historical liquidity data
+                            Unable to fetch liquidity information for this token
                           </p>
                         </div>
                       )}

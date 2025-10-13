@@ -55,19 +55,34 @@ OPENAI_API_KEY=sk-your-openai-api-key-here
 ETHERSCAN_API_KEY=your_etherscan_api_key
 ```
 
-- **Purpose**: Fetch verified contract source code
+- **Purpose**: Fetch verified contract source code from 50+ EVM chains
 - **Get from**: https://etherscan.io/myapikey
-- **Used by**: ContractService for fetching contract data
+- **Used by**: EtherscanV2Service for multi-chain contract data
 - **Required**: Yes
+- **🆕 V2 Update**: One API key now works across all supported chains:
+  - Ethereum, BSC, Polygon, Arbitrum, Optimism, Base, Avalanche, and more
+  - Reference: https://docs.etherscan.io/v/etherscan-v2
 
 ```bash
 ALCHEMY_API_KEY=your_alchemy_api_key
 ```
 
-- **Purpose**: Blockchain data enrichment (holder count, liquidity)
+- **Purpose**: Blockchain data enrichment (liquidity data)
 - **Get from**: https://alchemy.com
-- **Used by**: ContractService enrichment methods
-- **Required**: Recommended for full features
+- **Used by**: EtherscanV2Service enrichment methods
+- **Required**: Recommended for liquidity data
+- **Supported Networks**: Ethereum, Polygon, Arbitrum, Optimism, Base
+
+```bash
+MORALIS_API_KEY=your_moralis_api_key
+```
+
+- **Purpose**: Token holder distribution and analytics
+- **Get from**: https://admin.moralis.io/web3apis
+- **Used by**: EtherscanV2Service for holder data
+- **Required**: Recommended for holder distribution charts
+- **Supported Networks**: Ethereum, BSC, Polygon, Avalanche, Fantom, Arbitrum, Optimism, Base
+- **Features**: Top holder analysis, concentration risk, holder count
 
 ## Optional Variables (Enhanced Features)
 
@@ -266,7 +281,32 @@ if (!process.env.DATABASE_URL) {
 - [ ] NEXT_PUBLIC_POSTHOG_KEY
 - [ ] SENTRY_DSN
 
+## Migration Notes
+
+### Etherscan V2 API Migration (2025-10-13)
+
+**✅ What Changed:**
+
+- Migrated from separate API keys per chain to unified Etherscan V2 API
+- One `ETHERSCAN_API_KEY` now works for 50+ EVM chains
+- Simplified configuration and reduced setup complexity
+
+**🔧 Action Required:**
+
+- None! Existing `ETHERSCAN_API_KEY` automatically works with V2
+- Can remove old chain-specific keys (optional):
+  - `BSCSCAN_API_KEY` (deprecated)
+  - `POLYGONSCAN_API_KEY` (deprecated)
+  - `ARBISCAN_API_KEY` (deprecated)
+
+**📈 Benefits:**
+
+- Easier multi-chain expansion
+- Reduced API key management
+- Single rate limit across all chains
+- Access to new chains without code changes
+
 ---
 
-**Last Updated**: 2025-10-08  
-**Version**: 1.0
+**Last Updated**: 2025-10-13  
+**Version**: 1.1 (Etherscan V2 Migration)
