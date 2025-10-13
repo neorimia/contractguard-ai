@@ -124,15 +124,27 @@ export async function POST(request: NextRequest) {
       })
       .returning();
 
+    // Prepare extended response with Phase 2 data
+    const extendedResponse = {
+      ...saved,
+      recommendation: assessment.recommendation,
+      heuristicResults: assessment.heuristicResults,
+      // Phase 2: Extended holder data for visualizations
+      holderData: analysisData.holderData,
+      // Phase 2: Extended liquidity data (placeholder for events)
+      liquidityData: {
+        ...analysisData.liquidityData,
+        events: [], // To be implemented with historical data fetching
+        isLocked: false, // To be implemented with lock contract checking
+        poolCount: analysisData.liquidityData?.liquidityPairs?.length || 0,
+      },
+    };
+
     // Cache in Redis (5 min)
-    await redis.setex(cacheKey, 300, JSON.stringify(saved));
+    await redis.setex(cacheKey, 300, JSON.stringify(extendedResponse));
 
     return NextResponse.json({
-      data: {
-        ...saved,
-        recommendation: assessment.recommendation,
-        heuristicResults: assessment.heuristicResults,
-      },
+      data: extendedResponse,
       status: "success",
       cached: false,
     });

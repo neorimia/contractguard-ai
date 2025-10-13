@@ -228,6 +228,59 @@ export class EtherscanService extends BaseBlockchainService {
     });
   }
 
+  /**
+   * Fetch liquidity event timeline (Phase 3)
+   *
+   * Gets historical liquidity events for timeline visualization
+   */
+  async fetchLiquidityEvents(address: string): Promise<
+    Array<{
+      timestamp: string;
+      liquidityUsd: number;
+      change?: number;
+      changePercentage?: number;
+      eventType?: "add" | "remove" | "lock" | "unlock";
+    }>
+  > {
+    return this.retryFetch(async () => {
+      // This would typically fetch transfer events from the liquidity pool
+      // For now, we'll return empty array as placeholder
+      // In production, use Alchemy Transfer API or The Graph
+
+      // Example: Query Uniswap V2/V3 events for the pair
+      // - Mint events (liquidity added)
+      // - Burn events (liquidity removed)
+      // - Lock events (from lock contracts)
+
+      return [];
+    });
+  }
+
+  /**
+   * Check if liquidity is locked (Phase 3)
+   *
+   * Queries known lock contracts (Unicrypt, Team Finance, etc.)
+   */
+  async checkLiquidityLock(pairAddress: string): Promise<{
+    isLocked: boolean;
+    lockDuration?: number;
+    lockExpiration?: string;
+    lockedAmount?: string;
+    lockContract?: string;
+  }> {
+    return this.retryFetch(async () => {
+      // This would check known lock contracts:
+      // - Unicrypt: 0x663A5C229c09b049E36dCc11a9B0d4a8Eb9db214
+      // - Team Finance: 0xE2fE530C047f2d85298b07D9333C05737f1435fB
+      // - DxLock: Various addresses
+
+      // For now, return placeholder
+      return {
+        isLocked: false,
+      };
+    });
+  }
+
   validateAddress(address: string): boolean {
     return /^0x[a-fA-F0-9]{40}$/.test(address);
   }

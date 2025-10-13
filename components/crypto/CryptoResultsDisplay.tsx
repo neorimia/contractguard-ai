@@ -8,6 +8,8 @@ import { RiskScoreCard } from "./RiskScoreCard";
 import { RedFlagsList } from "./RedFlagsList";
 import { ContractMetadataCard } from "./ContractMetadataCard";
 import { HeuristicsBreakdown } from "./HeuristicsBreakdown";
+import { HolderDistributionChart } from "./HolderDistributionChart";
+import { LiquidityTimelineChart } from "./LiquidityTimelineChart";
 import ShareOnX from "@/components/ShareOnX";
 import {
   Shield,
@@ -17,6 +19,8 @@ import {
   Info,
   ChevronDown,
   ChevronUp,
+  TrendingUp,
+  Activity,
 } from "lucide-react";
 
 interface CryptoResultsDisplayProps {
@@ -53,6 +57,16 @@ export function CryptoResultsDisplay({
       count: result.flags?.length || 0,
     },
     {
+      id: "holder-distribution",
+      title: "Holder Distribution",
+      icon: <Users className="h-5 w-5" />,
+    },
+    {
+      id: "liquidity-timeline",
+      title: "Liquidity Timeline",
+      icon: <TrendingUp className="h-5 w-5" />,
+    },
+    {
       id: "heuristics",
       title: "Heuristics Breakdown",
       icon: <Code className="h-5 w-5" />,
@@ -60,7 +74,7 @@ export function CryptoResultsDisplay({
     {
       id: "metadata",
       title: "Contract Details",
-      icon: <Users className="h-5 w-5" />,
+      icon: <Activity className="h-5 w-5" />,
     },
   ];
 
@@ -175,6 +189,47 @@ export function CryptoResultsDisplay({
 
                   {section.id === "flags" && (
                     <RedFlagsList flags={result.flags || []} />
+                  )}
+
+                  {section.id === "holder-distribution" && (
+                    <>
+                      {(result as any).holderData?.topHolders ? (
+                        <HolderDistributionChart
+                          holders={(result as any).holderData.topHolders}
+                          totalSupply={(result as any).holderData.totalSupply}
+                        />
+                      ) : (
+                        <div className="text-center py-8 text-neutral-500">
+                          <Users className="h-12 w-12 mx-auto mb-3 opacity-50" />
+                          <p>Holder distribution data not available</p>
+                          <p className="text-sm mt-1">
+                            This feature requires additional blockchain data
+                          </p>
+                        </div>
+                      )}
+                    </>
+                  )}
+
+                  {section.id === "liquidity-timeline" && (
+                    <>
+                      {(result as any).liquidityData?.events ? (
+                        <LiquidityTimelineChart
+                          events={(result as any).liquidityData.events}
+                          currentLiquidity={Number(result.liquidityUsd) || 0}
+                          lockExpiration={
+                            (result as any).liquidityData.lockExpiration
+                          }
+                        />
+                      ) : (
+                        <div className="text-center py-8 text-neutral-500">
+                          <TrendingUp className="h-12 w-12 mx-auto mb-3 opacity-50" />
+                          <p>Liquidity timeline data not available</p>
+                          <p className="text-sm mt-1">
+                            This feature requires historical liquidity data
+                          </p>
+                        </div>
+                      )}
+                    </>
                   )}
 
                   {section.id === "heuristics" && result.heuristicResults && (

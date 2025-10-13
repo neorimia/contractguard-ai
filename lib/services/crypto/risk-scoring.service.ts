@@ -2,29 +2,49 @@
 import { ContractAnalysisData, HeuristicResult, RiskAssessment } from "./types";
 import {
   BaseHeuristic,
+  // Tier 1 Heuristics
   ContractVerificationHeuristic,
   PrivilegedMintHeuristic,
   HolderConcentrationHeuristic,
   LiquidityLockHeuristic,
   OwnershipRenouncementHeuristic,
+  // Tier 2 Heuristics
+  TransferRestrictionHeuristic,
+  PauseFreezeHeuristic,
+  TokenVestingHeuristic,
+  ContractActivityHeuristic,
+  LiquidityPoolActivityHeuristic,
 } from "./heuristics";
 import { RiskFlag } from "@/db/schema";
 
 export class RiskScoringService {
   private heuristics: BaseHeuristic[] = [
+    // Tier 1 - Core Security Checks
     new ContractVerificationHeuristic(),
     new PrivilegedMintHeuristic(),
     new HolderConcentrationHeuristic(),
     new LiquidityLockHeuristic(),
     new OwnershipRenouncementHeuristic(),
+    // Tier 2 - Advanced Analysis
+    new TransferRestrictionHeuristic(),
+    new PauseFreezeHeuristic(),
+    new TokenVestingHeuristic(),
+    new ContractActivityHeuristic(),
+    new LiquidityPoolActivityHeuristic(),
   ];
 
   async calculateRiskScore(
     data: ContractAnalysisData
   ): Promise<RiskAssessment> {
+    // Performance: Execute all heuristics in parallel
+    const startTime = Date.now();
+
     const results = await Promise.all(
       this.heuristics.map((h) => h.analyze(data))
     );
+
+    const executionTime = Date.now() - startTime;
+    console.log(`[Performance] Heuristics executed in ${executionTime}ms`);
 
     // Weighted average of heuristic scores
     const totalWeight = this.heuristics.reduce((sum, h) => sum + h.weight, 0);
