@@ -335,7 +335,7 @@ export function SummaryReportView({
                     onClick={onUpgrade}
                     variant="outline"
                     size="sm"
-                    className="border-white/30 text-white bg-black/50 hover:bg-white/10"
+                    className="border-white/30 text-white bg-black/50 hover:bg-white/10 hover:text-black"
                   >
                     <TrendingUp className="h-4 w-4 mr-2" />
                     Upgrade to Pro
