@@ -17,6 +17,11 @@ import { getInstantPackageByIndex } from "@/lib/config/pricing";
 import crypto from "crypto";
 import { eq } from "drizzle-orm";
 
+// Validate Stripe configuration
+if (!process.env.STRIPE_SECRET_KEY) {
+  console.error("STRIPE_SECRET_KEY is not configured");
+}
+
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
   apiVersion: "2025-09-30.clover",
   typescript: true,
@@ -59,6 +64,17 @@ async function ensureUserExists(stackUser: any): Promise<number | null> {
 
 export async function POST(req: NextRequest) {
   try {
+    // Test Stripe connection early
+    if (!process.env.STRIPE_SECRET_KEY) {
+      return NextResponse.json(
+        {
+          error: "Payment configuration error",
+          details: "Stripe is not properly configured. Please contact support.",
+        },
+        { status: 500 }
+      );
+    }
+
     const body = await req.json();
     const {
       packageIndex,
@@ -193,18 +209,42 @@ export async function POST(req: NextRequest) {
     // Get or create Stripe customer for authenticated user
     let customerId: string;
     try {
+      console.log("Creating Stripe customer for user:", {
+        email: stackUser.primaryEmail,
+        userId: localUserId,
+        name: stackUser.displayName,
+      });
+
       const customer = await stripeService.getOrCreateCustomer({
         email: stackUser.primaryEmail,
         userId: localUserId.toString(),
         name: stackUser.displayName || undefined,
       });
       customerId = customer.id;
+
+      console.log("Stripe customer created successfully:", customerId);
     } catch (error) {
       console.error("Error getting/creating Stripe customer:", error);
+
+      // Enhanced error logging
+      if (error instanceof Error) {
+        console.error("Stripe error details:", {
+          message: error.message,
+          name: error.name,
+          stack: error.stack,
+        });
+      }
+
       return NextResponse.json(
         {
           error: "Account setup failed",
           details: "Unable to set up payment account. Please try again.",
+          debug:
+            process.env.NODE_ENV === "development"
+              ? error instanceof Error
+                ? error.message
+                : "Unknown error"
+              : undefined,
         },
         { status: 500 }
       );
