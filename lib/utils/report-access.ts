@@ -94,6 +94,12 @@ export async function determineReportAccess(
 
     // Check for instant credits - if user has credits, they get full access
     if (user.instantCredits && user.instantCredits > 0) {
+      console.log("User has instant credits, granting full access:", {
+        userId,
+        instantCredits: user.instantCredits,
+        accessLevel: "full",
+        accessType: "instant_report",
+      });
       return {
         hasAccess: true,
         accessLevel: "full",

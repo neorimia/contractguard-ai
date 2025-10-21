@@ -221,6 +221,15 @@ export async function POST(req: NextRequest) {
       appUser.id
     );
 
+    // Debug logging for instant credits
+    console.log("Access validation result:", {
+      userId: appUser.id,
+      hasAccess: accessStatus.hasAccess,
+      accessType: accessStatus.accessType,
+      instantCredits: accessStatus.instantCredits,
+      scansRemaining: accessStatus.scansRemaining,
+    });
+
     if (!accessStatus.hasAccess) {
       // Determine upgrade message based on current state
       let upgradeMessage = "Upgrade to Pro for unlimited scans!";
