@@ -210,7 +210,7 @@ export async function POST(req: NextRequest) {
     // This avoids the Stripe customer creation API call that might be failing
     let customerId: string | undefined;
     let customerEmail: string | undefined;
-    
+
     try {
       console.log("Attempting to create Stripe customer for user:", {
         email: stackUser.primaryEmail,
@@ -224,11 +224,11 @@ export async function POST(req: NextRequest) {
         name: stackUser.displayName || undefined,
       });
       customerId = customer.id;
-      
+
       console.log("Stripe customer created successfully:", customerId);
     } catch (error) {
       console.error("Error getting/creating Stripe customer:", error);
-      
+
       // Enhanced error logging
       if (error instanceof Error) {
         console.error("Stripe error details:", {
@@ -237,7 +237,7 @@ export async function POST(req: NextRequest) {
           stack: error.stack,
         });
       }
-      
+
       // For instant purchases, we can fallback to using customer_email
       // This avoids the customer creation API call that might be failing
       console.log("Falling back to customer_email approach");
@@ -263,7 +263,8 @@ export async function POST(req: NextRequest) {
     if (customerId) {
       sessionParams.customer = customerId;
     } else {
-      sessionParams.customer_email = customerEmail || userEmail || stackUser.primaryEmail;
+      sessionParams.customer_email =
+        customerEmail || userEmail || stackUser.primaryEmail;
     }
 
     // Add metadata and other parameters

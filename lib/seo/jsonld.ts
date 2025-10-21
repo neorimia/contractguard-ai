@@ -2,37 +2,43 @@ import { siteConfig } from "@/config/site";
 
 export const jsonLdScript = (data: object) => JSON.stringify(data, null, 0);
 
-export const organizationLd = () => ({
-  "@context": "https://schema.org",
-  "@type": "Organization",
-  name: siteConfig.company.name,
-  url: siteConfig.siteUrl.toString(),
-  logo: new URL(siteConfig.company.logo, siteConfig.siteUrl).toString(),
-  description: siteConfig.siteDescription,
-  contactPoint: {
-    "@type": "ContactPoint",
-    email: siteConfig.contactEmail,
-    contactType: "customer service",
-  },
-  sameAs: [
-    siteConfig.links.twitter,
-    siteConfig.links.github,
-    siteConfig.links.discord,
-  ],
-});
+export const organizationLd = () => {
+  const baseUrl = siteConfig.siteUrl.toString();
+  return {
+    "@context": "https://schema.org",
+    "@type": "Organization",
+    name: siteConfig.company.name,
+    url: baseUrl,
+    logo: new URL(siteConfig.company.logo, baseUrl).toString(),
+    description: siteConfig.siteDescription,
+    contactPoint: {
+      "@type": "ContactPoint",
+      email: siteConfig.contactEmail,
+      contactType: "customer service",
+    },
+    sameAs: [
+      siteConfig.links.twitter,
+      siteConfig.links.github,
+      siteConfig.links.discord,
+    ],
+  };
+};
 
-export const websiteLd = () => ({
-  "@context": "https://schema.org",
-  "@type": "WebSite",
-  url: siteConfig.siteUrl.toString(),
-  name: siteConfig.siteName,
-  description: siteConfig.siteDescription,
-  potentialAction: {
-    "@type": "SearchAction",
-    target: `${siteConfig.siteUrl.toString()}/search?q={search_term_string}`,
-    "query-input": "required name=search_term_string",
-  },
-});
+export const websiteLd = () => {
+  const baseUrl = siteConfig.siteUrl.toString();
+  return {
+    "@context": "https://schema.org",
+    "@type": "WebSite",
+    url: baseUrl,
+    name: siteConfig.siteName,
+    description: siteConfig.siteDescription,
+    potentialAction: {
+      "@type": "SearchAction",
+      target: `${baseUrl}/search?q={search_term_string}`,
+      "query-input": "required name=search_term_string",
+    },
+  };
+};
 
 export const breadcrumbLd = (items: Array<{ name: string; url: string }>) => ({
   "@context": "https://schema.org",
