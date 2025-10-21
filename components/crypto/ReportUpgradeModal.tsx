@@ -79,7 +79,7 @@ export function ReportUpgradeModal({
         throw new Error("Invalid package selected");
       }
 
-      const response = await fetch("/api/payments/instant-report", {
+      const response = await fetch("/api/checkout/instant", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -89,6 +89,7 @@ export function ReportUpgradeModal({
           credits: selectedPkg.credits,
           price: selectedPkg.price,
           stripePriceId: selectedPkg.stripePriceId,
+          userEmail: user?.primaryEmail, // Pre-fill user email in Stripe
         }),
       });
 

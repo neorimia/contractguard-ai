@@ -58,6 +58,7 @@ export default function PricingSectionHybrid() {
         body: JSON.stringify({
           packageIndex,
           contractAddress: null, // General credits not tied to specific contract
+          userEmail: user.primaryEmail, // Pre-fill user email in Stripe
         }),
       });
 
