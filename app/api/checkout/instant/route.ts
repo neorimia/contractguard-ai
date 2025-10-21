@@ -206,10 +206,13 @@ export async function POST(req: NextRequest) {
       ? `${siteUrl}/report/${contractAddress}?chain=${chain}&canceled=true`
       : `${siteUrl}/pricing?canceled=true`;
 
-    // Get or create Stripe customer for authenticated user
-    let customerId: string;
+    // For instant purchases, we can use customer_email instead of creating a customer
+    // This avoids the Stripe customer creation API call that might be failing
+    let customerId: string | undefined;
+    let customerEmail: string | undefined;
+    
     try {
-      console.log("Creating Stripe customer for user:", {
+      console.log("Attempting to create Stripe customer for user:", {
         email: stackUser.primaryEmail,
         userId: localUserId,
         name: stackUser.displayName,
@@ -221,11 +224,11 @@ export async function POST(req: NextRequest) {
         name: stackUser.displayName || undefined,
       });
       customerId = customer.id;
-
+      
       console.log("Stripe customer created successfully:", customerId);
     } catch (error) {
       console.error("Error getting/creating Stripe customer:", error);
-
+      
       // Enhanced error logging
       if (error instanceof Error) {
         console.error("Stripe error details:", {
@@ -234,24 +237,16 @@ export async function POST(req: NextRequest) {
           stack: error.stack,
         });
       }
-
-      return NextResponse.json(
-        {
-          error: "Account setup failed",
-          details: "Unable to set up payment account. Please try again.",
-          debug:
-            process.env.NODE_ENV === "development"
-              ? error instanceof Error
-                ? error.message
-                : "Unknown error"
-              : undefined,
-        },
-        { status: 500 }
-      );
+      
+      // For instant purchases, we can fallback to using customer_email
+      // This avoids the customer creation API call that might be failing
+      console.log("Falling back to customer_email approach");
+      customerEmail = userEmail || stackUser.primaryEmail;
+      customerId = undefined; // Don't use customer ID, use email instead
     }
 
     // Create Stripe checkout session for one-time payment
-    const session = await stripe.checkout.sessions.create({
+    const sessionParams: any = {
       mode: "payment", // ← One-time payment mode
       payment_method_types: ["card"],
       line_items: [
@@ -262,27 +257,30 @@ export async function POST(req: NextRequest) {
       ],
       success_url: successUrl,
       cancel_url: cancelUrl,
+    };
 
-      // Customer and metadata
-      customer: customerId,
+    // Use customer ID if available, otherwise use customer_email
+    if (customerId) {
+      sessionParams.customer = customerId;
+    } else {
+      sessionParams.customer_email = customerEmail || userEmail || stackUser.primaryEmail;
+    }
 
-      // Pre-fill customer email if provided
-      customer_email: userEmail || stackUser.primaryEmail,
+    // Add metadata and other parameters
+    sessionParams.metadata = {
+      type: contractAddress ? "instant_report" : "instant_credits",
+      credits: pkg.credits.toString(),
+      userId: localUserId.toString(),
+      contractAddress: contractAddress || "",
+      chain: contractAddress ? chain : "",
+      packageIndex: packageIndex?.toString() || "0",
+      price: pkg.price.toString(),
+    };
 
-      // Track purchase metadata
-      metadata: {
-        type: contractAddress ? "instant_report" : "instant_credits",
-        credits: pkg.credits.toString(),
-        userId: localUserId.toString(),
-        contractAddress: contractAddress || "",
-        chain: contractAddress ? chain : "",
-        packageIndex: packageIndex?.toString() || "0",
-        price: pkg.price.toString(),
-      },
+    // Allow promo codes
+    sessionParams.allow_promotion_codes = true;
 
-      // Allow promo codes
-      allow_promotion_codes: true,
-    });
+    const session = await stripe.checkout.sessions.create(sessionParams);
 
     // Create purchase record
     const [purchaseRecord] = await db
