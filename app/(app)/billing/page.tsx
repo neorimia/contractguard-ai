@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { useUser } from "@stackframe/stack";
 import { Button } from "@/components/ui/button";
@@ -122,83 +122,85 @@ export default function BillingPage() {
     }
   }, [user, router]);
 
+  // Fetch user tier from database
+  const fetchUserTier = useCallback(async () => {
+    try {
+      const response = await fetch("/api/user/profile");
+      const data = (await response.json()) as {
+        tier?: "free" | "pro" | "enterprise";
+      };
+      console.log("Fetched user tier response:", data);
+      if (data.tier) {
+        setUserTier(data.tier);
+      }
+      console.log("Fetched user tier");
+    } catch (error) {
+      console.error("Failed to fetch user tier:", error);
+    }
+  }, []);
+
   // Fetch billing data
+  const fetchBillingData = useCallback(async () => {
+    try {
+      setLoading(true);
+
+      // Parallel fetch
+      const [billingRes, invoicesRes, usageRes, creditsRes] =
+        await Promise.all([
+          fetch("/api/user/billing"),
+          fetch("/api/user/billing/invoices?limit=10"),
+          fetch("/api/user/usage"),
+          fetch("/api/user/credits"),
+        ]);
+
+      const billingData = await billingRes.json();
+      const invoicesData = await invoicesRes.json();
+      const usageData = await usageRes.json();
+      const creditsData = await creditsRes.json();
+
+      if (billingData.status === "success") {
+        setSubscription(billingData.data.subscription);
+        setPaymentMethod(billingData.data.paymentMethod);
+        setUserTier(billingData.data.tier || "free");
+      }
+
+      if (invoicesData.status === "success") {
+        setInvoices(invoicesData.data.invoices);
+      }
+
+      if (usageData.status === "success") {
+        setUsage(usageData.data);
+      }
+
+      if (creditsData.status === "success") {
+        setInstantCredits(creditsData.data);
+      }
+
+      // Track page view
+      trackEvent("billing_page_viewed", {
+        tier: billingData.data?.tier || "free",
+        hasSubscription: !!billingData.data?.subscription,
+        hasInstantCredits: creditsData.data?.balance > 0,
+      });
+      console.log("Fetched billing data");
+    } catch (error) {
+      console.error("Failed to fetch billing data:", error);
+      setMessage({
+        type: "error",
+        text: "Failed to load billing information. Please try again.",
+      });
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  // Initial data fetch
   useEffect(() => {
-    const fetchBillingData = async () => {
-      try {
-        setLoading(true);
-
-        // Parallel fetch
-        const [billingRes, invoicesRes, usageRes, creditsRes] =
-          await Promise.all([
-            fetch("/api/user/billing"),
-            fetch("/api/user/billing/invoices?limit=10"),
-            fetch("/api/user/usage"),
-            fetch("/api/user/credits"),
-          ]);
-
-        const billingData = await billingRes.json();
-        const invoicesData = await invoicesRes.json();
-        const usageData = await usageRes.json();
-        const creditsData = await creditsRes.json();
-
-        if (billingData.status === "success") {
-          setSubscription(billingData.data.subscription);
-          setPaymentMethod(billingData.data.paymentMethod);
-          setUserTier(billingData.data.tier || "free");
-        }
-
-        if (invoicesData.status === "success") {
-          setInvoices(invoicesData.data.invoices);
-        }
-
-        if (usageData.status === "success") {
-          setUsage(usageData.data);
-          fetchUserTier(); // Re-fetch after Stripe redirect
-        }
-
-        if (creditsData.status === "success") {
-          setInstantCredits(creditsData.data);
-        }
-
-        // Track page view
-        trackEvent("billing_page_viewed", {
-          tier: billingData.data?.tier || "free",
-          hasSubscription: !!billingData.data?.subscription,
-          hasInstantCredits: creditsData.data?.balance > 0,
-        });
-        console.log("Fetched billing data");
-      } catch (error) {
-        console.error("Failed to fetch billing data:", error);
-        setMessage({
-          type: "error",
-          text: "Failed to load billing information. Please try again.",
-        });
-      } finally {
-        setLoading(false);
-      }
-    };
-    // Fetch user tier from database
-    const fetchUserTier = async () => {
-      try {
-        const response = await fetch("/api/user/profile");
-        const data = (await response.json()) as {
-          tier?: "free" | "pro" | "enterprise";
-        };
-        console.log("Fetched user tier response:", data);
-        if (data.tier) {
-          setUserTier(data.tier);
-        }
-        console.log("Fetched user tier");
-      } catch (error) {
-        console.error("Failed to fetch user tier:", error);
-      }
-    };
-
     if (user) {
       fetchBillingData();
+      fetchUserTier();
     }
-  }, [user]);
+  }, [user, fetchBillingData, fetchUserTier]);
 
   // Handle Stripe portal
   const handleManagePayment = async () => {
