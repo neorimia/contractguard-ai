@@ -1,7 +1,7 @@
 #!/usr/bin/env ts-node
 /**
  * Test script for CryptoGuard API endpoint
- * Tests the /api/crypto/analyze endpoint with known contracts
+ * Tests the /api/audit endpoint with known contracts
  */
 
 const KNOWN_CONTRACTS = {
@@ -30,12 +30,12 @@ async function testContract(
   console.log(`   Chain: ${chain}`);
 
   try {
-    const response = await fetch(`${baseUrl}/api/crypto/analyze`, {
+    const response = await fetch(`${baseUrl}/api/audit`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({ address, chain }),
+      body: JSON.stringify({ contractAddress: address, chain }),
     });
 
     const result = await response.json();

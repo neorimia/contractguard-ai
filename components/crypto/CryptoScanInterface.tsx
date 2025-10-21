@@ -25,6 +25,7 @@ import { AccountUpgradeModal } from "@/components/auth/AccountUpgradeModal";
 import { ScanOverview } from "@/components/scan/ScanOverview";
 import { BannerManager } from "@/components/banners/BannerManager";
 import { AILoadingState } from "@/components/scan/AILoadingState";
+import { getTierLimit } from "@/lib/config/tier-limits";
 
 interface CryptoAnalysisResult extends CryptoAudit {
   recommendation?: string;
@@ -187,13 +188,13 @@ export function CryptoScanInterface() {
     setLimitError(null);
 
     try {
-      const response = await fetch("/api/crypto/analyze", {
+      const response = await fetch("/api/audit", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          address: address.trim(),
+          contractAddress: address.trim(),
           chain,
         }),
       });
@@ -294,9 +295,9 @@ export function CryptoScanInterface() {
 
       setResult(data.data || data);
 
-      // Handle anonymous scan metadata
-      if (data.scanMetadata || data.metadata) {
-        const metadata = data.scanMetadata || data.metadata;
+      // Handle anonymous scan metadata (check both wrapped and direct locations)
+      if (data.data?.metadata || data.scanMetadata || data.metadata) {
+        const metadata = data.data?.metadata || data.scanMetadata || data.metadata;
         setScanMetadata(metadata);
 
         // Track anonymous scans performed
@@ -396,13 +397,19 @@ export function CryptoScanInterface() {
                 </div>
               );
             } else if (user && userAccessStatus) {
-              // Authenticated user
+              // Authenticated user - calculate tier-specific max scans
+              const maxScans = getTierLimit(userAccessStatus.accessType);
+              const isUnlimited = maxScans === -1;
+              const scansPerformed = isUnlimited
+                ? 0 // Unlimited tier displays differently
+                : maxScans - userAccessStatus.scansRemaining;
+
               return (
                 <div className="max-w-4xl mx-auto mb-8">
                   <ScanOverview
-                    scansPerformed={3 - userAccessStatus.scansRemaining}
+                    scansPerformed={scansPerformed}
                     scansRemaining={userAccessStatus.scansRemaining}
-                    maxScans={3}
+                    maxScans={isUnlimited ? 0 : maxScans}
                     tier={userAccessStatus.accessType}
                     instantCredits={userAccessStatus.instantCredits}
                     isAnonymous={false}

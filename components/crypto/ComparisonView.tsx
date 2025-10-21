@@ -242,22 +242,28 @@ export function ComparisonTable({ results }: ComparisonTableProps) {
             <tr className="border-b border-gray-800/50">
               <td className="p-3 text-gray-400">Top 10 Concentration</td>
               {results.map((r, idx) => {
-                const concentration = Number(
-                  r.result.topHolderConcentration || 0
-                );
+                const concentrationValue = r.result.topHolderConcentration;
+                const concentration =
+                  concentrationValue != null
+                    ? Number(concentrationValue)
+                    : null;
                 return (
                   <td key={idx} className="p-3">
-                    <span
-                      className={`${
-                        concentration > 75
-                          ? "text-red-500"
-                          : concentration > 50
-                            ? "text-orange-500"
-                            : "text-green-500"
-                      }`}
-                    >
-                      {concentration}%
-                    </span>
+                    {concentration != null ? (
+                      <span
+                        className={`${
+                          concentration > 75
+                            ? "text-red-500"
+                            : concentration > 50
+                              ? "text-orange-500"
+                              : "text-green-500"
+                        }`}
+                      >
+                        {concentration}%
+                      </span>
+                    ) : (
+                      <span className="text-gray-500">N/A</span>
+                    )}
                   </td>
                 );
               })}

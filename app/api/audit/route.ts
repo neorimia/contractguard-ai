@@ -1,11 +1,19 @@
 // app/api/audit/route.ts
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/db";
-import { cryptoAudits, anonymousScans, Issue, type RiskFlag } from "@/db/schema";
+import {
+  cryptoAudits,
+  anonymousScans,
+  Issue,
+  type RiskFlag,
+} from "@/db/schema";
 import { eq, and } from "drizzle-orm";
 import { ContractService } from "@/lib/services/contract.service";
 import { AIAnalysisService } from "@/lib/services/ai.service";
 import { AuthService } from "@/lib/services/auth.service";
+import { BlockchainServiceFactory } from "@/lib/services/blockchain/factory";
+import { RiskScoringService } from "@/lib/services/crypto/risk-scoring.service";
+import { ContractAnalysisData } from "@/lib/services/crypto/types";
 import { ReferralService } from "@/lib/services/referral.service";
 import { accessValidationService } from "@/lib/services/access-validation.service";
 import { getClientInfo } from "@/lib/utils/client-info";
@@ -19,6 +27,7 @@ import {
   getRemainingAnonymousScans,
   ANONYMOUS_SCAN_LIMITS,
 } from "@/lib/middleware/session-tracking";
+import { ErrorFactory, createErrorResponse } from "@/lib/utils/error-handler";
 
 const redis = new Redis({
   url: process.env.UPSTASH_REDIS_URL!,
@@ -39,7 +48,11 @@ const authService = new AuthService();
 function mapIssueToRiskFlag(issue: Issue, confidence: number): RiskFlag {
   return {
     type: issue.type,
-    severity: issue.severity.toLowerCase() as "low" | "medium" | "high" | "critical",
+    severity: issue.severity.toLowerCase() as
+      | "low"
+      | "medium"
+      | "high"
+      | "critical",
     title: issue.type,
     description: issue.description,
     evidence: `${issue.impact}${issue.code ? `\n\nCode:\n${issue.code}` : ""}`,
@@ -74,6 +87,8 @@ function parseLiquidity(liquidity: string | null | undefined): string | null {
 }
 
 export async function POST(req: NextRequest) {
+  const requestId = crypto.randomUUID();
+
   try {
     // 1. Authentication check - Get user from Stack Auth or create anonymous session
     const stackUser = await stackServerApp.getUser();
@@ -85,14 +100,8 @@ export async function POST(req: NextRequest) {
 
     // Validate that user has an email
     if (!stackUser.primaryEmail) {
-      return NextResponse.json(
-        {
-          error: "Invalid user account",
-          message:
-            "Your account is missing an email address. Please contact support.",
-          status: "error",
-        },
-        { status: 400 }
+      throw ErrorFactory.invalidUserAccount(
+        "User account is missing an email address"
       );
     }
 
@@ -130,14 +139,7 @@ export async function POST(req: NextRequest) {
         },
       });
 
-      return NextResponse.json(
-        {
-          error: "Failed to sync user account",
-          details: syncError.message,
-          status: "error",
-        },
-        { status: 500 }
-      );
+      throw ErrorFactory.userSyncFailed(syncError.message);
     }
 
     // 3. Check if soft account needs upgrade
@@ -216,10 +218,7 @@ export async function POST(req: NextRequest) {
 
     // Validate address
     if (!contractService.validateAddress(contractAddress)) {
-      return NextResponse.json(
-        { error: "Invalid contract address" },
-        { status: 400 }
-      );
+      throw ErrorFactory.invalidAddress();
     }
 
     const normalizedAddress = contractAddress.toLowerCase();
@@ -242,13 +241,20 @@ export async function POST(req: NextRequest) {
         appUser.id
       );
 
-      return NextResponse.json(cached, {
-        headers: {
-          "X-Access-Type": updatedAccessStatus.accessType,
-          "X-Scans-Remaining": updatedAccessStatus.scansRemaining.toString(),
-          "X-Instant-Credits": updatedAccessStatus.instantCredits.toString(),
+      return NextResponse.json(
+        {
+          data: cached,
+          status: "success",
+          cached: true,
         },
-      });
+        {
+          headers: {
+            "X-Access-Type": updatedAccessStatus.accessType,
+            "X-Scans-Remaining": updatedAccessStatus.scansRemaining.toString(),
+            "X-Instant-Credits": updatedAccessStatus.instantCredits.toString(),
+          },
+        }
+      );
     }
 
     // 2. Check database cache (24 hour TTL)
@@ -286,87 +292,156 @@ export async function POST(req: NextRequest) {
         appUser.id
       );
 
-      return NextResponse.json(existing, {
-        headers: {
-          "X-Access-Type": updatedAccessStatus.accessType,
-          "X-Scans-Remaining": updatedAccessStatus.scansRemaining.toString(),
-          "X-Instant-Credits": updatedAccessStatus.instantCredits.toString(),
-        },
-      });
-    }
-
-    // 3. Fetch fresh data
-    console.log("Fetching fresh analysis...");
-
-    const contractData = await contractService.fetchContract(
-      normalizedAddress,
-      chain
-    );
-
-    if (!contractData.isVerified) {
       return NextResponse.json(
         {
-          error: "Contract not verified",
-          message:
-            "This contract source code is not verified on the blockchain explorer. Cannot perform security analysis.",
+          data: existing,
+          status: "success",
+          cached: true,
         },
-        { status: 400 }
+        {
+          headers: {
+            "X-Access-Type": updatedAccessStatus.accessType,
+            "X-Scans-Remaining": updatedAccessStatus.scansRemaining.toString(),
+            "X-Instant-Credits": updatedAccessStatus.instantCredits.toString(),
+          },
+        }
       );
     }
 
-    // 4. Get enrichment data
-    const enrichmentData = await contractService.getEnrichmentData(
-      normalizedAddress,
-      chain
-    );
+    // 3. Fetch fresh data using Phase 2 architecture (BlockchainServiceFactory)
+    console.log(`Fetching fresh analysis for ${chain}:${normalizedAddress}...`);
 
-    // 5. AI Analysis
-    const analysis = await aiService.analyzeContract(
-      contractData.sourceCode,
-      contractData.contractName,
-      enrichmentData
-    );
+    const blockchainService = BlockchainServiceFactory.getService(chain);
 
-    // 6. Add pattern-based detection
-    const patternIssues = aiService.detectKnownPatterns(
-      contractData.sourceCode
-    );
+    // Parallel data fetching for better performance
+    const [
+      sourceCodeResult,
+      metadataResult,
+      holderDataResult,
+      liquidityDataResult,
+    ] = await Promise.allSettled([
+      blockchainService.fetchContractSource(normalizedAddress),
+      blockchainService.fetchContractMetadata(normalizedAddress),
+      blockchainService.fetchHolderDistribution(normalizedAddress),
+      blockchainService.fetchLiquidityData(normalizedAddress),
+    ]);
 
-    // Merge AI and pattern-based issues
-    const allIssues = [...analysis.issues, ...patternIssues];
+    // Build analysis data
+    const analysisData: ContractAnalysisData = {
+      address: normalizedAddress,
+      chain,
+      sourceCode:
+        sourceCodeResult.status === "fulfilled"
+          ? sourceCodeResult.value
+          : undefined,
+      metadata:
+        metadataResult.status === "fulfilled"
+          ? metadataResult.value
+          : undefined,
+      holderData:
+        holderDataResult.status === "fulfilled"
+          ? holderDataResult.value
+          : undefined,
+      liquidityData:
+        liquidityDataResult.status === "fulfilled"
+          ? liquidityDataResult.value
+          : undefined,
+    };
 
-    // Recalculate risk score if patterns found
-    const finalRiskScore =
-      patternIssues.length > 0
-        ? Math.max(
-            analysis.riskScore,
-            patternIssues.some((i) => i.severity === "CRITICAL") ? 90 : 70
-          )
-        : analysis.riskScore;
+    // Check if contract is verified
+    if (!analysisData.sourceCode?.isVerified) {
+      throw ErrorFactory.contractNotVerified();
+    }
 
-    // 7. Transform and save to database (new cryptoAudits schema)
-    const flags: RiskFlag[] = allIssues.map((issue) =>
-      mapIssueToRiskFlag(issue, analysis.confidence)
-    );
+    // 4. Hybrid Analysis - RiskScoringService (fast) + AI fallback (accurate)
+    console.log("Running hybrid analysis (heuristics + AI)...");
+
+    // Primary: Run heuristic analysis (fast, deterministic)
+    const riskScoringService = new RiskScoringService();
+    const heuristicAssessment =
+      await riskScoringService.calculateRiskScore(analysisData);
+
+    let finalAssessment = heuristicAssessment;
+    let usedAI = false;
+
+    // Fallback: Use AI only if heuristic confidence < 70% (hybrid approach)
+    if (heuristicAssessment.confidence < 70) {
+      console.log(
+        `Low confidence (${heuristicAssessment.confidence}%), running AI analysis...`
+      );
+      try {
+        const aiAnalysis = await aiService.analyzeContract(
+          analysisData.sourceCode?.sourceCode || "",
+          analysisData.sourceCode?.contractName || "Unknown Contract",
+          {
+            holderCount: analysisData.holderData?.holderCount,
+            liquidity: analysisData.liquidityData?.totalLiquidityUsd
+              ? `$${analysisData.liquidityData.totalLiquidityUsd}`
+              : "0",
+            ownerBalance: "0",
+          }
+        );
+
+        // Merge heuristic and AI results
+        const aiIssues = aiAnalysis.issues.map((issue) =>
+          mapIssueToRiskFlag(issue, aiAnalysis.confidence)
+        );
+        finalAssessment = {
+          riskScore: Math.round(
+            (heuristicAssessment.riskScore + aiAnalysis.riskScore) / 2
+          ),
+          riskCategory: getRiskCategory(
+            Math.round(
+              (heuristicAssessment.riskScore + aiAnalysis.riskScore) / 2
+            )
+          ),
+          confidence: Math.max(
+            heuristicAssessment.confidence,
+            aiAnalysis.confidence
+          ),
+          flags: [...heuristicAssessment.flags, ...aiIssues],
+          heuristicResults: heuristicAssessment.heuristicResults,
+          recommendation: heuristicAssessment.recommendation,
+        };
+        usedAI = true;
+        console.log("AI analysis completed, merged with heuristics");
+      } catch (aiError) {
+        console.warn("AI analysis failed, using heuristics only:", aiError);
+        // Continue with heuristic-only results
+      }
+    } else {
+      console.log(
+        `High confidence (${heuristicAssessment.confidence}%), skipping AI (cost savings!)`
+      );
+    }
+
+    // 5. Transform and save to database
+    const flags: RiskFlag[] = finalAssessment.flags;
 
     const auditData = {
       contractAddress: normalizedAddress,
       chain,
-      riskScore: finalRiskScore,
-      riskCategory: getRiskCategory(finalRiskScore),
+      riskScore: finalAssessment.riskScore,
+      riskCategory: finalAssessment.riskCategory,
       flags,
       metadata: {
-        deployer: contractData.deployer || "Unknown",
-        deployDate: contractData.deployDate || new Date().toISOString(),
-        sourceCode: contractData.sourceCode.slice(0, 10000), // Store partial
-        compiler: contractData.compiler,
-        txCount: enrichmentData.recentTransactions,
+        deployer: analysisData.metadata?.deployer || "Unknown",
+        deployDate:
+          analysisData.metadata?.deployDate || new Date().toISOString(),
+        sourceCode: analysisData.sourceCode?.sourceCode?.slice(0, 10000) || "", // Store partial
+        compiler: analysisData.sourceCode?.compilerVersion || "Unknown",
+        txCount: analysisData.metadata?.txCount || 0,
       },
-      confidence: analysis.confidence,
-      holderCount: enrichmentData.holderCount,
-      topHolderConcentration: null, // Not available yet (future enhancement)
-      liquidityUsd: parseLiquidity(enrichmentData.liquidity),
-      isVerified: contractData.isVerified,
+      confidence: finalAssessment.confidence,
+      holderCount: analysisData.holderData?.holderCount || 0,
+      topHolderConcentration:
+        (analysisData.holderData?.topHolderConcentration ?? null) !== null
+          ? (
+              analysisData.holderData?.topHolderConcentration ?? null
+            )?.toString()
+          : null,
+      liquidityUsd: analysisData.liquidityData?.totalLiquidityUsd || null,
+      isVerified: analysisData.sourceCode?.isVerified || false,
       views: 1,
       shares: 0,
       expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000), // 24h cache TTL
@@ -392,9 +467,6 @@ export async function POST(req: NextRequest) {
         .returning();
       result = inserted;
     }
-
-    // 8. Cache in Redis
-    await redis.set(cacheKey, result, { ex: 300 });
 
     // 9. Consume scan based on access type
     await accessValidationService.consumeScan(
@@ -463,20 +535,43 @@ export async function POST(req: NextRequest) {
     }
     // ============================================================
 
-    // Return with access status headers
-    return NextResponse.json(result, {
-      headers: {
-        "X-Access-Type": updatedAccessStatus.accessType,
-        "X-Scans-Remaining": updatedAccessStatus.scansRemaining.toString(),
-        "X-Instant-Credits": updatedAccessStatus.instantCredits.toString(),
+    // Prepare extended response with additional analysis data
+    const extendedResponse = {
+      ...result,
+      recommendation: finalAssessment.recommendation,
+      heuristicResults: finalAssessment.heuristicResults,
+      // Phase 2: Extended holder data for visualizations
+      holderData: analysisData.holderData,
+      // Phase 2: Extended liquidity data
+      liquidityData: {
+        ...analysisData.liquidityData,
+        events: [], // To be implemented with historical data fetching
+        isLocked: false, // To be implemented with lock contract checking
+        poolCount: analysisData.liquidityData?.liquidityPairs?.length || 0,
       },
-    });
-  } catch (error: any) {
-    console.error("Audit API error:", error);
+    };
+
+    // Cache extended response in Redis for future requests
+    await redis.set(cacheKey, extendedResponse, { ex: 300 });
+
+    // Return with access status headers
     return NextResponse.json(
-      { error: "Analysis failed", details: error.message },
-      { status: 500 }
+      {
+        data: extendedResponse,
+        status: "success",
+        cached: false,
+      },
+      {
+        headers: {
+          "X-Access-Type": updatedAccessStatus.accessType,
+          "X-Scans-Remaining": updatedAccessStatus.scansRemaining.toString(),
+          "X-Instant-Credits": updatedAccessStatus.instantCredits.toString(),
+        },
+      }
     );
+  } catch (error: any) {
+    // Error logging handled by createErrorResponse
+    return createErrorResponse(error, requestId);
   }
 }
 
@@ -488,26 +583,44 @@ function isRecent(timestamp: Date | null, maxAge: number): boolean {
 
 // GET endpoint for retrieving existing audits
 export async function GET(req: NextRequest) {
-  const { searchParams } = new URL(req.url);
-  const address = searchParams.get("address");
-  const chain = searchParams.get("chain") || "ethereum";
+  const requestId = crypto.randomUUID();
 
-  if (!address) {
-    return NextResponse.json({ error: "Address required" }, { status: 400 });
+  try {
+    const { searchParams } = new URL(req.url);
+    const address = searchParams.get("address");
+    const chain = searchParams.get("chain") || "ethereum";
+
+    if (!address) {
+      throw ErrorFactory.missingParameters(["address"]);
+    }
+
+    if (!contractService.validateAddress(address)) {
+      throw ErrorFactory.invalidAddress();
+    }
+
+    const audit = await db.query.cryptoAudits.findFirst({
+      where: and(
+        eq(cryptoAudits.contractAddress, address.toLowerCase()),
+        eq(cryptoAudits.chain, chain)
+      ),
+    });
+
+    if (!audit) {
+      return NextResponse.json(
+        {
+          status: "error",
+          error: "Audit not found",
+          message: "No audit found for this contract address",
+        },
+        { status: 404 }
+      );
+    }
+
+    return NextResponse.json(audit);
+  } catch (error: any) {
+    // Error logging handled by createErrorResponse
+    return createErrorResponse(error, requestId);
   }
-
-  const audit = await db.query.cryptoAudits.findFirst({
-    where: and(
-      eq(cryptoAudits.contractAddress, address.toLowerCase()),
-      eq(cryptoAudits.chain, chain)
-    ),
-  });
-
-  if (!audit) {
-    return NextResponse.json({ error: "Audit not found" }, { status: 404 });
-  }
-
-  return NextResponse.json(audit);
 }
 
 /**
@@ -515,6 +628,8 @@ export async function GET(req: NextRequest) {
  * Allows up to 3 scans per session (24h cookie)
  */
 async function handleAnonymousScan(req: NextRequest) {
+  const requestId = crypto.randomUUID();
+
   try {
     // Get or create anonymous session
     const sessionId = await getOrCreateAnonymousSession(req);
@@ -547,10 +662,7 @@ async function handleAnonymousScan(req: NextRequest) {
 
     // Validate address
     if (!contractService.validateAddress(contractAddress)) {
-      return NextResponse.json(
-        { error: "Invalid contract address" },
-        { status: 400 }
-      );
+      throw ErrorFactory.invalidAddress();
     }
 
     const normalizedAddress = contractAddress.toLowerCase();
@@ -642,21 +754,34 @@ async function handleAnonymousScan(req: NextRequest) {
     );
 
     if (!contractData.isVerified) {
-      return NextResponse.json(
-        {
-          error: "Contract not verified",
-          message:
-            "This contract source code is not verified on the blockchain explorer. Cannot perform security analysis.",
-        },
-        { status: 400 }
-      );
+      throw ErrorFactory.contractNotVerified();
     }
 
-    // Get enrichment data
-    const enrichmentData = await contractService.getEnrichmentData(
-      normalizedAddress,
-      chain
-    );
+    // Get enrichment data and holder distribution data
+    const blockchainService = BlockchainServiceFactory.getService(chain);
+    const [enrichmentDataResult, holderDataResult] = await Promise.allSettled([
+      contractService.getEnrichmentData(normalizedAddress, chain),
+      blockchainService.fetchHolderDistribution(normalizedAddress),
+    ]);
+
+    const enrichmentData =
+      enrichmentDataResult.status === "fulfilled"
+        ? enrichmentDataResult.value
+        : {
+            holderCount: 0,
+            liquidity: "0",
+            ownerBalance: "0",
+            recentTransactions: 0,
+          };
+
+    const holderData =
+      holderDataResult.status === "fulfilled"
+        ? holderDataResult.value
+        : {
+            holderCount: 0,
+            topHolderConcentration: 0,
+            topHolders: [],
+          };
 
     // AI Analysis
     const analysis = await aiService.analyzeContract(
@@ -718,8 +843,11 @@ async function handleAnonymousScan(req: NextRequest) {
         txCount: enrichmentData.recentTransactions,
       },
       confidence: analysis.confidence,
-      holderCount: enrichmentData.holderCount,
-      topHolderConcentration: null,
+      holderCount: holderData.holderCount || enrichmentData.holderCount,
+      topHolderConcentration:
+        (holderData.topHolderConcentration ?? null) !== null
+          ? holderData.topHolderConcentration.toString()
+          : null,
       liquidityUsd: parseLiquidity(enrichmentData.liquidity),
       isVerified: contractData.isVerified,
       views: 1,
@@ -787,10 +915,7 @@ async function handleAnonymousScan(req: NextRequest) {
       }
     );
   } catch (error: any) {
-    console.error("Anonymous scan error:", error);
-    return NextResponse.json(
-      { error: "Analysis failed", details: error.message },
-      { status: 500 }
-    );
+    // Error logging handled by createErrorResponse
+    return createErrorResponse(error, requestId);
   }
 }

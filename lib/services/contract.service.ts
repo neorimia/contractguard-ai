@@ -1,4 +1,6 @@
 // lib/services/contract.service.ts
+import { ErrorFactory } from '@/lib/utils/error-handler';
+
 interface ContractData {
   address: string;
   sourceCode: string;
@@ -36,9 +38,7 @@ export class ContractService {
     try {
       // Check if API key is configured
       if (!this.etherscanApiKey || this.etherscanApiKey === "undefined") {
-        throw new Error(
-          "ETHERSCAN_API_KEY is not configured. Please add it to .env.local"
-        );
+        throw ErrorFactory.apiKeyMissing("Etherscan");
       }
 
       // Fetch source code using Etherscan API V2
@@ -59,8 +59,21 @@ export class ContractService {
           "Etherscan error:",
           sourceData.message || sourceData.result
         );
-        throw new Error(
-          `Contract not found or not verified: ${sourceData.message || "Unknown error"}`
+
+        // Check if it's a rate limit error
+        if (sourceData.message?.toLowerCase().includes("rate limit")) {
+          throw ErrorFactory.etherscanRateLimit();
+        }
+
+        // Check if contract not found
+        if (sourceData.message?.toLowerCase().includes("not found") ||
+            sourceData.result === "Contract source code not verified") {
+          throw ErrorFactory.etherscanNotFound(address, chain);
+        }
+
+        throw ErrorFactory.etherscanUnavailable(
+          undefined,
+          sourceData.message || "Unknown error"
         );
       }
 
