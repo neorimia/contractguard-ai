@@ -28,6 +28,13 @@ import {
   ANONYMOUS_SCAN_LIMITS,
 } from "@/lib/middleware/session-tracking";
 import { ErrorFactory, createErrorResponse } from "@/lib/utils/error-handler";
+import {
+  determineReportAccess,
+  transformToSummaryReport,
+  transformToFullReport,
+} from "@/lib/utils/report-access";
+import { getAnonymousSessionFromRequest } from "@/lib/middleware/session-tracking";
+import type { ReportResponse } from "@/lib/types/report-types";
 
 const redis = new Redis({
   url: process.env.UPSTASH_REDIS_URL!,
@@ -83,6 +90,37 @@ function parseLiquidity(liquidity: string | null | undefined): string | null {
     return isNaN(parsed) ? null : parsed.toString();
   } catch {
     return null;
+  }
+}
+
+/**
+ * Process audit response based on user access level
+ * Returns summary report for free/anonymous users, full report for paid users
+ */
+async function processAuditResponse(
+  auditData: any,
+  userId: number | null,
+  guestSessionId: string | null,
+  contractAddress: string,
+  chain: string
+): Promise<ReportResponse> {
+  // Determine access level
+  const accessStatus = await determineReportAccess(
+    userId,
+    guestSessionId,
+    contractAddress,
+    chain
+  );
+
+  // Transform based on access level
+  if (accessStatus.accessLevel === "summary") {
+    return transformToSummaryReport(auditData);
+  } else {
+    return transformToFullReport(
+      auditData,
+      accessStatus.accessType as "pro" | "team" | "instant_report",
+      accessStatus.instantReportExpiresAt
+    );
   }
 }
 
@@ -241,9 +279,18 @@ export async function POST(req: NextRequest) {
         appUser.id
       );
 
+      // Apply access control and transform response
+      const processedResponse = await processAuditResponse(
+        cached,
+        appUser.id,
+        null, // No guest session for authenticated users
+        normalizedAddress,
+        chain
+      );
+
       return NextResponse.json(
         {
-          data: cached,
+          data: processedResponse,
           status: "success",
           cached: true,
         },
@@ -252,6 +299,7 @@ export async function POST(req: NextRequest) {
             "X-Access-Type": updatedAccessStatus.accessType,
             "X-Scans-Remaining": updatedAccessStatus.scansRemaining.toString(),
             "X-Instant-Credits": updatedAccessStatus.instantCredits.toString(),
+            "X-Report-Access-Level": processedResponse.accessLevel,
           },
         }
       );
@@ -292,9 +340,18 @@ export async function POST(req: NextRequest) {
         appUser.id
       );
 
+      // Apply access control and transform response
+      const processedResponse = await processAuditResponse(
+        existing,
+        appUser.id,
+        null, // No guest session for authenticated users
+        normalizedAddress,
+        chain
+      );
+
       return NextResponse.json(
         {
-          data: existing,
+          data: processedResponse,
           status: "success",
           cached: true,
         },
@@ -303,6 +360,7 @@ export async function POST(req: NextRequest) {
             "X-Access-Type": updatedAccessStatus.accessType,
             "X-Scans-Remaining": updatedAccessStatus.scansRemaining.toString(),
             "X-Instant-Credits": updatedAccessStatus.instantCredits.toString(),
+            "X-Report-Access-Level": processedResponse.accessLevel,
           },
         }
       );
@@ -554,10 +612,19 @@ export async function POST(req: NextRequest) {
     // Cache extended response in Redis for future requests
     await redis.set(cacheKey, extendedResponse, { ex: 300 });
 
+    // Apply access control and transform response
+    const processedResponse = await processAuditResponse(
+      extendedResponse,
+      appUser.id,
+      null, // No guest session for authenticated users
+      normalizedAddress,
+      chain
+    );
+
     // Return with access status headers
     return NextResponse.json(
       {
-        data: extendedResponse,
+        data: processedResponse,
         status: "success",
         cached: false,
       },
@@ -566,6 +633,7 @@ export async function POST(req: NextRequest) {
           "X-Access-Type": updatedAccessStatus.accessType,
           "X-Scans-Remaining": updatedAccessStatus.scansRemaining.toString(),
           "X-Instant-Credits": updatedAccessStatus.instantCredits.toString(),
+          "X-Report-Access-Level": processedResponse.accessLevel,
         },
       }
     );
@@ -616,7 +684,37 @@ export async function GET(req: NextRequest) {
       );
     }
 
-    return NextResponse.json(audit);
+    // Determine user context for access control
+    const stackUser = await stackServerApp.getUser();
+    let userId: number | null = null;
+    let guestSessionId: string | null = null;
+
+    if (stackUser) {
+      try {
+        const appUser = await authService.getUserByStackId(stackUser.id);
+        userId = appUser?.id || null;
+      } catch (error) {
+        // User lookup failed, continue as anonymous
+        console.warn("Failed to lookup user for GET request:", error);
+      }
+    } else {
+      // Try to get anonymous session ID
+      guestSessionId = getAnonymousSessionFromRequest(req);
+    }
+
+    // Apply access control and transform response
+    const processedResponse = await processAuditResponse(
+      audit,
+      userId,
+      guestSessionId,
+      address.toLowerCase(),
+      chain
+    );
+
+    return NextResponse.json({
+      data: processedResponse,
+      status: "success",
+    });
   } catch (error: any) {
     // Error logging handled by createErrorResponse
     return createErrorResponse(error, requestId);
@@ -678,9 +776,18 @@ async function handleAnonymousScan(req: NextRequest) {
       const newCount = await incrementAnonymousScanCount(sessionId);
       const remaining = await getRemainingAnonymousScans(sessionId);
 
+      // Apply access control and transform response
+      const processedResponse = await processAuditResponse(
+        cached,
+        null, // No user ID for anonymous users
+        sessionId,
+        normalizedAddress,
+        chain
+      );
+
       return NextResponse.json(
         {
-          ...cached,
+          data: processedResponse,
           metadata: {
             accessType: "anonymous",
             scansRemaining: remaining,
@@ -692,6 +799,7 @@ async function handleAnonymousScan(req: NextRequest) {
             "X-Access-Type": "anonymous",
             "X-Scans-Remaining": remaining.toString(),
             "X-Session-Id": sessionId,
+            "X-Report-Access-Level": processedResponse.accessLevel,
           },
         }
       );
@@ -726,9 +834,18 @@ async function handleAnonymousScan(req: NextRequest) {
       const newCount = await incrementAnonymousScanCount(sessionId);
       const remaining = await getRemainingAnonymousScans(sessionId);
 
+      // Apply access control and transform response
+      const processedResponse = await processAuditResponse(
+        existing,
+        null, // No user ID for anonymous users
+        sessionId,
+        normalizedAddress,
+        chain
+      );
+
       return NextResponse.json(
         {
-          ...existing,
+          data: processedResponse,
           metadata: {
             accessType: "anonymous",
             scansRemaining: remaining,
@@ -740,6 +857,7 @@ async function handleAnonymousScan(req: NextRequest) {
             "X-Access-Type": "anonymous",
             "X-Scans-Remaining": remaining.toString(),
             "X-Session-Id": sessionId,
+            "X-Report-Access-Level": processedResponse.accessLevel,
           },
         }
       );
@@ -890,10 +1008,19 @@ async function handleAnonymousScan(req: NextRequest) {
     const newCount = await incrementAnonymousScanCount(sessionId);
     const remaining = await getRemainingAnonymousScans(sessionId);
 
+    // Apply access control and transform response
+    const processedResponse = await processAuditResponse(
+      auditResult,
+      null, // No user ID for anonymous users
+      sessionId,
+      normalizedAddress,
+      chain
+    );
+
     // Return result with metadata
     return NextResponse.json(
       {
-        ...auditResult,
+        data: processedResponse,
         metadata: {
           accessType: "anonymous",
           scansRemaining: remaining,
@@ -911,6 +1038,7 @@ async function handleAnonymousScan(req: NextRequest) {
           "X-Access-Type": "anonymous",
           "X-Scans-Remaining": remaining.toString(),
           "X-Session-Id": sessionId,
+          "X-Report-Access-Level": processedResponse.accessLevel,
         },
       }
     );

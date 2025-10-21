@@ -56,7 +56,7 @@ async function ensureUserExists(stackUser: any): Promise<number | null> {
 
 export async function POST(req: NextRequest) {
   try {
-    const { packageIndex, contractAddress, guestEmail } = await req.json();
+    const { packageIndex, contractAddress } = await req.json();
 
     // Validate package
     const pkg = getInstantPackageByIndex(packageIndex);
@@ -81,15 +81,30 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Check if user is authenticated
+    // Check if user is authenticated (required for instant purchases)
     const stackUser = await stackServerApp.getUser();
-    const isGuest = !stackUser;
 
-    // Ensure authenticated user exists in local database
+    if (!stackUser || !stackUser.primaryEmail) {
+      return NextResponse.json(
+        { error: "Unauthorized", status: "error" },
+        { status: 401 }
+      );
+    }
+
+    const isGuest = false; // No longer supporting guest purchases
+
+    // Ensure authenticated user exists in local database (now required)
     const localUserId = await ensureUserExists(stackUser);
 
-    // Generate guest session ID for anonymous users
-    const guestSessionId = isGuest ? crypto.randomUUID() : null;
+    if (!localUserId) {
+      return NextResponse.json(
+        {
+          error: "Account setup failed",
+          details: "Unable to set up your account. Please try again.",
+        },
+        { status: 500 }
+      );
+    }
 
     // Get base URL
     const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
@@ -121,13 +136,9 @@ export async function POST(req: NextRequest) {
       metadata: {
         type: "instant_credits",
         credits: pkg.credits.toString(),
-        userId: localUserId?.toString() || "",
-        guestSessionId: guestSessionId || "",
+        userId: localUserId.toString(),
         contractAddress: contractAddress || "",
       },
-
-      // Optional: collect email for guest users
-      ...(isGuest && guestEmail ? { customer_email: guestEmail } : {}),
 
       // Allow promo codes
       allow_promotion_codes: true,
@@ -136,8 +147,8 @@ export async function POST(req: NextRequest) {
     // Create purchase record
     await db.insert(purchases).values({
       userId: localUserId,
-      guestSessionId,
-      guestEmail: guestEmail || null,
+      guestSessionId: null, // No guest sessions for authenticated purchases
+      guestEmail: null, // No guest email for authenticated purchases
       type: "instant_credits",
       credits: pkg.credits,
       amount: Math.round(pkg.price * 100), // Convert to cents

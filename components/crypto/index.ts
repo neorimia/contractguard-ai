@@ -9,6 +9,13 @@ export { RiskScoreCard } from "./RiskScoreCard";
 export { RedFlagsList } from "./RedFlagsList";
 export { ContractMetadataCard } from "./ContractMetadataCard";
 export { HeuristicsBreakdown } from "./HeuristicsBreakdown";
+export { SummaryReportView } from "./SummaryReportView";
+export {
+  LockedSectionPreview,
+  CompactLockedPreview,
+  LockedCard,
+} from "./LockedSectionPreview";
+export { ReportUpgradeModal } from "./ReportUpgradeModal";
 
 // Visualization components (Phase 2)
 export { HolderDistributionChart } from "./HolderDistributionChart";

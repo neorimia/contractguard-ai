@@ -13,8 +13,9 @@ import { EmailService } from "@/lib/services/email.service";
 import { ReferralService } from "@/lib/services/referral.service";
 import { ReferralGamificationService } from "@/lib/services/referral-gamification.service";
 import { db } from "@/db";
-import { purchases, users, referrals } from "@/db/schema";
+import { purchases, users, referrals, instantReports } from "@/db/schema";
 import { eq, sql } from "drizzle-orm";
+import { paymentService } from "@/lib/services/payment.service";
 import Stripe from "stripe";
 
 const authService = new AuthService();
@@ -175,6 +176,30 @@ async function handleInstantPurchase(session: Stripe.Checkout.Session) {
     .where(eq(purchases.id, purchase.id));
 
   console.log(`Purchase ${purchase.id} marked as completed`);
+
+  // Handle instant report purchases - activate the instant report record
+  if (purchase.metadata?.contractAddress) {
+    try {
+      // Use payment service to find and activate the instant report
+      const instantReport = await paymentService.getInstantReportByPurchaseId(
+        purchase.id
+      );
+
+      if (instantReport) {
+        // Ensure the instant report is active using payment service
+        await paymentService.updateInstantReportStatus(instantReport.id, true);
+
+        console.log(
+          `✅ Activated instant report ${instantReport.id} for contract ${purchase.metadata.contractAddress}`
+        );
+      } else {
+        console.warn(`No instant report found for purchase ${purchase.id}`);
+      }
+    } catch (error) {
+      console.error("Error activating instant report:", error);
+      // Don't fail the webhook - log error and continue
+    }
+  }
 
   // Credit the user/guest account
   if (purchase.userId) {
