@@ -50,6 +50,13 @@ export async function determineReportAccess(
       };
     }
 
+    console.log("determineReportAccess - User found:", {
+      userId: user.id,
+      tier: user.tier,
+      instantCredits: user.instantCredits,
+      accountType: user.accountType,
+    });
+
     // Check subscription tier
     if (user.tier === "pro" || user.tier === "team") {
       return {
