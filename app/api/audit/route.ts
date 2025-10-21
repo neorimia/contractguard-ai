@@ -112,10 +112,20 @@ async function processAuditResponse(
     chain
   );
 
+  console.log("processAuditResponse - determineReportAccess result:", {
+    userId,
+    guestSessionId,
+    contractAddress,
+    chain,
+    accessStatus,
+  });
+
   // Transform based on access level
   if (accessStatus.accessLevel === "summary") {
+    console.log("processAuditResponse - Returning summary report");
     return transformToSummaryReport(auditData);
   } else {
+    console.log("processAuditResponse - Returning full report");
     return transformToFullReport(
       auditData,
       accessStatus.accessType as "pro" | "team" | "instant_credit"
