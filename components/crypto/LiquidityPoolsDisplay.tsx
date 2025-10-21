@@ -84,15 +84,17 @@ export function LiquidityPoolsDisplay({
   };
 
   return (
-    <Card className={`p-6 bg-gray-900 border-gray-800 ${className || ""}`}>
+    <Card
+      className={`p-6 bg-neutral-900 border-neutral-800 ${className || ""}`}
+    >
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div>
           <h3 className="text-lg font-semibold text-white flex items-center gap-2">
-            <Droplet className="h-5 w-5 text-cyan-400" />
+            <Droplet className="h-5 w-5 text-blue-400" />
             Liquidity Analysis
           </h3>
-          <p className="text-sm text-gray-400 mt-1">
+          <p className="text-sm text-neutral-400 mt-1">
             {poolCount} pool{poolCount !== 1 ? "s" : ""} across{" "}
             {Object.keys(dexGroups).length} DEX
             {Object.keys(dexGroups).length !== 1 ? "es" : ""}
@@ -108,22 +110,22 @@ export function LiquidityPoolsDisplay({
 
       {/* Total Liquidity */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-        <div className="bg-gray-800/50 p-4 rounded-lg">
-          <div className="text-sm text-gray-400 mb-1">Total Liquidity</div>
-          <div className="text-2xl font-bold text-cyan-400">
+        <div className="bg-neutral-800/50 p-4 rounded-lg">
+          <div className="text-sm text-neutral-400 mb-1">Total Liquidity</div>
+          <div className="text-2xl font-bold text-blue-400">
             {formatCurrency(totalLiquidity)}
           </div>
         </div>
-        <div className="bg-gray-800/50 p-4 rounded-lg">
-          <div className="text-sm text-gray-400 mb-1">Largest Pool</div>
+        <div className="bg-neutral-800/50 p-4 rounded-lg">
+          <div className="text-sm text-neutral-400 mb-1">Largest Pool</div>
           <div className="text-2xl font-bold text-white">
             {sortedPairs.length > 0
               ? formatCurrency(sortedPairs[0].liquidityUsd)
               : "$0"}
           </div>
         </div>
-        <div className="bg-gray-800/50 p-4 rounded-lg">
-          <div className="text-sm text-gray-400 mb-1">Average Pool</div>
+        <div className="bg-neutral-800/50 p-4 rounded-lg">
+          <div className="text-sm text-neutral-400 mb-1">Average Pool</div>
           <div className="text-2xl font-bold text-white">
             {sortedPairs.length > 0
               ? formatCurrency(totalLiquidity / sortedPairs.length)
@@ -134,7 +136,7 @@ export function LiquidityPoolsDisplay({
 
       {/* DEX Distribution */}
       <div className="mb-6">
-        <h4 className="text-sm font-medium text-gray-400 mb-3">
+        <h4 className="text-sm font-medium text-neutral-400 mb-3">
           DEX Distribution
         </h4>
         <div className="space-y-2">
@@ -145,19 +147,19 @@ export function LiquidityPoolsDisplay({
                   <span className="text-sm text-white capitalize">
                     {stat.dex}
                   </span>
-                  <span className="text-sm text-gray-400">
+                  <span className="text-sm text-neutral-400">
                     {formatCurrency(stat.total)} ({stat.percentage.toFixed(1)}
                     %)
                   </span>
                 </div>
-                <div className="w-full bg-gray-800 rounded-full h-2">
+                <div className="w-full bg-neutral-800 rounded-full h-2">
                   <div
-                    className="bg-cyan-500 h-2 rounded-full transition-all"
+                    className="bg-blue-500 h-2 rounded-full transition-all"
                     style={{ width: `${stat.percentage}%` }}
                   />
                 </div>
               </div>
-              <span className="text-xs text-gray-500">
+              <span className="text-xs text-neutral-500">
                 {stat.pairs} pool{stat.pairs !== 1 ? "s" : ""}
               </span>
             </div>
@@ -167,7 +169,7 @@ export function LiquidityPoolsDisplay({
 
       {/* Liquidity Pools List */}
       <div>
-        <h4 className="text-sm font-medium text-gray-400 mb-3">
+        <h4 className="text-sm font-medium text-neutral-400 mb-3">
           All Liquidity Pools
         </h4>
         <div className="space-y-2 max-h-80 overflow-y-auto">
@@ -179,12 +181,12 @@ export function LiquidityPoolsDisplay({
             return (
               <div
                 key={`pool-${idx}-${pair.pair}`}
-                className="flex items-center justify-between p-3 rounded-lg bg-gray-800/50 hover:bg-gray-800 transition-colors"
+                className="flex items-center justify-between p-3 rounded-lg bg-neutral-800/50 hover:bg-neutral-800 transition-colors"
               >
                 <div className="flex items-center gap-3 flex-1 min-w-0">
                   <div className="flex-shrink-0">
-                    <div className="w-8 h-8 rounded-lg bg-cyan-500/10 flex items-center justify-center">
-                      <Droplet className="h-4 w-4 text-cyan-400" />
+                    <div className="w-8 h-8 rounded-lg bg-blue-500/10 flex items-center justify-center">
+                      <Droplet className="h-4 w-4 text-blue-400" />
                     </div>
                   </div>
                   <div className="flex-1 min-w-0">
@@ -192,9 +194,11 @@ export function LiquidityPoolsDisplay({
                       <span className="text-sm font-medium text-white capitalize">
                         {pair.dex}
                       </span>
-                      <span className="text-xs text-gray-500">#{idx + 1}</span>
+                      <span className="text-xs text-neutral-500">
+                        #{idx + 1}
+                      </span>
                     </div>
-                    <code className="text-xs text-gray-400 font-mono block truncate">
+                    <code className="text-xs text-neutral-400 font-mono block truncate">
                       {formatAddress(pair.pair)}
                     </code>
                   </div>
@@ -203,7 +207,7 @@ export function LiquidityPoolsDisplay({
                   <div className="text-sm font-medium text-white">
                     {formatCurrency(pair.liquidityUsd)}
                   </div>
-                  <div className="text-xs text-gray-400">
+                  <div className="text-xs text-neutral-400">
                     {percentage.toFixed(1)}%
                   </div>
                 </div>
