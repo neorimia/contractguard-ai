@@ -415,7 +415,7 @@ export class PDFExportService {
       </div>
       <div class="metric-card">
         <h4>Top 10 Concentration</h4>
-        <p>${audit.topHolderConcentration ? audit.topHolderConcentration + "%" : "N/A"}</p>
+        <p>${audit.topHolderConcentration != null ? audit.topHolderConcentration + "%" : "N/A"}</p>
       </div>
       <div class="metric-card">
         <h4>Total Liquidity</h4>
@@ -485,7 +485,11 @@ export class PDFExportService {
   <div class="section">
     <h3>👥 Top Holders Distribution</h3>
     <p><strong>Total Holders:</strong> ${holderData.holderCount?.toLocaleString() || "N/A"}</p>
-    <p><strong>Top 10 Concentration:</strong> ${holderData.topHolderConcentration || audit.topHolderConcentration || "N/A"}%</p>
+    <p><strong>Top 10 Concentration:</strong> ${(() => {
+      const concentration =
+        holderData.topHolderConcentration ?? audit.topHolderConcentration;
+      return concentration != null ? concentration + "%" : "N/A";
+    })()}</p>
     
     <table>
       <thead>

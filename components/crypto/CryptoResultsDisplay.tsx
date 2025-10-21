@@ -87,7 +87,7 @@ export function CryptoResultsDisplay({
   return (
     <div className="space-y-8">
       {/* Header */}
-      <div className="flex items-start justify-between gap-4">
+      <div className="flex flex-col md:flex-row items-start justify-between gap-4">
         <div>
           <div className="flex items-center gap-2 mb-2">
             <div className="flex h-2 w-2 rounded-full bg-white" />
@@ -181,7 +181,8 @@ export function CryptoResultsDisplay({
                       <MetricCard
                         label="Top 10 Concentration"
                         value={
-                          result.topHolderConcentration
+                          result.topHolderConcentration != null &&
+                          result.topHolderConcentration !== ""
                             ? `${result.topHolderConcentration}%`
                             : "N/A"
                         }

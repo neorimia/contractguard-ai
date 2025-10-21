@@ -77,7 +77,7 @@ export function PDFExportButton({
       size={size}
       onClick={handleExport}
       disabled={exporting}
-      className={`flex items-center gap-2 ${className}`}
+      className={`flex items-center gap-2 ${className} bg-white text-black hover:bg-gray-100 text-xs px-4 py-2 font-semibold whitespace-nowrap `}
     >
       {exporting ? (
         <>

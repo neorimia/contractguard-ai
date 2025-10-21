@@ -1,5 +1,6 @@
 // lib/services/ai.service.ts
 import { Issue } from "@/db/schema";
+import { ErrorFactory } from "@/lib/utils/error-handler";
 
 interface AnalysisResult {
   riskScore: number;
@@ -42,9 +43,7 @@ export class AIAnalysisService {
     }
 
     if (this.providers.length === 0) {
-      throw new Error(
-        "No AI API key configured. Please add OPENAI_API_KEY or CLAUDE_API_KEY to .env.local"
-      );
+      throw ErrorFactory.apiKeyMissing("OpenAI or Claude");
     }
   }
 
@@ -103,7 +102,7 @@ export class AIAnalysisService {
 
     const timeoutPromise = new Promise<never>((_, reject) => {
       setTimeout(() => {
-        reject(new Error(`Request timeout after ${this.REQUEST_TIMEOUT}ms`));
+        reject(ErrorFactory.aiServiceTimeout(provider.name));
       }, this.REQUEST_TIMEOUT);
     });
 

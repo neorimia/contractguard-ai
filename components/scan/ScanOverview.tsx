@@ -51,7 +51,7 @@ export function ScanOverview({
       transition={{ duration: 0.4, ease: "easeOut" }}
       className="max-w-2xl mx-auto mt-6"
     >
-      <div className="bg-white/5 dark:bg-black/5 backdrop-blur-sm border border-white/20 dark:border-black/20 rounded-xl p-4">
+      <div className="bg-white/5 dark:bg-black/5 backdrop-blur-sm border border-white/20 dark:border-white/20 rounded-xl p-4">
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-2">
             {isUnlimited ? (
@@ -59,9 +59,9 @@ export function ScanOverview({
             ) : instantCredits > 0 ? (
               <Sparkles className="w-4 h-4 text-primary" />
             ) : (
-              <Shield className="w-4 h-4 text-white/60 dark:text-black/60" />
+              <Shield className="w-4 h-4 text-white/60 dark:text-white/60" />
             )}
-            <span className="text-sm font-medium text-white/80 dark:text-black/80">
+            <span className="text-sm font-medium text-white/80 dark:text-white/80">
               {isUnlimited
                 ? "Unlimited Scans"
                 : tier === "pro"
@@ -73,7 +73,7 @@ export function ScanOverview({
                       : "Free Scans Today"}
             </span>
           </div>
-          <span className="text-sm font-semibold text-white dark:text-black">
+          <span className="text-sm font-semibold text-white dark:text-white">
             {isUnlimited ? (
               <span className="flex items-center gap-1">
                 <Infinity className="w-4 h-4" />
@@ -121,7 +121,7 @@ export function ScanOverview({
                 <CheckCircle className="w-3 h-3" />
                 Scan as much as you want
               </span>
-              <span className="text-white/40 dark:text-black/40">
+              <span className="text-white/40 dark:text-white/40">
                 {tier === "team" ? "$99/mo" : "Premium"}
               </span>
             </>
@@ -131,7 +131,7 @@ export function ScanOverview({
                 <Sparkles className="w-3 h-3" />
                 Using instant credits
               </span>
-              <span className="text-white/40 dark:text-black/40">
+              <span className="text-white/40 dark:text-white/40">
                 {scansRemaining} free scans left
               </span>
             </>
@@ -140,7 +140,7 @@ export function ScanOverview({
               <span className="text-red-400 dark:text-red-500 font-medium">
                 ⚠️ No scans remaining
               </span>
-              <span className="text-white/40 dark:text-black/40">
+              <span className="text-white/40 dark:text-white/40">
                 {isAnonymous ? "Sign up for 3 daily" : "Upgrade or buy credits"}
               </span>
             </>

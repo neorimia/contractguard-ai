@@ -245,26 +245,28 @@ export function ScanInterface() {
       // Track scan completed
       trackEvent(AnalyticsEvents.SCAN_COMPLETED, {
         contractAddress: address,
-        riskScore: data.riskScore,
-        recommendation: data.recommendation,
-        issuesFound: data.issues?.length || 0,
+        riskScore: data.data?.riskScore || data.riskScore,
+        recommendation: data.data?.recommendation || data.recommendation,
+        issuesFound: data.data?.issues?.length || data.issues?.length || 0,
         isAnonymous: !user,
       });
 
-      setResult(data);
+      setResult(data.data || data);
 
       // Handle anonymous scan metadata
-      if (data.metadata) {
-        setScanMetadata(data.metadata);
+      if (data.data?.metadata || data.metadata) {
+        setScanMetadata(data.data?.metadata || data.metadata);
+
+        const metadata = data.data?.metadata || data.metadata;
 
         // Track anonymous scans performed
-        if (data.metadata.accessType === "anonymous") {
-          const scansPerformed = 3 - (data.metadata.scansRemaining || 0);
+        if (metadata.accessType === "anonymous") {
+          const scansPerformed = 3 - (metadata.scansRemaining || 0);
           setAnonymousScansPerformed(scansPerformed);
 
           // Save sessionId for later use (when limit is reached)
-          if (data.metadata.sessionId) {
-            setAnonymousSessionId(data.metadata.sessionId);
+          if (metadata.sessionId) {
+            setAnonymousSessionId(metadata.sessionId);
           }
 
           // Show soft signup prompt after 1st scan (early capture)
@@ -274,10 +276,10 @@ export function ScanInterface() {
         }
 
         // Update authenticated user access status after scan
-        if (user && data.metadata.scansRemaining !== undefined) {
+        if (user && metadata.scansRemaining !== undefined) {
           setUserAccessStatus((prev) => ({
             accessType: prev?.accessType || "free",
-            scansRemaining: data.metadata.scansRemaining,
+            scansRemaining: metadata.scansRemaining,
             instantCredits: prev?.instantCredits || 0,
             accountType: prev?.accountType,
           }));
