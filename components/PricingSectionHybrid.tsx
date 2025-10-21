@@ -33,6 +33,12 @@ export default function PricingSectionHybrid() {
 
   // Handle instant purchase
   const handleInstantPurchase = async (packageIndex: number) => {
+    // Check if user is authenticated
+    if (!user) {
+      router.push("/sign-in?redirect=/pricing");
+      return;
+    }
+
     const pkg = PRICING_CONFIG.instant.packages[packageIndex];
 
     trackEvent(AnalyticsEvents.CHECKOUT_INITIATED, {
@@ -46,15 +52,12 @@ export default function PricingSectionHybrid() {
     try {
       setLoadingTier(`instant_${packageIndex}`);
 
-      const guestSessionId = localStorage.getItem("guestSessionId");
-
       const response = await fetch("/api/checkout/instant", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           packageIndex,
-          contractAddress: null, // Not tied to specific contract
-          guestSessionId,
+          contractAddress: null, // General credits not tied to specific contract
         }),
       });
 
@@ -226,7 +229,7 @@ export default function PricingSectionHybrid() {
                         "Instant delivery",
                         "Never expires",
                       ]}
-                      buttonText="Buy Now"
+                      buttonText={user ? "Buy Now" : "Sign in to Buy"}
                       buttonLoading={loadingTier === `instant_${index}`}
                       onButtonClick={() => handleInstantPurchase(index)}
                       buttonDisabled={loadingTier !== null}
@@ -306,7 +309,9 @@ export default function PricingSectionHybrid() {
                         : undefined
                     }
                     perks={PRICING_CONFIG.pro.perks}
-                    buttonText="Subscribe to Pro"
+                    buttonText={
+                      user ? "Subscribe to Pro" : "Sign in to Subscribe"
+                    }
                     buttonLoading={loadingTier === "pro"}
                     onButtonClick={() => handleSubscription("pro")}
                     buttonDisabled={loadingTier !== null}
@@ -331,7 +336,9 @@ export default function PricingSectionHybrid() {
                         : undefined
                     }
                     perks={PRICING_CONFIG.team.perks}
-                    buttonText="Subscribe to Team"
+                    buttonText={
+                      user ? "Subscribe to Team" : "Sign in to Subscribe"
+                    }
                     buttonLoading={loadingTier === "team"}
                     onButtonClick={() => handleSubscription("team")}
                     buttonDisabled={loadingTier !== null}

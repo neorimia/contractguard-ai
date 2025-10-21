@@ -26,6 +26,8 @@ import {
 } from "@/components/ui/dialog";
 import { SummaryReportData } from "@/lib/types/report-types";
 import { PRICING_CONFIG } from "@/lib/config/pricing";
+import { useUser } from "@stackframe/stack";
+import { useRouter } from "next/navigation";
 
 interface ReportUpgradeModalProps {
   open: boolean;
@@ -44,30 +46,38 @@ export function ReportUpgradeModal({
   onSuccess,
   onError,
 }: ReportUpgradeModalProps) {
+  const user = useUser();
+  const router = useRouter();
   const [selectedOption, setSelectedOption] = useState<SelectedOption>(null);
   const [selectedInstantPackage, setSelectedInstantPackage] = useState(0);
   const [selectedSubscription, setSelectedSubscription] = useState<
     "pro" | "team"
   >("pro");
   const [isLoading, setIsLoading] = useState(false);
-  const [guestEmail, setGuestEmail] = useState("");
-  const [showEmailInput, setShowEmailInput] = useState(false);
 
   const handleClose = () => {
     if (!isLoading) {
       setSelectedOption(null);
-      setGuestEmail("");
-      setShowEmailInput(false);
       onOpenChange(false);
     }
   };
 
   const handleInstantPurchase = async () => {
+    // Check if user is authenticated
+    if (!user) {
+      router.push("/sign-in");
+      return;
+    }
+
     setIsLoading(true);
 
     try {
       const selectedPkg =
         PRICING_CONFIG.instant.packages[selectedInstantPackage];
+
+      if (!selectedPkg) {
+        throw new Error("Invalid package selected");
+      }
 
       const response = await fetch("/api/payments/instant-report", {
         method: "POST",
@@ -75,7 +85,10 @@ export function ReportUpgradeModal({
         body: JSON.stringify({
           contractAddress: data.contractAddress,
           chain: data.chain,
-          guestEmail: guestEmail || undefined,
+          packageIndex: selectedInstantPackage,
+          credits: selectedPkg.credits,
+          price: selectedPkg.price,
+          stripePriceId: selectedPkg.stripePriceId,
         }),
       });
 
@@ -95,6 +108,12 @@ export function ReportUpgradeModal({
   };
 
   const handleSubscriptionUpgrade = async () => {
+    // Check if user is authenticated
+    if (!user) {
+      router.push("/sign-in");
+      return;
+    }
+
     setIsLoading(true);
 
     try {
@@ -130,7 +149,7 @@ export function ReportUpgradeModal({
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto p-0">
+      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto p-0 bg-black border-white/20">
         <AnimatePresence mode="wait">
           {!selectedOption ? (
             // Initial selection screen
@@ -142,12 +161,12 @@ export function ReportUpgradeModal({
               className="p-6"
             >
               <DialogHeader className="text-center mb-8">
-                <DialogTitle className="text-3xl font-bold mb-2">
+                <DialogTitle className="text-3xl font-bold mb-2 text-white">
                   Unlock Full Security Analysis
                 </DialogTitle>
-                <DialogDescription className="text-lg">
+                <DialogDescription className="text-lg text-white/70">
                   Choose how you'd like to access the complete report for{" "}
-                  <code className="bg-gray-100 px-2 py-1 rounded text-sm">
+                  <code className="bg-black/30 border border-white/20 px-2 py-1 rounded text-sm text-white">
                     {data.contractAddress.slice(0, 6)}...
                     {data.contractAddress.slice(-4)}
                   </code>
@@ -158,47 +177,53 @@ export function ReportUpgradeModal({
                 {/* Instant Report Option */}
                 <motion.div whileHover={{ scale: 1.02 }} className="relative">
                   <div
-                    className="p-6 rounded-xl border-2 border-blue-200 bg-gradient-to-br from-blue-50 to-blue-100 cursor-pointer hover:border-blue-300 transition-all"
-                    onClick={() => setSelectedOption("instant")}
+                    className="p-6 rounded-xl border-2 border-white/30 bg-gradient-to-br from-black/40 to-black/20 cursor-pointer hover:border-white/50 transition-all"
+                    onClick={() => {
+                      if (!user) {
+                        router.push("/sign-in");
+                        return;
+                      }
+                      setSelectedOption("instant");
+                    }}
                   >
                     <div className="flex items-center justify-between mb-4">
                       <div className="flex items-center gap-3">
-                        <div className="p-2 bg-blue-600 rounded-lg">
-                          <Zap className="h-6 w-6 text-white" />
+                        <div className="p-2 bg-white rounded-lg">
+                          <Zap className="h-6 w-6 text-black" />
                         </div>
                         <div>
-                          <h3 className="text-xl font-bold text-blue-900">
+                          <h3 className="text-xl font-bold text-white">
                             Instant Report
                           </h3>
-                          <p className="text-blue-700">One-time access</p>
+                          <p className="text-white/70">One-time access</p>
                         </div>
                       </div>
-                      <Badge className="bg-blue-600 text-white">Popular</Badge>
+                      <Badge className="bg-white text-black">Popular</Badge>
                     </div>
 
                     <div className="space-y-3">
-                      <div className="text-3xl font-bold text-blue-900">
+                      <div className="text-3xl font-bold text-white">
                         ${instantPriceOptions[1].price}
-                        <span className="text-sm font-normal text-blue-700 ml-1">
+                        <span className="text-sm font-normal text-white/70 ml-1">
                           for {instantPriceOptions[1].credits} reports
                         </span>
                       </div>
 
                       <ul className="space-y-2 text-sm">
-                        <li className="flex items-center gap-2">
-                          <CheckCircle className="h-4 w-4 text-green-600" />
+                        <li className="flex items-center gap-2 text-white/80">
+                          <CheckCircle className="h-4 w-4 text-white" />
                           Full security analysis
                         </li>
-                        <li className="flex items-center gap-2">
-                          <CheckCircle className="h-4 w-4 text-green-600" />
+                        <li className="flex items-center gap-2 text-white/80">
+                          <CheckCircle className="h-4 w-4 text-white" />
                           All {data.totalIssuesCount} issues detailed
                         </li>
-                        <li className="flex items-center gap-2">
-                          <CheckCircle className="h-4 w-4 text-green-600" />
+                        <li className="flex items-center gap-2 text-white/80">
+                          <CheckCircle className="h-4 w-4 text-white" />
                           24-hour access
                         </li>
-                        <li className="flex items-center gap-2">
-                          <CheckCircle className="h-4 w-4 text-green-600" />
+                        <li className="flex items-center gap-2 text-white/80">
+                          <CheckCircle className="h-4 w-4 text-white" />
                           No subscription required
                         </li>
                       </ul>
@@ -206,13 +231,17 @@ export function ReportUpgradeModal({
 
                     <div className="mt-6">
                       <Button
-                        className="w-full bg-blue-600 hover:bg-blue-700 text-white"
+                        className="w-full bg-white hover:bg-white/90 text-black border border-white/20"
                         onClick={(e) => {
                           e.stopPropagation();
+                          if (!user) {
+                            router.push("/sign-in");
+                            return;
+                          }
                           setSelectedOption("instant");
                         }}
                       >
-                        Get Instant Access
+                        {user ? "Get Instant Access" : "Sign in to Purchase"}
                         <ArrowRight className="h-4 w-4 ml-2" />
                       </Button>
                     </div>
@@ -222,52 +251,58 @@ export function ReportUpgradeModal({
                 {/* Subscription Option */}
                 <motion.div whileHover={{ scale: 1.02 }} className="relative">
                   <div
-                    className="p-6 rounded-xl border-2 border-purple-200 bg-gradient-to-br from-purple-50 to-purple-100 cursor-pointer hover:border-purple-300 transition-all"
-                    onClick={() => setSelectedOption("subscription")}
+                    className="p-6 rounded-xl border-2 border-white/20 bg-gradient-to-br from-black/30 to-black/10 cursor-pointer hover:border-white/40 transition-all"
+                    onClick={() => {
+                      if (!user) {
+                        router.push("/sign-in");
+                        return;
+                      }
+                      setSelectedOption("subscription");
+                    }}
                   >
                     <div className="flex items-center justify-between mb-4">
                       <div className="flex items-center gap-3">
-                        <div className="p-2 bg-purple-600 rounded-lg">
+                        <div className="p-2 bg-black rounded-lg border border-white/20">
                           <TrendingUp className="h-6 w-6 text-white" />
                         </div>
                         <div>
-                          <h3 className="text-xl font-bold text-purple-900">
+                          <h3 className="text-xl font-bold text-white">
                             Pro Subscription
                           </h3>
-                          <p className="text-purple-700">Unlimited access</p>
+                          <p className="text-white/70">Unlimited access</p>
                         </div>
                       </div>
                       <Badge
                         variant="outline"
-                        className="border-purple-600 text-purple-600"
+                        className="border-white/30 text-white bg-black/50"
                       >
                         Best Value
                       </Badge>
                     </div>
 
                     <div className="space-y-3">
-                      <div className="text-3xl font-bold text-purple-900">
+                      <div className="text-3xl font-bold text-white">
                         ${proPlan.price}
-                        <span className="text-sm font-normal text-purple-700 ml-1">
+                        <span className="text-sm font-normal text-white/70 ml-1">
                           /month
                         </span>
                       </div>
 
                       <ul className="space-y-2 text-sm">
-                        <li className="flex items-center gap-2">
-                          <CheckCircle className="h-4 w-4 text-green-600" />
+                        <li className="flex items-center gap-2 text-white/80">
+                          <CheckCircle className="h-4 w-4 text-white" />
                           Unlimited contract scans
                         </li>
-                        <li className="flex items-center gap-2">
-                          <CheckCircle className="h-4 w-4 text-green-600" />
+                        <li className="flex items-center gap-2 text-white/80">
+                          <CheckCircle className="h-4 w-4 text-white" />
                           Advanced risk scoring
                         </li>
-                        <li className="flex items-center gap-2">
-                          <CheckCircle className="h-4 w-4 text-green-600" />
+                        <li className="flex items-center gap-2 text-white/80">
+                          <CheckCircle className="h-4 w-4 text-white" />
                           Email alerts & monitoring
                         </li>
-                        <li className="flex items-center gap-2">
-                          <CheckCircle className="h-4 w-4 text-green-600" />
+                        <li className="flex items-center gap-2 text-white/80">
+                          <CheckCircle className="h-4 w-4 text-white" />
                           Priority support
                         </li>
                       </ul>
@@ -276,13 +311,17 @@ export function ReportUpgradeModal({
                     <div className="mt-6">
                       <Button
                         variant="outline"
-                        className="w-full border-purple-600 text-purple-600 hover:bg-purple-50"
+                        className="w-full bg-white hover:bg-white/90 text-black border border-white/20"
                         onClick={(e) => {
                           e.stopPropagation();
+                          if (!user) {
+                            router.push("/sign-in");
+                            return;
+                          }
                           setSelectedOption("subscription");
                         }}
                       >
-                        Upgrade to Pro
+                        {user ? "Upgrade to Pro" : "Sign in for Pro"}
                         <ArrowRight className="h-4 w-4 ml-2" />
                       </Button>
                     </div>
@@ -291,19 +330,23 @@ export function ReportUpgradeModal({
               </div>
 
               {/* Trust signals */}
-              <div className="mt-8 pt-6 border-t border-gray-200">
+              <div className="mt-8 pt-6 border-t border-white/20">
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-center">
                   <div className="flex flex-col items-center gap-2">
-                    <Shield className="h-8 w-8 text-green-600" />
-                    <span className="text-sm font-medium">Secure Payment</span>
+                    <Shield className="h-8 w-8 text-white" />
+                    <span className="text-sm font-medium text-white/80">
+                      Secure Payment
+                    </span>
                   </div>
                   <div className="flex flex-col items-center gap-2">
-                    <Zap className="h-8 w-8 text-blue-600" />
-                    <span className="text-sm font-medium">Instant Access</span>
+                    <Zap className="h-8 w-8 text-white" />
+                    <span className="text-sm font-medium text-white/80">
+                      Instant Access
+                    </span>
                   </div>
                   <div className="flex flex-col items-center gap-2">
-                    <CheckCircle className="h-8 w-8 text-purple-600" />
-                    <span className="text-sm font-medium">
+                    <CheckCircle className="h-8 w-8 text-white" />
+                    <span className="text-sm font-medium text-white/80">
                       Money Back Guarantee
                     </span>
                   </div>
@@ -325,14 +368,15 @@ export function ReportUpgradeModal({
                   size="sm"
                   onClick={() => setSelectedOption(null)}
                   disabled={isLoading}
+                  className="text-white hover:bg-white/10"
                 >
                   <ArrowLeft className="h-4 w-4" />
                 </Button>
                 <div>
-                  <h2 className="text-2xl font-bold">
+                  <h2 className="text-2xl font-bold text-white">
                     Choose Instant Report Package
                   </h2>
-                  <p className="text-gray-600">
+                  <p className="text-white/70">
                     One-time purchase, no subscription
                   </p>
                 </div>
@@ -344,36 +388,36 @@ export function ReportUpgradeModal({
                     key={index}
                     className={`p-4 rounded-lg border-2 cursor-pointer transition-all ${
                       selectedInstantPackage === index
-                        ? "border-blue-600 bg-blue-50 shadow-lg"
-                        : "border-gray-200 hover:border-gray-300"
+                        ? "border-white bg-white/10 shadow-lg"
+                        : "border-white/20 hover:border-white/40 bg-black/20"
                     }`}
                     onClick={() => setSelectedInstantPackage(index)}
                   >
                     {pkg.popular && (
-                      <Badge className="mb-2 bg-blue-600 text-white">
+                      <Badge className="mb-2 bg-white text-black">
                         Most Popular
                       </Badge>
                     )}
                     {pkg.savings && (
                       <Badge
                         variant="outline"
-                        className="mb-2 border-green-500 text-green-700"
+                        className="mb-2 border-white/30 text-white bg-black/50"
                       >
                         {pkg.savings}
                       </Badge>
                     )}
 
                     <div className="text-center">
-                      <div className="text-2xl font-bold mb-1">
+                      <div className="text-2xl font-bold mb-1 text-white">
                         {pkg.credits}
                       </div>
-                      <div className="text-sm text-gray-600 mb-3">
+                      <div className="text-sm text-white/70 mb-3">
                         {pkg.credits === 1 ? "Report" : "Reports"}
                       </div>
-                      <div className="text-xl font-bold text-blue-600 mb-1">
+                      <div className="text-xl font-bold text-white mb-1">
                         ${pkg.price}
                       </div>
-                      <div className="text-sm text-gray-500">
+                      <div className="text-sm text-white/60">
                         ${(pkg.price / pkg.credits).toFixed(2)} per report
                       </div>
                     </div>
@@ -382,23 +426,10 @@ export function ReportUpgradeModal({
               </div>
 
               <div className="space-y-4">
-                <div>
-                  <Label htmlFor="email" className="text-sm">
-                    Email (optional - for receipt)
-                  </Label>
-                  <Input
-                    id="email"
-                    type="email"
-                    placeholder="your@email.com"
-                    value={guestEmail}
-                    onChange={(e) => setGuestEmail(e.target.value)}
-                  />
-                </div>
-
                 <Button
                   onClick={handleInstantPurchase}
-                  disabled={isLoading}
-                  className="w-full bg-blue-600 hover:bg-blue-700 text-white"
+                  disabled={isLoading || !user}
+                  className="w-full bg-white hover:bg-white/90 text-black border border-white/20"
                   size="lg"
                 >
                   {isLoading ? (
@@ -416,7 +447,7 @@ export function ReportUpgradeModal({
                   )}
                 </Button>
 
-                <p className="text-xs text-center text-gray-500">
+                <p className="text-xs text-center text-white/60">
                   Credits never expire. Use them anytime for future reports.
                 </p>
               </div>
@@ -436,14 +467,15 @@ export function ReportUpgradeModal({
                   size="sm"
                   onClick={() => setSelectedOption(null)}
                   disabled={isLoading}
+                  className="text-white hover:bg-white/10"
                 >
                   <ArrowLeft className="h-4 w-4" />
                 </Button>
                 <div>
-                  <h2 className="text-2xl font-bold">
+                  <h2 className="text-2xl font-bold text-white">
                     Choose Subscription Plan
                   </h2>
-                  <p className="text-gray-600">
+                  <p className="text-white/70">
                     Unlimited access with monthly billing
                   </p>
                 </div>
@@ -460,22 +492,24 @@ export function ReportUpgradeModal({
                       key={plan.id}
                       className={`p-6 rounded-lg border-2 cursor-pointer transition-all ${
                         isSelected
-                          ? "border-purple-600 bg-purple-50 shadow-lg"
-                          : "border-gray-200 hover:border-gray-300"
+                          ? "border-white bg-white/10 shadow-lg"
+                          : "border-white/20 hover:border-white/40 bg-black/20"
                       }`}
                       onClick={() => setSelectedSubscription(planKey)}
                     >
                       {planKey === "pro" && (
-                        <Badge className="mb-3 bg-blue-600 text-white">
+                        <Badge className="mb-3 bg-white text-black">
                           Recommended
                         </Badge>
                       )}
 
                       <div className="space-y-3">
-                        <h3 className="text-xl font-bold">{plan.label}</h3>
-                        <div className="text-3xl font-bold text-purple-600">
+                        <h3 className="text-xl font-bold text-white">
+                          {plan.label}
+                        </h3>
+                        <div className="text-3xl font-bold text-white">
                           ${plan.price}
-                          <span className="text-sm font-normal text-gray-600 ml-1">
+                          <span className="text-sm font-normal text-white/70 ml-1">
                             /{plan.interval}
                           </span>
                         </div>
@@ -484,14 +518,14 @@ export function ReportUpgradeModal({
                           {plan.perks.slice(0, 4).map((perk, perkIndex) => (
                             <li
                               key={perkIndex}
-                              className="flex items-center gap-2"
+                              className="flex items-center gap-2 text-white/80"
                             >
-                              <CheckCircle className="h-4 w-4 text-green-600 flex-shrink-0" />
+                              <CheckCircle className="h-4 w-4 text-white flex-shrink-0" />
                               <span>{perk}</span>
                             </li>
                           ))}
                           {plan.perks.length > 4 && (
-                            <li className="text-xs text-gray-500 pl-6">
+                            <li className="text-xs text-white/60 pl-6">
                               +{plan.perks.length - 4} more features
                             </li>
                           )}
@@ -505,7 +539,7 @@ export function ReportUpgradeModal({
               <Button
                 onClick={handleSubscriptionUpgrade}
                 disabled={isLoading}
-                className="w-full bg-purple-600 hover:bg-purple-700 text-white"
+                className="w-full bg-white hover:bg-white/90 text-black border border-white/20"
                 size="lg"
               >
                 {isLoading ? (
@@ -516,12 +550,14 @@ export function ReportUpgradeModal({
                 ) : (
                   <>
                     <TrendingUp className="h-4 w-4 mr-2" />
-                    Upgrade to {PRICING_CONFIG[selectedSubscription].label}
+                    {user
+                      ? `Upgrade to ${PRICING_CONFIG[selectedSubscription].label}`
+                      : "Sign in to upgrade"}
                   </>
                 )}
               </Button>
 
-              <p className="text-sm text-center text-gray-500 mt-3">
+              <p className="text-sm text-center text-white/60 mt-3">
                 Cancel anytime. 30-day money-back guarantee.
               </p>
             </motion.div>

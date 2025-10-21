@@ -14,20 +14,26 @@ import { stackServerApp } from "@/stack/server";
 import { eq } from "drizzle-orm";
 import crypto from "crypto";
 import Stripe from "stripe";
+import { PRICING_CONFIG } from "@/lib/config/pricing";
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
   apiVersion: "2025-09-30.clover",
   typescript: true,
 });
 
-// Price for single instant report
-const INSTANT_REPORT_PRICE = 4.99; // $4.99 per report
-const INSTANT_REPORT_PRICE_CENTS = Math.round(INSTANT_REPORT_PRICE * 100);
+// Price constants removed - now using dynamic package-based pricing
 
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const { contractAddress, chain = "ethereum", guestEmail } = body;
+    const {
+      contractAddress,
+      chain = "ethereum",
+      packageIndex,
+      credits,
+      price,
+      stripePriceId,
+    } = body;
 
     // Input validation
     if (!contractAddress || typeof contractAddress !== "string") {
@@ -63,54 +69,105 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Get authenticated user (optional for instant reports)
-    const stackUser = await stackServerApp.getUser();
-    const isGuest = !stackUser;
-
-    // Ensure user exists in local database if authenticated
-    let localUserId: number | null = null;
-    if (stackUser) {
-      try {
-        // Check if user already exists in local DB
-        const [existingUser] = await db
-          .select({ id: users.id })
-          .from(users)
-          .where(eq(users.stackUserId, stackUser.id))
-          .limit(1);
-
-        if (existingUser) {
-          localUserId = existingUser.id;
-        } else {
-          // Create new user record for authenticated user
-          const [newUser] = await db
-            .insert(users)
-            .values({
-              stackUserId: stackUser.id,
-              email:
-                stackUser.primaryEmail || `user-${stackUser.id}@temp.local`,
-              emailVerified: stackUser.primaryEmailVerified || false,
-              displayName: stackUser.displayName || null,
-              tier: "free",
-              scansToday: 0,
-              instantCredits: 0,
-            })
-            .returning({ id: users.id });
-
-          localUserId = newUser.id;
-        }
-      } catch (error) {
-        console.error("Error ensuring user exists:", error);
-        // Continue as guest if user creation fails
+    // Validate package information
+    let selectedPackage;
+    if (packageIndex !== undefined && typeof packageIndex === "number") {
+      // Validate package index
+      if (
+        packageIndex < 0 ||
+        packageIndex >= PRICING_CONFIG.instant.packages.length
+      ) {
+        return NextResponse.json(
+          {
+            error: "Invalid package selection",
+            details: "Package index is out of range",
+          },
+          { status: 400 }
+        );
       }
+
+      selectedPackage = PRICING_CONFIG.instant.packages[packageIndex];
+
+      // Validate package data matches what was sent
+      if (
+        credits !== selectedPackage.credits ||
+        price !== selectedPackage.price
+      ) {
+        return NextResponse.json(
+          {
+            error: "Package data mismatch",
+            details: "Package information does not match selected package",
+          },
+          { status: 400 }
+        );
+      }
+    } else {
+      // Fallback to default single report package (for backward compatibility)
+      selectedPackage = PRICING_CONFIG.instant.packages[0];
     }
 
-    // Generate guest session ID for anonymous users
-    const guestSessionId = isGuest ? crypto.randomUUID() : null;
+    // Use the selected package or default values
+    const reportPrice = selectedPackage.price;
+    const reportPriceCents = Math.round(reportPrice * 100);
+    const reportCredits = selectedPackage.credits;
+    const reportStripePriceId = selectedPackage.stripePriceId || stripePriceId;
+
+    // Get authenticated user (required for instant reports)
+    const stackUser = await stackServerApp.getUser();
+
+    if (!stackUser || !stackUser.primaryEmail) {
+      return NextResponse.json(
+        { error: "Unauthorized", status: "error" },
+        { status: 401 }
+      );
+    }
+
+    const isGuest = false; // No longer supporting guest purchases
+
+    // Ensure user exists in local database (now required)
+    let localUserId: number;
+    try {
+      // Check if user already exists in local DB
+      const [existingUser] = await db
+        .select({ id: users.id })
+        .from(users)
+        .where(eq(users.stackUserId, stackUser.id))
+        .limit(1);
+
+      if (existingUser) {
+        localUserId = existingUser.id;
+      } else {
+        // Create new user record for authenticated user
+        const [newUser] = await db
+          .insert(users)
+          .values({
+            stackUserId: stackUser.id,
+            email: stackUser.primaryEmail!,
+            emailVerified: stackUser.primaryEmailVerified || false,
+            displayName: stackUser.displayName || null,
+            tier: "free",
+            scansToday: 0,
+            instantCredits: 0,
+          })
+          .returning({ id: users.id });
+
+        localUserId = newUser.id;
+      }
+    } catch (error) {
+      console.error("Error ensuring user exists:", error);
+      return NextResponse.json(
+        {
+          error: "Account setup failed",
+          details: "Unable to set up your account. Please try again.",
+        },
+        { status: 500 }
+      );
+    }
 
     // Check instant report purchase limits
     const limitCheck = await paymentService.checkInstantReportLimits(
-      localUserId || undefined,
-      guestSessionId || undefined
+      localUserId,
+      undefined // No guest session since authentication is required
     );
 
     if (!limitCheck.canPurchase) {
@@ -132,24 +189,29 @@ export async function POST(req: NextRequest) {
     const successUrl = `${siteUrl}/report/${contractAddress}?chain=${chain}&session_id={CHECKOUT_SESSION_ID}&success=true`;
     const cancelUrl = `${siteUrl}/report/${contractAddress}?chain=${chain}&canceled=true`;
 
-    // Get or create Stripe customer for authenticated users
-    let customerId: string | undefined;
-    if (stackUser && stackUser.primaryEmail) {
-      try {
-        const customer = await stripeService.getOrCreateCustomer({
-          email: stackUser.primaryEmail,
-          userId: localUserId?.toString() || "",
-          name: stackUser.displayName || undefined,
-        });
-        customerId = customer.id;
-      } catch (error) {
-        console.error("Error getting/creating Stripe customer:", error);
-        // Continue without customer ID
-      }
+    // Get or create Stripe customer for authenticated user
+    let customerId: string;
+    try {
+      const customer = await stripeService.getOrCreateCustomer({
+        email: stackUser.primaryEmail,
+        userId: localUserId.toString(),
+        name: stackUser.displayName || undefined,
+      });
+      customerId = customer.id;
+    } catch (error) {
+      console.error("Error getting/creating Stripe customer:", error);
+      return NextResponse.json(
+        {
+          error: "Account setup failed",
+          details: "Unable to set up payment account. Please try again.",
+        },
+        { status: 500 }
+      );
     }
 
     // Check if instant report price ID is configured
     const instantReportPriceId =
+      reportStripePriceId ||
       process.env.STRIPE_PRICE_INSTANT_REPORT ||
       process.env.STRIPE_PRICE_INSTANT_1;
     if (!instantReportPriceId) {
@@ -178,18 +240,16 @@ export async function POST(req: NextRequest) {
 
       // Customer and metadata
       customer: customerId,
-      customer_email:
-        !customerId && (stackUser?.primaryEmail || guestEmail)
-          ? stackUser?.primaryEmail || guestEmail
-          : undefined,
 
       // Track purchase metadata
       metadata: {
         type: "instant_report",
-        userId: localUserId?.toString() || "",
-        guestSessionId: guestSessionId || "",
+        userId: localUserId.toString(),
         contractAddress: contractAddress,
         chain: chain,
+        packageIndex: packageIndex?.toString() || "0",
+        credits: reportCredits.toString(),
+        price: reportPrice.toString(),
       },
 
       // Allow promo codes
@@ -201,15 +261,16 @@ export async function POST(req: NextRequest) {
       .insert(purchases)
       .values({
         userId: localUserId,
-        guestSessionId,
-        guestEmail: guestEmail || null,
+        guestSessionId: null, // No guest sessions for authenticated purchases
+        guestEmail: null, // No guest email for authenticated purchases
         type: "instant_credits", // Use existing type, will be processed as instant report
-        amount: INSTANT_REPORT_PRICE_CENTS,
+        amount: reportPriceCents,
         currency: "usd",
         stripeCheckoutSessionId: session.id,
         status: "pending",
         metadata: {
           contractAddress,
+          packageSize: reportCredits, // Using existing packageSize field for credits
           ipAddress:
             req.headers.get("x-forwarded-for") ||
             req.headers.get("x-real-ip") ||
@@ -223,12 +284,12 @@ export async function POST(req: NextRequest) {
 
     // Create instant report record with 24-hour expiration using payment service
     const instantReport = await paymentService.createInstantReport({
-      userId: localUserId || undefined,
-      guestSessionId: guestSessionId || undefined,
+      userId: localUserId,
+      guestSessionId: undefined, // No guest sessions for authenticated purchases
       contractAddress,
       chain,
       purchaseId,
-      amount: INSTANT_REPORT_PRICE_CENTS,
+      amount: reportPriceCents,
       expiresInHours: 24,
     });
 
@@ -237,7 +298,9 @@ export async function POST(req: NextRequest) {
       sessionId: session.id,
       purchaseId,
       instantReportId: instantReport.id,
-      price: INSTANT_REPORT_PRICE,
+      price: reportPrice,
+      credits: reportCredits,
+      packageIndex,
       contractAddress,
       chain,
       status: "success",

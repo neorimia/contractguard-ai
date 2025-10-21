@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import React from "react";
 import { motion } from "motion/react";
 import {
   Lock,
@@ -23,6 +23,11 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { SummaryReportData } from "@/lib/types/report-types";
+import {
+  LockedSectionPreview,
+  CompactLockedPreview,
+  LockedCard,
+} from "./LockedSectionPreview";
 
 interface SummaryReportViewProps {
   data: SummaryReportData;
@@ -35,54 +40,57 @@ export function SummaryReportView({
   onUpgrade,
   onInstantPurchase,
 }: SummaryReportViewProps) {
-  const [showLockedContent, setShowLockedContent] = useState(false);
-
   const getRiskConfig = (category: string) => {
     switch (category) {
       case "critical":
         return {
-          color: "text-red-500",
-          bgColor: "bg-red-500/10",
-          borderColor: "border-red-500/20",
+          color: "text-white",
+          bgColor: "bg-black/50",
+          borderColor: "border-white/30",
           icon: AlertTriangle,
           label: "CRITICAL RISK",
-          textColor: "text-red-600",
+          textColor: "text-white",
+          progressColor: "bg-white",
         };
       case "high":
         return {
-          color: "text-orange-500",
-          bgColor: "bg-orange-500/10",
-          borderColor: "border-orange-500/20",
+          color: "text-white",
+          bgColor: "bg-black/30",
+          borderColor: "border-white/20",
           icon: AlertTriangle,
           label: "HIGH RISK",
-          textColor: "text-orange-600",
+          textColor: "text-white",
+          progressColor: "bg-white",
         };
       case "medium":
         return {
-          color: "text-yellow-500",
-          bgColor: "bg-yellow-500/10",
-          borderColor: "border-yellow-500/20",
+          color: "text-white",
+          bgColor: "bg-black/20",
+          borderColor: "border-white/15",
           icon: AlertTriangle,
           label: "MEDIUM RISK",
-          textColor: "text-yellow-600",
+          textColor: "text-white",
+          progressColor: "bg-white",
         };
       case "low":
         return {
-          color: "text-green-500",
-          bgColor: "bg-green-500/10",
-          borderColor: "border-green-500/20",
+          color: "text-white",
+          bgColor: "bg-black/10",
+          borderColor: "border-white/10",
           icon: Shield,
           label: "LOW RISK",
-          textColor: "text-green-600",
+          textColor: "text-white",
+          progressColor: "bg-white",
         };
       default:
         return {
-          color: "text-blue-500",
-          bgColor: "bg-blue-500/10",
-          borderColor: "border-blue-500/20",
+          color: "text-white",
+          bgColor: "bg-black/5",
+          borderColor: "border-white/5",
           icon: Shield,
           label: "VERY LOW RISK",
-          textColor: "text-blue-600",
+          textColor: "text-white",
+          progressColor: "bg-white",
         };
     }
   };
@@ -90,15 +98,15 @@ export function SummaryReportView({
   const getSeverityColor = (severity: string) => {
     switch (severity) {
       case "critical":
-        return "text-red-600 bg-red-50 border-red-200";
+        return "text-white bg-black border-white/30";
       case "high":
-        return "text-orange-600 bg-orange-50 border-orange-200";
+        return "text-white bg-black/80 border-white/20";
       case "medium":
-        return "text-yellow-600 bg-yellow-50 border-yellow-200";
+        return "text-white bg-black/60 border-white/15";
       case "low":
-        return "text-green-600 bg-green-50 border-green-200";
+        return "text-white bg-black/40 border-white/10";
       default:
-        return "text-gray-600 bg-gray-50 border-gray-200";
+        return "text-white bg-black/20 border-white/10";
     }
   };
 
@@ -112,62 +120,63 @@ export function SummaryReportView({
   const dailyProCost = monthlyPrice / 30;
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       {/* Risk Score Card */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         className="relative"
       >
-        <Card
-          className={`${riskConfig.bgColor} ${riskConfig.borderColor} border-2`}
+        <div
+          className={`
+          p-8 rounded-xl border
+          ${riskConfig.bgColor} ${riskConfig.borderColor}
+          backdrop-blur-sm
+        `}
         >
-          <CardHeader className="pb-4">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-4">
-                <div className={`p-3 rounded-full ${riskConfig.bgColor}`}>
-                  <RiskIcon className={`h-8 w-8 ${riskConfig.color}`} />
-                </div>
-                <div>
-                  <CardTitle className={`text-xl ${riskConfig.textColor}`}>
-                    {riskConfig.label}
-                  </CardTitle>
-                  <CardDescription className="text-sm opacity-80">
-                    Confidence: {data.confidence}%
-                  </CardDescription>
-                </div>
+          {/* Header */}
+          <div className="flex items-start justify-between mb-6">
+            <div className="flex items-center gap-4">
+              <div className={riskConfig.color}>
+                <RiskIcon className="h-12 w-12" />
               </div>
-              <div className="text-right">
-                <div className={`text-4xl font-bold ${riskConfig.textColor}`}>
-                  {data.riskScore}
-                </div>
-                <div className="text-sm opacity-60">/ 100</div>
+              <div>
+                <h3 className={`text-2xl font-bold ${riskConfig.color}`}>
+                  {riskConfig.label}
+                </h3>
+                <p className="text-sm text-white/70 mt-1">
+                  Confidence: {data.confidence}%
+                </p>
               </div>
             </div>
-          </CardHeader>
-
-          <CardContent>
-            {/* Progress Bar */}
-            <div className="relative w-full h-2 bg-white/20 rounded-full overflow-hidden mb-4">
-              <motion.div
-                initial={{ width: 0 }}
-                animate={{ width: `${data.riskScore}%` }}
-                transition={{ duration: 1.5, ease: "easeOut" }}
-                className={`h-full ${riskConfig.color.replace("text-", "bg-")}`}
-              />
+            <div className="text-right">
+              <div className={`text-5xl font-bold ${riskConfig.color}`}>
+                {data.riskScore}
+              </div>
+              <div className="text-sm text-white/70">/ 100</div>
             </div>
+          </div>
 
-            {/* Recommendation */}
-            <div className="p-4 bg-white/10 rounded-lg backdrop-blur-sm">
-              <p className="text-sm font-medium">
-                Recommendation:{" "}
-                <span className={riskConfig.textColor}>
-                  {data.recommendation}
-                </span>
-              </p>
-            </div>
-          </CardContent>
-        </Card>
+          {/* Progress Bar */}
+          <div className="relative w-full h-3 bg-black/50 border border-white/20 rounded-full overflow-hidden mb-6">
+            <motion.div
+              initial={{ width: 0 }}
+              animate={{ width: `${data.riskScore}%` }}
+              transition={{ duration: 1.5, ease: "easeOut" }}
+              className={`h-full ${riskConfig.progressColor}`}
+            />
+          </div>
+
+          {/* Recommendation */}
+          <div className="p-4 bg-black/30 border border-white/10 rounded-lg">
+            <p className="text-sm text-white leading-relaxed">
+              Recommendation:{" "}
+              <span className="font-semibold text-white">
+                {data.recommendation}
+              </span>
+            </p>
+          </div>
+        </div>
       </motion.div>
 
       {/* Basic Info Section */}
@@ -177,41 +186,37 @@ export function SummaryReportView({
         transition={{ delay: 0.1 }}
         className="grid grid-cols-1 md:grid-cols-3 gap-4"
       >
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <Users className="h-5 w-5 text-blue-500" />
-              <div>
-                <p className="text-sm text-gray-600">Holders</p>
-                <p className="font-semibold">{data.holderCountRange}</p>
-              </div>
+        <div className="p-6 rounded-xl border border-white/20 bg-black/20 backdrop-blur-sm">
+          <div className="flex items-center gap-3">
+            <Users className="h-5 w-5 text-white" />
+            <div>
+              <p className="text-sm text-white/70">Holders</p>
+              <p className="font-semibold text-white">
+                {data.holderCountRange}
+              </p>
             </div>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
 
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <DollarSign className="h-5 w-5 text-green-500" />
-              <div>
-                <p className="text-sm text-gray-600">Liquidity</p>
-                <p className="font-semibold">{data.liquidityRange}</p>
-              </div>
+        <div className="p-6 rounded-xl border border-white/20 bg-black/20 backdrop-blur-sm">
+          <div className="flex items-center gap-3">
+            <DollarSign className="h-5 w-5 text-white" />
+            <div>
+              <p className="text-sm text-white/70">Liquidity</p>
+              <p className="font-semibold text-white">{data.liquidityRange}</p>
             </div>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
 
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <Clock className="h-5 w-5 text-purple-500" />
-              <div>
-                <p className="text-sm text-gray-600">Age</p>
-                <p className="font-semibold">{data.deployedAge}</p>
-              </div>
+        <div className="p-6 rounded-xl border border-white/20 bg-black/20 backdrop-blur-sm">
+          <div className="flex items-center gap-3">
+            <Clock className="h-5 w-5 text-white" />
+            <div>
+              <p className="text-sm text-white/70">Age</p>
+              <p className="font-semibold text-white">{data.deployedAge}</p>
             </div>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
       </motion.div>
 
       {/* Top Issues Preview */}
@@ -219,54 +224,127 @@ export function SummaryReportView({
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.2 }}
+        className="border border-white/20 rounded-xl overflow-hidden bg-black/20 backdrop-blur-sm"
       >
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <AlertTriangle className="h-5 w-5 text-orange-500" />
-              Top Security Issues
-              <Badge variant="outline" className="ml-auto">
+        {/* Section Header */}
+        <div className="p-6 border-b border-white/20">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <AlertTriangle className="h-5 w-5 text-white" />
+              <h3 className="text-xl font-semibold text-white">
+                Top Security Issues
+              </h3>
+              <Badge
+                variant="outline"
+                className="bg-black/50 border-white/30 text-white"
+              >
                 {data.topIssues.length} of {data.totalIssuesCount} shown
               </Badge>
-            </CardTitle>
-            <CardDescription>
-              Get the complete list of {data.totalIssuesCount} security issues
-              found
-            </CardDescription>
-          </CardHeader>
+            </div>
+          </div>
+          <p className="text-sm text-white/70 mt-2">
+            Get the complete list of {data.totalIssuesCount} security issues
+            found
+          </p>
+        </div>
 
-          <CardContent className="space-y-3">
-            {data.topIssues.map((issue, index) => (
-              <div
-                key={index}
-                className="flex items-start gap-3 p-3 rounded-lg border"
-              >
-                <Badge className={getSeverityColor(issue.severity)}>
-                  {issue.severity.toUpperCase()}
-                </Badge>
-                <div className="flex-1 min-w-0">
-                  <h4 className="font-semibold text-sm">{issue.title}</h4>
-                  <p className="text-sm text-gray-600 mt-1">
-                    {issue.description}
-                  </p>
-                </div>
+        {/* Section Content */}
+        <div className="p-6 space-y-3">
+          {data.topIssues.map((issue, index) => (
+            <div
+              key={index}
+              className="flex items-start gap-3 p-4 rounded-lg border border-white/15 bg-black/30"
+            >
+              <Badge className={getSeverityColor(issue.severity)}>
+                {issue.severity.toUpperCase()}
+              </Badge>
+              <div className="flex-1 min-w-0">
+                <h4 className="font-semibold text-sm text-white">
+                  {issue.title}
+                </h4>
+                <p className="text-sm text-white/70 mt-1">
+                  {issue.description}
+                </p>
               </div>
-            ))}
+            </div>
+          ))}
 
-            {/* Locked Content Teaser */}
-            <div className="relative">
-              <div className="absolute inset-0 bg-gradient-to-t from-white via-white/80 to-transparent pointer-events-none z-10" />
-              <div className="p-4 rounded-lg border border-dashed border-gray-300 bg-gray-50">
-                <div className="flex items-center gap-3 text-gray-500">
-                  <Lock className="h-5 w-5" />
-                  <span className="text-sm font-medium">
-                    +{data.totalIssuesCount - data.topIssues.length} more issues
+          {/* Additional Issues Preview using LockedSectionPreview */}
+          <LockedSectionPreview lockedHeight="300px">
+            <div className="space-y-3">
+              {/* Additional Issues Content */}
+              {Array.from(
+                {
+                  length: Math.min(
+                    5,
+                    data.totalIssuesCount - data.topIssues.length
+                  ),
+                },
+                (_, index) => (
+                  <div
+                    key={`preview-${index}`}
+                    className="flex items-start gap-3 p-3 rounded-lg border border-white/10 bg-black/20"
+                  >
+                    <Badge className="text-white bg-black/60 border-white/15">
+                      {index % 3 === 0
+                        ? "HIGH"
+                        : index % 2 === 0
+                          ? "MEDIUM"
+                          : "LOW"}
+                    </Badge>
+                    <div className="flex-1 min-w-0">
+                      <h4 className="font-medium text-sm text-white/80">
+                        Additional Security Issue #
+                        {index + data.topIssues.length + 1}
+                      </h4>
+                      <p className="text-xs text-white/60 mt-1">
+                        Detailed analysis and remediation guidance available
+                        with full report access.
+                      </p>
+                    </div>
+                  </div>
+                )
+              )}
+
+              {data.totalIssuesCount - data.topIssues.length > 5 && (
+                <div className="p-3 text-center text-white/70 border border-dashed border-white/20 rounded-lg">
+                  <span className="text-sm">
+                    +{data.totalIssuesCount - data.topIssues.length - 5} more
+                    detailed issues in full report
                   </span>
+                </div>
+              )}
+
+              {/* Full Report CTA */}
+              <div className="p-4 bg-black/30 border border-white/10 rounded-lg mt-4">
+                <p className="text-sm text-white/80 mb-3">
+                  This is just a preview of what you'll get with full access.
+                  Get detailed analysis and remediation guidance for all{" "}
+                  {data.totalIssuesCount} issues.
+                </p>
+                <div className="flex gap-2">
+                  <Button
+                    onClick={onInstantPurchase}
+                    size="sm"
+                    className="bg-white hover:bg-white/90 text-black"
+                  >
+                    <Zap className="h-4 w-4 mr-2" />
+                    Get Full Report
+                  </Button>
+                  <Button
+                    onClick={onUpgrade}
+                    variant="outline"
+                    size="sm"
+                    className="border-white/30 text-white bg-black/50 hover:bg-white/10"
+                  >
+                    <TrendingUp className="h-4 w-4 mr-2" />
+                    Upgrade to Pro
+                  </Button>
                 </div>
               </div>
             </div>
-          </CardContent>
-        </Card>
+          </LockedSectionPreview>
+        </div>
       </motion.div>
 
       {/* Primary Upgrade CTA */}
@@ -274,97 +352,113 @@ export function SummaryReportView({
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.3 }}
+        className="border border-white/20 rounded-xl overflow-hidden bg-gradient-to-br from-black/40 to-black/20 backdrop-blur-sm"
       >
-        <Card className="bg-gradient-to-r from-blue-50 to-purple-50 border-blue-200">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Zap className="h-6 w-6 text-blue-600" />
+        <div className="p-6 border-b border-white/20">
+          <div className="flex items-center gap-3">
+            <Zap className="h-6 w-6 text-white" />
+            <h3 className="text-xl font-semibold text-white">
               Unlock Full Security Analysis
-            </CardTitle>
-            <CardDescription>
-              Get detailed insights, all security issues, and comprehensive risk
-              assessment
-            </CardDescription>
-          </CardHeader>
+            </h3>
+          </div>
+          <p className="text-sm text-white/70 mt-2">
+            Get detailed insights, all security issues, and comprehensive risk
+            assessment
+          </p>
+        </div>
 
-          <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {/* Instant Report Option */}
-              <div className="space-y-3">
-                <div className="flex items-center justify-between">
-                  <h4 className="font-semibold">Instant Report</h4>
-                  <Badge variant="secondary">Popular</Badge>
-                </div>
-                <div className="space-y-2">
-                  <div className="text-2xl font-bold">${instantPrice}</div>
-                  <p className="text-sm text-gray-600">
-                    {data.upgradeOptions.instantReport.description}
-                  </p>
-                  <ul className="text-sm space-y-1">
-                    <li className="flex items-center gap-2">
-                      <TrendingUp className="h-4 w-4 text-green-500" />
-                      All {data.totalIssuesCount} security issues
-                    </li>
-                    <li className="flex items-center gap-2">
-                      <Shield className="h-4 w-4 text-blue-500" />
-                      Detailed risk analysis
-                    </li>
-                    <li className="flex items-center gap-2">
-                      <Clock className="h-4 w-4 text-purple-500" />
-                      {data.upgradeOptions.instantReport.validFor} access
-                    </li>
-                  </ul>
-                </div>
-                <Button
-                  onClick={onInstantPurchase}
-                  className="w-full bg-blue-600 hover:bg-blue-700"
+        <div className="p-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* Instant Report Option */}
+            <div className="space-y-4 p-4 rounded-lg border border-white/15 bg-black/30">
+              <div className="flex items-center justify-between">
+                <h4 className="font-semibold text-white">Instant Report</h4>
+                <Badge
+                  variant="secondary"
+                  className="bg-white/20 text-white border-white/30"
                 >
-                  <Zap className="h-4 w-4 mr-2" />
-                  Get Instant Report
-                  <ChevronRight className="h-4 w-4 ml-2" />
-                </Button>
+                  Popular
+                </Badge>
               </div>
-
-              {/* Pro Subscription Option */}
               <div className="space-y-3">
-                <div className="flex items-center justify-between">
-                  <h4 className="font-semibold">Pro Subscription</h4>
-                  <Badge variant="outline">Best Value</Badge>
+                <div className="text-2xl font-bold text-white">
+                  ${instantPrice}
                 </div>
-                <div className="space-y-2">
-                  <div className="text-2xl font-bold">
-                    ${monthlyPrice}/month
-                    <span className="text-sm font-normal text-gray-500 ml-1">
-                      (${dailyProCost.toFixed(2)}/day)
-                    </span>
-                  </div>
-                  <p className="text-sm text-gray-600">
-                    {data.upgradeOptions.proSubscription.description}
-                  </p>
-                  <ul className="text-sm space-y-1">
-                    {data.upgradeOptions.proSubscription.features
-                      .slice(0, 3)
-                      .map((feature, index) => (
-                        <li key={index} className="flex items-center gap-2">
-                          <Shield className="h-4 w-4 text-green-500" />
-                          {feature}
-                        </li>
-                      ))}
-                  </ul>
-                </div>
-                <Button
-                  onClick={onUpgrade}
-                  variant="outline"
-                  className="w-full border-blue-600 text-blue-600 hover:bg-blue-50"
-                >
-                  <TrendingUp className="h-4 w-4 mr-2" />
-                  Upgrade to Pro
-                  <ChevronRight className="h-4 w-4 ml-2" />
-                </Button>
+                <p className="text-sm text-white/70">
+                  {data.upgradeOptions.instantReport.description}
+                </p>
+                <ul className="text-sm space-y-2">
+                  <li className="flex items-center gap-2 text-white/80">
+                    <TrendingUp className="h-4 w-4 text-white" />
+                    All {data.totalIssuesCount} security issues
+                  </li>
+                  <li className="flex items-center gap-2 text-white/80">
+                    <Shield className="h-4 w-4 text-white" />
+                    Detailed risk analysis
+                  </li>
+                  <li className="flex items-center gap-2 text-white/80">
+                    <Clock className="h-4 w-4 text-white" />
+                    {data.upgradeOptions.instantReport.validFor} access
+                  </li>
+                </ul>
               </div>
+              <Button
+                onClick={onInstantPurchase}
+                className="w-full bg-white hover:bg-neutral-100 text-black border border-white/20"
+              >
+                <Zap className="h-4 w-4 mr-2" />
+                Get Instant Report
+                <ChevronRight className="h-4 w-4 ml-2" />
+              </Button>
             </div>
-          </CardContent>
-        </Card>
+
+            {/* Pro Subscription Option */}
+            <div className="space-y-4 p-4 rounded-lg border border-white/15 bg-black/30">
+              <div className="flex items-center justify-between">
+                <h4 className="font-semibold text-white">Pro Subscription</h4>
+                <Badge
+                  variant="outline"
+                  className="border-white/30 text-white bg-black/50"
+                >
+                  Best Value
+                </Badge>
+              </div>
+              <div className="space-y-3">
+                <div className="text-2xl font-bold text-white">
+                  ${monthlyPrice}/month
+                  <span className="text-sm font-normal text-white/70 ml-1">
+                    (${dailyProCost.toFixed(2)}/day)
+                  </span>
+                </div>
+                <p className="text-sm text-white/70">
+                  {data.upgradeOptions.proSubscription.description}
+                </p>
+                <ul className="text-sm space-y-2">
+                  {data.upgradeOptions.proSubscription.features
+                    .slice(0, 3)
+                    .map((feature, index) => (
+                      <li
+                        key={index}
+                        className="flex items-center gap-2 text-white/80"
+                      >
+                        <Shield className="h-4 w-4 text-white" />
+                        {feature}
+                      </li>
+                    ))}
+                </ul>
+              </div>
+              <Button
+                onClick={onUpgrade}
+                variant="outline"
+                className="w-full bg-black hover:bg-neutral-100 text-white border border-white/20"
+              >
+                <TrendingUp className="h-4 w-4 mr-2" />
+                Upgrade to Pro
+                <ChevronRight className="h-4 w-4 ml-2" />
+              </Button>
+            </div>
+          </div>
+        </div>
       </motion.div>
 
       {/* Bottom CTA */}
@@ -372,45 +466,85 @@ export function SummaryReportView({
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.4 }}
-        className="text-center"
+        className="text-center space-y-6"
       >
-        <p className="text-sm text-gray-600 mb-4">
+        <p className="text-sm text-white/70">
           Need help choosing?{" "}
-          <span className="text-blue-600 cursor-pointer hover:underline">
+          <a
+            href="mailto:contact@contractguard.ai"
+            className="text-white cursor-pointer hover:text-white/80 hover:underline transition-colors"
+          >
             Contact support
-          </span>
+          </a>
         </p>
 
-        {/* Locked Section Previews */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6">
-          {[
-            {
-              title: "Holder Analysis",
-              icon: Users,
-              desc: "Top holders distribution",
-            },
-            {
-              title: "Liquidity Analysis",
-              icon: DollarSign,
-              desc: "Pool depth & stability",
-            },
-            {
-              title: "Contract Details",
-              icon: Shield,
-              desc: "Source code analysis",
-            },
-          ].map((section, index) => (
-            <div key={index} className="relative">
-              <div className="absolute inset-0 bg-gradient-to-t from-gray-900 via-gray-900/50 to-transparent rounded-lg" />
-              <div className="relative p-4 border border-gray-200 rounded-lg bg-gradient-to-br from-gray-50 to-gray-100">
-                <div className="flex items-center gap-2 mb-2 opacity-60">
-                  <Lock className="h-4 w-4" />
-                  <span className="text-sm font-medium">{section.title}</span>
+        {/* Locked Section Previews using LockedCard */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <LockedCard>
+            <div className="p-4 space-y-3">
+              <div className="text-sm text-white/70 mb-3">
+                Comprehensive holder analysis including:
+              </div>
+              <div className="space-y-2">
+                <div className="text-xs text-white/60">
+                  • Top 10 holder concentration analysis
                 </div>
-                <p className="text-sm text-gray-500">{section.desc}</p>
+                <div className="text-xs text-white/60">
+                  • Whale movement tracking
+                </div>
+                <div className="text-xs text-white/60">
+                  • Holder distribution charts
+                </div>
+                <div className="text-xs text-white/60">
+                  • Balance history and trends
+                </div>
               </div>
             </div>
-          ))}
+          </LockedCard>
+
+          <LockedCard>
+            <div className="p-4 space-y-3">
+              <div className="text-sm text-white/70 mb-3">
+                Detailed liquidity assessment covering:
+              </div>
+              <div className="space-y-2">
+                <div className="text-xs text-white/60">
+                  • Multi-DEX liquidity aggregation
+                </div>
+                <div className="text-xs text-white/60">
+                  • 24h volume analysis
+                </div>
+                <div className="text-xs text-white/60">
+                  • Pool lock status verification
+                </div>
+                <div className="text-xs text-white/60">
+                  • Price impact calculations
+                </div>
+              </div>
+            </div>
+          </LockedCard>
+
+          <LockedCard>
+            <div className="p-4 space-y-3">
+              <div className="text-sm text-white/70 mb-3">
+                Advanced contract inspection featuring:
+              </div>
+              <div className="space-y-2">
+                <div className="text-xs text-white/60">
+                  • Function-level security audit
+                </div>
+                <div className="text-xs text-white/60">
+                  • Gas optimization analysis
+                </div>
+                <div className="text-xs text-white/60">
+                  • Upgradability assessment
+                </div>
+                <div className="text-xs text-white/60">
+                  • Code quality metrics
+                </div>
+              </div>
+            </div>
+          </LockedCard>
         </div>
       </motion.div>
     </div>
