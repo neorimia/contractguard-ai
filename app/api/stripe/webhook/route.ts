@@ -199,9 +199,16 @@ async function handleInstantPurchase(session: Stripe.Checkout.Session) {
       console.error("Error activating instant report:", error);
       // Don't fail the webhook - log error and continue
     }
+
+    // For contract-specific instant reports, don't add general credits
+    // The user gets access to that specific contract only
+    console.log(
+      "Contract-specific instant report - not adding general credits"
+    );
+    return;
   }
 
-  // Credit the user/guest account
+  // Credit the user/guest account (only for general instant credit purchases)
   if (purchase.userId) {
     // Registered user → add instant credits
     const user = await authService.getUserById(purchase.userId);

@@ -113,7 +113,7 @@ export async function POST(req: NextRequest) {
     // Determine success URL based on contract address
     const successUrl = contractAddress
       ? `${siteUrl}/report/${contractAddress}?session_id={CHECKOUT_SESSION_ID}&success=true`
-      : `${siteUrl}/account?session_id={CHECKOUT_SESSION_ID}&success=true`;
+      : `${siteUrl}/billing?session_id={CHECKOUT_SESSION_ID}&success=true`;
 
     const cancelUrl = contractAddress
       ? `${siteUrl}/report/${contractAddress}?canceled=true`
