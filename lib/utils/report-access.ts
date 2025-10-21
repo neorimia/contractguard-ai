@@ -92,6 +92,16 @@ export async function determineReportAccess(
       }
     }
 
+    // Check for instant credits - if user has credits, they get full access
+    if (user.instantCredits && user.instantCredits > 0) {
+      return {
+        hasAccess: true,
+        accessLevel: "full",
+        accessType: "instant_report",
+        userId,
+      };
+    }
+
     // Default: Free tier (summary only)
     return {
       hasAccess: true,
@@ -127,6 +137,21 @@ export async function determineReportAccess(
           instantReportExpiresAt: expiresAt,
         };
       }
+    }
+
+    // Check for guest user with instant credits
+    const guestUser = await db.query.users.findFirst({
+      where: eq(users.guestSessionId, guestSessionId),
+    });
+
+    if (guestUser && guestUser.instantCredits && guestUser.instantCredits > 0) {
+      return {
+        hasAccess: true,
+        accessLevel: "full",
+        accessType: "instant_report",
+        guestSessionId,
+        userId: guestUser.id,
+      };
     }
 
     // Default: Anonymous user (summary only)
