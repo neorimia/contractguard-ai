@@ -5,13 +5,7 @@
  */
 
 import { db } from "@/db";
-import {
-  instantReports,
-  users,
-  User,
-  type CryptoAudit,
-  type RiskFlag,
-} from "@/db/schema";
+import { users, User, type CryptoAudit, type RiskFlag } from "@/db/schema";
 import { and, eq } from "drizzle-orm";
 import {
   ReportAccessLevel,
@@ -66,31 +60,7 @@ export async function determineReportAccess(
       };
     }
 
-    // Check for valid instant report purchase
-    const instantReport = await db.query.instantReports.findFirst({
-      where: and(
-        eq(instantReports.userId, userId),
-        eq(instantReports.contractAddress, contractAddress.toLowerCase()),
-        eq(instantReports.chain, chain),
-        eq(instantReports.isActive, true)
-      ),
-    });
-
-    if (instantReport) {
-      const now = new Date();
-      const expiresAt = new Date(instantReport.expiresAt);
-
-      if (expiresAt > now) {
-        return {
-          hasAccess: true,
-          accessLevel: "full",
-          accessType: "instant_report",
-          userId,
-          instantReportId: instantReport.id,
-          instantReportExpiresAt: expiresAt,
-        };
-      }
-    }
+    // Instant reports removed - only instant credits are used now
 
     // Check for instant credits - if user has credits, they get full access
     if (user.instantCredits && user.instantCredits > 0) {
@@ -98,12 +68,12 @@ export async function determineReportAccess(
         userId,
         instantCredits: user.instantCredits,
         accessLevel: "full",
-        accessType: "instant_report",
+        accessType: "instant_credit",
       });
       return {
         hasAccess: true,
         accessLevel: "full",
-        accessType: "instant_report",
+        accessType: "instant_credit",
         userId,
       };
     }
@@ -119,31 +89,7 @@ export async function determineReportAccess(
 
   // Case 2: Anonymous session (guest user)
   if (guestSessionId) {
-    // Check for guest instant report purchase
-    const instantReport = await db.query.instantReports.findFirst({
-      where: and(
-        eq(instantReports.guestSessionId, guestSessionId),
-        eq(instantReports.contractAddress, contractAddress.toLowerCase()),
-        eq(instantReports.chain, chain),
-        eq(instantReports.isActive, true)
-      ),
-    });
-
-    if (instantReport) {
-      const now = new Date();
-      const expiresAt = new Date(instantReport.expiresAt);
-
-      if (expiresAt > now) {
-        return {
-          hasAccess: true,
-          accessLevel: "full",
-          accessType: "instant_report",
-          guestSessionId,
-          instantReportId: instantReport.id,
-          instantReportExpiresAt: expiresAt,
-        };
-      }
-    }
+    // Instant reports removed - only instant credits are used now
 
     // Check for guest user with instant credits
     const guestUser = await db.query.users.findFirst({
@@ -154,7 +100,7 @@ export async function determineReportAccess(
       return {
         hasAccess: true,
         accessLevel: "full",
-        accessType: "instant_report",
+        accessType: "instant_credit",
         guestSessionId,
         userId: guestUser.id,
       };
@@ -254,7 +200,7 @@ export function transformToFullReport(
     holderData?: any;
     liquidityData?: any;
   },
-  accessType: "pro" | "team" | "instant_report",
+  accessType: "pro" | "team" | "instant_credit",
   expiresAt?: Date
 ): FullReportData {
   return {
@@ -285,10 +231,7 @@ export function transformToFullReport(
     heuristicResults: audit.heuristicResults,
 
     createdAt: audit.createdAt || new Date(),
-    expiresAt:
-      accessType === "instant_report"
-        ? expiresAt
-        : audit.expiresAt || undefined,
+    expiresAt: audit.expiresAt || undefined,
 
     accessLevel: "full",
     accessType,

@@ -118,8 +118,7 @@ async function processAuditResponse(
   } else {
     return transformToFullReport(
       auditData,
-      accessStatus.accessType as "pro" | "team" | "instant_report",
-      accessStatus.instantReportExpiresAt
+      accessStatus.accessType as "pro" | "team" | "instant_credit"
     );
   }
 }

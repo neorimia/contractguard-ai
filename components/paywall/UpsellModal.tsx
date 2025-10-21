@@ -26,7 +26,11 @@ interface UpsellModalProps {
   creditsRemaining: number;
 }
 
-export function UpsellModal({ open, onClose, creditsRemaining }: UpsellModalProps) {
+export function UpsellModal({
+  open,
+  onClose,
+  creditsRemaining,
+}: UpsellModalProps) {
   const router = useRouter();
   const [isUpgrading, setIsUpgrading] = useState(false);
   const { accessLabel } = useAccessStatusDisplay();
@@ -94,7 +98,8 @@ export function UpsellModal({ open, onClose, creditsRemaining }: UpsellModalProp
             <div>
               <p className="text-sm text-gray-600">Your Credits</p>
               <p className="text-2xl font-bold text-blue-600">
-                {creditsRemaining} {creditsRemaining === 1 ? "report" : "reports"} remaining
+                {creditsRemaining}{" "}
+                {creditsRemaining === 1 ? "report" : "reports"} remaining
               </p>
             </div>
             <Badge variant="outline" className="text-blue-600 border-blue-300">
@@ -124,7 +129,8 @@ export function UpsellModal({ open, onClose, creditsRemaining }: UpsellModalProp
             <div>
               <h3 className="font-semibold mb-1">Advanced Features</h3>
               <p className="text-sm text-gray-600">
-                Email alerts, PDF exports, AI chat assistance, and priority support.
+                Email alerts, PDF exports, AI chat assistance, and priority
+                support.
               </p>
             </div>
           </div>
@@ -136,7 +142,9 @@ export function UpsellModal({ open, onClose, creditsRemaining }: UpsellModalProp
             <div>
               <h3 className="font-semibold mb-1">Keep Your Credits</h3>
               <p className="text-sm text-gray-600">
-                Your {creditsRemaining} instant {creditsRemaining === 1 ? "credit" : "credits"} will be preserved and never expire.
+                Your {creditsRemaining} instant{" "}
+                {creditsRemaining === 1 ? "credit" : "credits"} will be
+                preserved and never expire.
               </p>
             </div>
           </div>
@@ -146,7 +154,7 @@ export function UpsellModal({ open, onClose, creditsRemaining }: UpsellModalProp
         <div className="bg-gradient-to-br from-blue-50 to-purple-50 rounded-lg p-6 mb-6">
           <div className="flex items-center justify-between mb-4">
             <div>
-              <p className="text-sm text-gray-600">Instant Reports</p>
+              <p className="text-sm text-gray-600">Instant Credits</p>
               <p className="text-xl font-semibold">$4.99+ per scan</p>
             </div>
             <div className="text-2xl font-bold text-gray-400">→</div>
@@ -155,7 +163,9 @@ export function UpsellModal({ open, onClose, creditsRemaining }: UpsellModalProp
               <p className="text-3xl font-bold text-blue-600">
                 ${PRICING_CONFIG.pro.price}/mo
               </p>
-              <Badge className="mt-1 bg-green-600">Save 80%+ after 6 scans</Badge>
+              <Badge className="mt-1 bg-green-600">
+                Save 80%+ after 6 scans
+              </Badge>
             </div>
           </div>
 

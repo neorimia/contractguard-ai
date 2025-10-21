@@ -113,7 +113,7 @@ export function SummaryReportView({
   const riskConfig = getRiskConfig(data.riskCategory);
   const RiskIcon = riskConfig.icon;
 
-  // Calculate savings for instant report vs subscription
+  // Calculate savings for instant credits vs subscription
   const instantPrice = data.upgradeOptions.instantReport.price / 100;
   const monthlyPrice = data.upgradeOptions.proSubscription.price / 100;
   const dailyInstantCost = instantPrice; // Assuming 1 report per day
@@ -369,10 +369,10 @@ export function SummaryReportView({
 
         <div className="p-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {/* Instant Report Option */}
+            {/* Instant Credits Option */}
             <div className="space-y-4 p-4 rounded-lg border border-white/15 bg-black/30">
               <div className="flex items-center justify-between">
-                <h4 className="font-semibold text-white">Instant Report</h4>
+                <h4 className="font-semibold text-white">Instant Credits</h4>
                 <Badge
                   variant="secondary"
                   className="bg-white/20 text-white border-white/30"
@@ -407,7 +407,7 @@ export function SummaryReportView({
                 className="w-full bg-white hover:bg-neutral-100 text-black border border-white/20"
               >
                 <Zap className="h-4 w-4 mr-2" />
-                Get Instant Report
+                Get Instant Credits
                 <ChevronRight className="h-4 w-4 ml-2" />
               </Button>
             </div>

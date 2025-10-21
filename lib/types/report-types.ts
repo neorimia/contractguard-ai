@@ -122,7 +122,7 @@ export interface FullReportData {
 
   // Access control
   accessLevel: "full";
-  accessType: "pro" | "team" | "instant_report";
+  accessType: "pro" | "team" | "instant_credit";
 }
 
 /**
@@ -138,7 +138,7 @@ export type ReportResponse = SummaryReportData | FullReportData;
 export interface ReportAccessStatus {
   hasAccess: boolean;
   accessLevel: ReportAccessLevel;
-  accessType: "free" | "pro" | "team" | "instant_report" | "soft" | "anonymous";
+  accessType: "free" | "pro" | "team" | "instant_credit" | "soft" | "anonymous";
   userId?: number;
   guestSessionId?: string;
 

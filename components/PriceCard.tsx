@@ -1,7 +1,7 @@
 /**
  * Reusable Price Card Component
  *
- * Unified card design for both Instant Reports and Subscriptions
+ * Unified card design for both Instant Credits and Subscriptions
  */
 
 "use client";
@@ -18,7 +18,7 @@ interface PriceCardProps {
   isPopular?: boolean;
   animationDelay?: number;
 
-  // Header content (for instant reports)
+  // Header content (for instant credits)
   credits?: number;
   savings?: string | null;
 

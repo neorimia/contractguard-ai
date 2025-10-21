@@ -269,7 +269,7 @@ export async function POST(req: NextRequest) {
 
     // Add metadata and other parameters
     sessionParams.metadata = {
-      type: contractAddress ? "instant_report" : "instant_credits",
+      type: "instant_credits",
       credits: pkg.credits.toString(),
       userId: localUserId.toString(),
       contractAddress: contractAddress || "",
@@ -290,7 +290,7 @@ export async function POST(req: NextRequest) {
         userId: localUserId,
         guestSessionId: null, // No guest sessions for authenticated purchases
         guestEmail: null, // No guest email for authenticated purchases
-        type: contractAddress ? "instant_credits" : "instant_credits", // Use existing type, will be processed as instant report
+        type: "instant_credits",
         credits: pkg.credits,
         amount: Math.round(pkg.price * 100), // Convert to cents
         currency: "usd",
@@ -310,26 +310,12 @@ export async function POST(req: NextRequest) {
 
     const purchaseId = purchaseRecord.id;
 
-    // Create instant report record for contract-specific purchases
-    let instantReportId: string | undefined;
-    if (contractAddress) {
-      const instantReport = await paymentService.createInstantReport({
-        userId: localUserId,
-        guestSessionId: undefined, // No guest sessions for authenticated purchases
-        contractAddress,
-        chain,
-        purchaseId,
-        amount: Math.round(pkg.price * 100),
-        expiresInHours: 24,
-      });
-      instantReportId = instantReport.id;
-    }
+    // Instant reports removed - only instant credits are used now
 
     return NextResponse.json({
       url: session.url,
       sessionId: session.id,
       purchaseId,
-      instantReportId,
       price: pkg.price,
       credits: pkg.credits,
       packageIndex,
@@ -346,7 +332,7 @@ export async function POST(req: NextRequest) {
         {
           error: "Payment configuration error",
           details:
-            "Instant report pricing is not properly configured. Please contact support.",
+            "Instant credits pricing is not properly configured. Please contact support.",
         },
         { status: 500 }
       );

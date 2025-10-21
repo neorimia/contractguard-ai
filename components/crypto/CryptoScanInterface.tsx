@@ -207,7 +207,7 @@ export function CryptoScanInterface() {
       });
 
       const data = await response.json();
-      
+
       // Extract updated access status from response headers
       const updatedScansRemaining = response.headers.get("X-Scans-Remaining");
       const updatedInstantCredits = response.headers.get("X-Instant-Credits");
@@ -340,11 +340,18 @@ export function CryptoScanInterface() {
         }
 
         // Update authenticated user access status after scan
-        if (user && (updatedScansRemaining !== null || updatedInstantCredits !== null)) {
+        if (
+          user &&
+          (updatedScansRemaining !== null || updatedInstantCredits !== null)
+        ) {
           setUserAccessStatus((prev) => ({
             accessType: updatedAccessType || prev?.accessType || "free",
-            scansRemaining: updatedScansRemaining ? parseInt(updatedScansRemaining) : (prev?.scansRemaining || 0),
-            instantCredits: updatedInstantCredits ? parseInt(updatedInstantCredits) : (prev?.instantCredits || 0),
+            scansRemaining: updatedScansRemaining
+              ? parseInt(updatedScansRemaining)
+              : prev?.scansRemaining || 0,
+            instantCredits: updatedInstantCredits
+              ? parseInt(updatedInstantCredits)
+              : prev?.instantCredits || 0,
             accountType: prev?.accountType,
           }));
         }
