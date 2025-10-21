@@ -12,6 +12,8 @@ import { HolderDistributionChart } from "./HolderDistributionChart";
 import { LiquidityTimelineChart } from "./LiquidityTimelineChart";
 import { LiquidityPoolsDisplay } from "./LiquidityPoolsDisplay";
 import { PDFExportButton } from "./PDFExportButton";
+import { SummaryReportView } from "./SummaryReportView";
+import { ReportResponse } from "@/lib/types/report-types";
 import ShareOnX from "@/components/ShareOnX";
 import {
   Shield,
@@ -31,6 +33,9 @@ interface CryptoResultsDisplayProps {
     heuristicResults?: HeuristicResult[];
   };
   contractAddress?: string;
+  reportAccess?: ReportResponse | null;
+  onUpgradeClick?: () => void;
+  onInstantPurchaseClick?: () => void;
 }
 
 interface Section {
@@ -43,6 +48,9 @@ interface Section {
 export function CryptoResultsDisplay({
   result,
   contractAddress,
+  reportAccess,
+  onUpgradeClick,
+  onInstantPurchaseClick,
 }: CryptoResultsDisplayProps) {
   const [expandedSection, setExpandedSection] = useState<string>("overview");
 
@@ -84,6 +92,34 @@ export function CryptoResultsDisplay({
     setExpandedSection(expandedSection === sectionId ? "" : sectionId);
   };
 
+  // Conditional rendering based on access level
+  if (reportAccess && reportAccess.accessLevel === "summary") {
+    return (
+      <div className="space-y-8">
+        {/* Header */}
+        <div className="flex flex-col md:flex-row items-start justify-between gap-4">
+          <div>
+            <div className="flex items-center gap-2 mb-2">
+              <div className="flex h-2 w-2 rounded-full bg-white" />
+              <span className="text-sm font-medium">Analysis Complete</span>
+            </div>
+            <h2 className="text-4xl font-semibold tracking-tight">
+              Results<span className="text-neutral-500">.</span>
+            </h2>
+          </div>
+        </div>
+
+        {/* Summary Report View */}
+        <SummaryReportView
+          data={reportAccess}
+          onUpgrade={onUpgradeClick || (() => {})}
+          onInstantPurchase={onInstantPurchaseClick || (() => {})}
+        />
+      </div>
+    );
+  }
+
+  // Full report view (existing implementation)
   return (
     <div className="space-y-8">
       {/* Header */}

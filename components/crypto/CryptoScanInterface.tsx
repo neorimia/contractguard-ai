@@ -15,10 +15,12 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { ArrowRight, Loader2, AlertCircle, ChevronDown } from "lucide-react";
 import { CryptoResultsDisplay } from "./CryptoResultsDisplay";
+import { ReportUpgradeModal } from "./ReportUpgradeModal";
 import { useUser } from "@stackframe/stack";
 import { trackEvent, AnalyticsEvents } from "@/lib/analytics/posthog";
 import { CryptoAudit, RiskFlag } from "@/db/schema";
 import { HeuristicResult } from "@/lib/services/crypto/types";
+import { ReportResponse } from "@/lib/types/report-types";
 import ScanLimitDrawer from "@/components/ScanLimitDrawer";
 import { SoftSignupPrompt } from "@/components/auth/SoftSignupPrompt";
 import { AccountUpgradeModal } from "@/components/auth/AccountUpgradeModal";
@@ -85,6 +87,11 @@ export function CryptoScanInterface() {
     instantCredits: number;
     accountType?: string;
   } | null>(null);
+
+  // New paywall-related state
+  const [reportAccess, setReportAccess] = useState<ReportResponse | null>(null);
+  const [showReportUpgradeModal, setShowReportUpgradeModal] = useState(false);
+
   const user = useUser();
   const resultsRef = useRef<HTMLDivElement>(null);
 
@@ -293,11 +300,22 @@ export function CryptoScanInterface() {
         isAnonymous: !user,
       });
 
+      // Set the audit result (for backward compatibility)
       setResult(data.data || data);
+
+      // Set report access information (new paywall system)
+      // The API now returns processed response based on access level
+      if (data.data) {
+        setReportAccess(data.data);
+      } else if (data.accessLevel) {
+        // Direct ReportResponse format
+        setReportAccess(data);
+      }
 
       // Handle anonymous scan metadata (check both wrapped and direct locations)
       if (data.data?.metadata || data.scanMetadata || data.metadata) {
-        const metadata = data.data?.metadata || data.scanMetadata || data.metadata;
+        const metadata =
+          data.data?.metadata || data.scanMetadata || data.metadata;
         setScanMetadata(metadata);
 
         // Track anonymous scans performed
@@ -341,6 +359,28 @@ export function CryptoScanInterface() {
     }
   };
 
+  // Paywall modal handlers
+  const handleUpgradeClick = () => {
+    setShowReportUpgradeModal(true);
+  };
+
+  const handleInstantPurchaseClick = () => {
+    setShowReportUpgradeModal(true);
+  };
+
+  const handleReportUpgradeSuccess = () => {
+    setShowReportUpgradeModal(false);
+    // Optionally refresh the report or re-scan
+    if (address && chain) {
+      analyzeContract();
+    }
+  };
+
+  const handleReportUpgradeError = (error: string) => {
+    console.error("Upgrade error:", error);
+    setError(error);
+  };
+
   return (
     <>
       <section className="py-24 sm:py-32 bg-black text-white">
@@ -363,7 +403,7 @@ export function CryptoScanInterface() {
               <p className="text-xl text-neutral-400 max-w-2xl">
                 Detect scams, honeypots, and rug pulls in seconds. Multi-chain
                 support for 8 blockchains including Ethereum, BSC, Polygon,
-                Arbitrum, Optimism, Base, Avalanche, and Solana.
+                Arbitrum, Optimism, Base, and Avalanche.
               </p>
             </div>
           </div>
@@ -468,7 +508,7 @@ export function CryptoScanInterface() {
                             className="text-white hover:bg-neutral-800 cursor-pointer"
                           >
                             <div className="flex items-center gap-3">
-                              <span className="text-lg">{c.icon}</span>
+                              {/*<span className="text-lg">{c.icon}</span>*/}
                               <span>{c.label}</span>
                             </div>
                           </DropdownMenuItem>
@@ -596,7 +636,13 @@ export function CryptoScanInterface() {
           {/* Results */}
           {result && (
             <div ref={resultsRef} className="mt-24">
-              <CryptoResultsDisplay result={result} contractAddress={address} />
+              <CryptoResultsDisplay
+                result={result}
+                contractAddress={address}
+                reportAccess={reportAccess}
+                onUpgradeClick={handleUpgradeClick}
+                onInstantPurchaseClick={handleInstantPurchaseClick}
+              />
             </div>
           )}
         </div>
@@ -677,6 +723,19 @@ export function CryptoScanInterface() {
           onClose={() => setShowUpgradeModal(false)}
         />
       )}
+
+      {/* Report Upgrade Modal (for paywall system) */}
+      {showReportUpgradeModal &&
+        reportAccess &&
+        reportAccess.accessLevel === "summary" && (
+          <ReportUpgradeModal
+            open={showReportUpgradeModal}
+            onOpenChange={setShowReportUpgradeModal}
+            data={reportAccess}
+            onSuccess={handleReportUpgradeSuccess}
+            onError={handleReportUpgradeError}
+          />
+        )}
     </>
   );
 }

@@ -798,8 +798,63 @@ export type NewReferralReward = typeof referralRewards.$inferInsert;
 export type SocialProofStat = typeof socialProofStats.$inferSelect;
 export type NewSocialProofStat = typeof socialProofStats.$inferInsert;
 
+// Instant Reports table for one-time report purchases (24-hour access)
+export const instantReports = pgTable(
+  "instant_reports",
+  {
+    id: text("id")
+      .primaryKey()
+      .$defaultFn(() => crypto.randomUUID()),
+
+    // User relationship (nullable for guest purchases)
+    userId: integer("user_id").references(() => users.id, {
+      onDelete: "cascade",
+    }),
+    guestSessionId: text("guest_session_id"), // For anonymous purchases
+
+    // Contract reference
+    contractAddress: varchar("contract_address", { length: 255 }).notNull(),
+    chain: varchar("chain", { length: 50 }).notNull().default("ethereum"),
+
+    // Purchase details
+    purchaseId: text("purchase_id").references(() => purchases.id, {
+      onDelete: "set null",
+    }),
+    amount: integer("amount").notNull(), // Price paid in cents ($4.99 = 499)
+
+    // Access control
+    expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(), // 24 hours from purchase
+    isActive: boolean("is_active").notNull().default(true),
+
+    // Metadata
+    metadata: jsonb("metadata").$type<{
+      ipAddress?: string;
+      userAgent?: string;
+      referralCode?: string;
+    }>(),
+
+    // Timestamps
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
+  },
+  (table) => ({
+    userContractIdx: index("instant_reports_user_contract_idx").on(
+      table.userId,
+      table.contractAddress,
+      table.chain
+    ),
+    guestContractIdx: index("instant_reports_guest_contract_idx").on(
+      table.guestSessionId,
+      table.contractAddress,
+      table.chain
+    ),
+    expiresAtIdx: index("instant_reports_expires_at_idx").on(table.expiresAt),
+  })
+);
+
 // CryptoGuard Type Exports
 export type CryptoAudit = typeof cryptoAudits.$inferSelect;
 export type NewCryptoAudit = typeof cryptoAudits.$inferInsert;
 export type RiskHeuristic = typeof riskHeuristics.$inferSelect;
 export type NewRiskHeuristic = typeof riskHeuristics.$inferInsert;
+export type InstantReport = typeof instantReports.$inferSelect;
+export type NewInstantReport = typeof instantReports.$inferInsert;

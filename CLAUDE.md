@@ -28,6 +28,30 @@ npm run db:studio        # Open Drizzle Studio (database GUI)
 
 **Important**: After modifying `db/schema.ts`, always run `npm run db:push` to sync changes.
 
+## Development Principles
+
+### Code Reuse and Component Strategy
+
+**CRITICAL**: Always check for existing logic/components before creating new ones:
+
+1. **Search existing codebase first**:
+   - Use `codebase_search` to find similar functionality
+   - Check `lib/services/` for existing service methods
+   - Look in `components/` for reusable components
+   - Examine `lib/` for utility functions
+
+2. **Update over Create**:
+   - If similar logic exists, extend or modify the existing implementation
+   - If a component exists but needs changes, update it rather than creating a new one
+   - Only create new components when absolutely no existing solution can be adapted
+
+3. **shadcn/ui ONLY Policy**:
+   - **NEVER** create custom UI components when shadcn/ui has equivalents
+   - Always check `components/ui/` first for available shadcn components
+   - If shadcn component needed: use `pnpm dlx shadcn@latest add [component] --yes`
+   - Import from `@/components/ui/[component-name]`
+   - Built-in components: button, card, chart, input, label, drawer
+
 ## Architecture Patterns
 
 ### Service Layer Pattern
@@ -37,6 +61,8 @@ All external integrations use service classes in `lib/services/`:
 - **ContractService** (`lib/services/contract.service.ts`): Etherscan/Alchemy blockchain data fetching
 - **AIAnalysisService** (`lib/services/ai.service.ts`): OpenAI/Caffeine.ai contract analysis
 - **BaseService pattern**: Extend for common functionality, implement clear interfaces
+
+**Code Reuse Priority**: Before adding new service methods, search existing services for similar functionality that can be extended or reused.
 
 Service methods follow this structure:
 
@@ -135,19 +161,37 @@ STRIPE_SECRET_KEY=        # Payment processing
 
 ## Component Structure
 
-**shadcn/ui components** in `components/ui/`: Built on Radix UI primitives with Tailwind styling
+### shadcn/ui Components (MANDATORY)
 
-- `button.tsx`, `input.tsx`, `label.tsx`: Form elements
-- `card.tsx`: Container component
-- `chart.tsx`: Recharts wrapper
+**Location**: `components/ui/` - Built on Radix UI primitives with Tailwind styling
 
-**Feature components** in `components/`: Landing page sections
+**Available components**: `button.tsx`, `input.tsx`, `label.tsx`, `card.tsx`, `chart.tsx`, `drawer.tsx`
+
+**Usage Rules**:
+
+- **MUST** use shadcn/ui components for all UI elements
+- **FORBIDDEN** to create custom components that duplicate shadcn functionality
+- To add new shadcn component: `pnpm dlx shadcn@latest add [component-name] --yes`
+- Always import from `@/components/ui/[component-name]`
+
+### Feature Components
+
+**Location**: `components/` - Business logic and page sections
 
 - `Header.tsx`: Navigation with responsive menu
 - `HeroSection.tsx`: Main CTA and value proposition
 - `FAQSection.tsx`, `PricingSection.tsx`, `Feature.tsx`
 
-**SEO components** in `components/seo/`:
+**Development Process**:
+
+1. Check if component already exists in `components/`
+2. If exists but needs changes → **UPDATE** the existing component
+3. Only create new if no existing component can be adapted
+4. Always compose feature components from shadcn/ui primitives
+
+### SEO Components
+
+**Location**: `components/seo/` - SEO-specific functionality
 
 - `json-ld.tsx`: Structured data for Google
 
