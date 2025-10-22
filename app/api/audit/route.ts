@@ -270,7 +270,11 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const { contractAddress, chain = "ethereum" } = await req.json();
+    const {
+      contractAddress,
+      chain = "ethereum",
+      aiProvider,
+    } = await req.json();
 
     // Validate address
     if (!contractService.validateAddress(contractAddress)) {
@@ -441,9 +445,14 @@ export async function POST(req: NextRequest) {
     let usedAI = false;
 
     // Fallback: Use AI only if heuristic confidence < 70% (hybrid approach)
-    if (heuristicAssessment.confidence < 70) {
+    // Debug mode: Force AI analysis if aiProvider is specified and confidence < 90%
+    const shouldUseAI =
+      heuristicAssessment.confidence < 70 ||
+      (aiProvider && heuristicAssessment.confidence < 90);
+
+    if (shouldUseAI) {
       console.log(
-        `Low confidence (${heuristicAssessment.confidence}%), running AI analysis...`
+        `Running AI analysis... (confidence: ${heuristicAssessment.confidence}%, provider: ${aiProvider || "default"})`
       );
       try {
         const aiAnalysis = await aiService.analyzeContract(
@@ -455,7 +464,8 @@ export async function POST(req: NextRequest) {
               ? `$${analysisData.liquidityData.totalLiquidityUsd}`
               : "0",
             ownerBalance: "0",
-          }
+          },
+          aiProvider // Pass AI provider preference
         );
 
         // Merge heuristic and AI results
@@ -774,7 +784,11 @@ async function handleAnonymousScan(req: NextRequest) {
       );
     }
 
-    const { contractAddress, chain = "ethereum" } = await req.json();
+    const {
+      contractAddress,
+      chain = "ethereum",
+      aiProvider,
+    } = await req.json();
 
     // Validate address
     if (!contractService.validateAddress(contractAddress)) {
@@ -923,7 +937,8 @@ async function handleAnonymousScan(req: NextRequest) {
     const analysis = await aiService.analyzeContract(
       contractData.sourceCode,
       contractData.contractName,
-      enrichmentData
+      enrichmentData,
+      aiProvider // Pass AI provider preference
     );
 
     // Pattern-based detection

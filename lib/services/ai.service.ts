@@ -45,23 +45,72 @@ export class AIAnalysisService {
     if (this.providers.length === 0) {
       throw ErrorFactory.apiKeyMissing("OpenAI or Claude");
     }
+
+    console.log(
+      `AI Service initialized with providers: ${this.providers.map((p) => p.name).join(", ")}`
+    );
+  }
+
+  /**
+   * Get available providers for frontend display
+   */
+  getAvailableProviders(): Array<{ name: string; displayName: string }> {
+    return this.providers.map((provider) => ({
+      name: provider.name === "openai" ? "chatgpt" : provider.name,
+      displayName: provider.name === "openai" ? "ChatGPT" : "Claude",
+    }));
   }
 
   async analyzeContract(
     sourceCode: string,
     contractName: string,
-    enrichmentData?: any
+    enrichmentData?: any,
+    preferredProvider?: "chatgpt" | "claude"
   ): Promise<AnalysisResult> {
+    console.log(`Analyzing contract with provider: ${preferredProvider}`);
+    console.log(`Enrichment data: ${JSON.stringify(enrichmentData)}`);
+    console.log(`Source code: ${sourceCode}`);
+    console.log(`Contract name: ${contractName}`);
+
     const prompt = this.buildAnalysisPrompt(
       sourceCode,
       contractName,
       enrichmentData
     );
 
+    // Map frontend provider names to internal provider names
+    const providerMap: { [key: string]: "openai" | "claude" } = {
+      chatgpt: "openai",
+      claude: "claude",
+    };
+
+    // Reorder providers based on preference
+    let orderedProviders = [...this.providers];
+    if (preferredProvider && providerMap[preferredProvider]) {
+      const preferredName = providerMap[preferredProvider];
+      const preferred = this.providers.find((p) => p.name === preferredName);
+      const others = this.providers.filter((p) => p.name !== preferredName);
+
+      if (preferred) {
+        orderedProviders = [preferred, ...others];
+        console.log(
+          `Using preferred AI provider: ${preferredProvider} (${preferredName})`
+        );
+      } else {
+        console.warn(
+          `Preferred provider ${preferredProvider} not available, using default order`
+        );
+      }
+    } else if (preferredProvider) {
+      console.warn(
+        `Unknown provider preference: ${preferredProvider}, using default order`
+      );
+    }
+
     // Try each provider in order with fallback
     let lastError: Error | null = null;
 
-    for (const provider of this.providers) {
+    for (const provider of orderedProviders) {
       try {
         console.log(`Attempting analysis with ${provider.name}...`);
 
@@ -78,7 +127,7 @@ export class AIAnalysisService {
         );
 
         // Continue to next provider if available
-        if (provider !== this.providers[this.providers.length - 1]) {
+        if (provider !== orderedProviders[orderedProviders.length - 1]) {
           console.log(`Falling back to next provider...`);
           continue;
         }
@@ -199,7 +248,7 @@ export class AIAnalysisService {
           "anthropic-version": "2023-06-01",
         },
         body: JSON.stringify({
-          model: "claude-3-5-sonnet-20241022",
+          model: "claude-3-7-sonnet-20250219",
           max_tokens: 4096,
           temperature: 0.3,
           system: this.getSystemPrompt(),
