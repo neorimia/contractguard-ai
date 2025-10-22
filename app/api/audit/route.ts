@@ -509,6 +509,7 @@ export async function POST(req: NextRequest) {
       chain,
       riskScore: finalAssessment.riskScore,
       riskCategory: finalAssessment.riskCategory,
+      userId: appUser.id, // Track which user created this audit
       flags,
       metadata: {
         deployer: analysisData.metadata?.deployer || "Unknown",
@@ -985,6 +986,7 @@ async function handleAnonymousScan(req: NextRequest) {
       chain,
       riskScore: finalRiskScore,
       riskCategory: getRiskCategory(finalRiskScore),
+      userId: null, // Anonymous users have no user_id
       flags,
       metadata: {
         deployer: contractData.deployer || "Unknown",

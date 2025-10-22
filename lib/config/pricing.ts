@@ -3,6 +3,7 @@
  *
  * Centralized pricing structure for hybrid monetization model:
  * - Instant Reports (pay-per-scan, no signup)
+ * - Starter Subscription (monthly recurring)
  * - Pro Subscription (monthly recurring)
  * - Team/API Plan (monthly recurring with API access)
  */
@@ -37,6 +38,25 @@ export const PRICING_CONFIG = {
       },
     ],
   },
+
+  starter: {
+    id: "starter_monthly",
+    label: "Starter Plan",
+    type: "subscription" as const,
+    price: 14,
+    stripePriceId: process.env.STRIPE_PRICE_STARTER_MONTHLY || "",
+    interval: "month" as const,
+    monthlyCredits: 30,
+    extraScanPrice: 0.3,
+    perks: [
+      "30 full AI audits per month (≈1 per day)",
+      "Plain-English explanations & risk scoring",
+      "Email summaries for watched tokens",
+      "Export summaries as PDF",
+      "Add-on scans at $0.30 each after 30/month",
+    ],
+  },
+
   pro: {
     id: "pro_monthly",
     label: "Pro Plan",
@@ -44,15 +64,19 @@ export const PRICING_CONFIG = {
     price: 29,
     stripePriceId: process.env.STRIPE_PRICE_PRO_MONTHLY || "",
     interval: "month" as const,
+    monthlyCredits: 150,
+    extraScanPrice: 0.25,
     perks: [
-      "Unlimited scans",
-      "Advanced risk scoring",
+      "150 AI audits per month (≈5/day)",
+      "Advanced risk scoring & liquidity analysis",
       "Email alerts for watched contracts",
       "PDF export functionality",
       "AI chat for contract questions",
       "Priority support",
+      "Extra scans just $0.25 each after 150/month",
     ],
   },
+
   team: {
     id: "team_monthly",
     label: "Team/API Plan",
@@ -60,14 +84,32 @@ export const PRICING_CONFIG = {
     price: 99,
     stripePriceId: process.env.STRIPE_PRICE_TEAM_MONTHLY || "",
     interval: "month" as const,
+    monthlyCredits: 1000,
+    extraScanPrice: 0.1,
     perks: [
       "Everything in Pro",
       "Multi-user dashboard",
       "Shared report library",
-      "API access (€0.15/scan)",
+      "API access (first 1000 scans included, $0.10/extra)",
       "White-label options",
       "Dedicated account manager",
     ],
+  },
+} as const;
+
+// Unified credit limits export for backend usage
+export const PRICING_LIMITS = {
+  starter: {
+    monthlyCredits: 30,
+    extraScanPrice: 0.3,
+  },
+  pro: {
+    monthlyCredits: 150,
+    extraScanPrice: 0.25,
+  },
+  team: {
+    monthlyCredits: 1000,
+    extraScanPrice: 0.1,
   },
 } as const;
 
@@ -75,18 +117,17 @@ export const PRICING_CONFIG = {
 export type PricingTier = keyof typeof PRICING_CONFIG;
 export type InstantPackage = (typeof PRICING_CONFIG.instant.packages)[number];
 export type SubscriptionPlan =
+  | typeof PRICING_CONFIG.starter
   | typeof PRICING_CONFIG.pro
   | typeof PRICING_CONFIG.team;
 
 // Helper functions
-export function getInstantPackageByIndex(
-  index: number,
-): InstantPackage | null {
+export function getInstantPackageByIndex(index: number): InstantPackage | null {
   return PRICING_CONFIG.instant.packages[index] || null;
 }
 
 export function getInstantPackageByCredits(
-  credits: number,
+  credits: number
 ): InstantPackage | null {
   return (
     PRICING_CONFIG.instant.packages.find((pkg) => pkg.credits === credits) ||
@@ -95,7 +136,7 @@ export function getInstantPackageByCredits(
 }
 
 export function getSubscriptionPlan(
-  tier: "pro" | "team",
+  tier: "starter" | "pro" | "team"
 ): SubscriptionPlan | null {
   return PRICING_CONFIG[tier] || null;
 }
@@ -105,8 +146,10 @@ export function isValidInstantPackageIndex(index: number): boolean {
   return index >= 0 && index < PRICING_CONFIG.instant.packages.length;
 }
 
-export function isValidSubscriptionTier(tier: string): tier is "pro" | "team" {
-  return tier === "pro" || tier === "team";
+export function isValidSubscriptionTier(
+  tier: string
+): tier is "starter" | "pro" | "team" {
+  return tier === "starter" || tier === "pro" || tier === "team";
 }
 
 // Price calculation helpers

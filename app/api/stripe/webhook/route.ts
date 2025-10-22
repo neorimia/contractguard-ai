@@ -873,7 +873,7 @@ async function handlePaymentIntentSucceeded(
  */
 function determineTierFromSubscription(
   subscription: Stripe.Subscription
-): "free" | "pro" | "enterprise" {
+): "free" | "starter" | "pro" | "team" | "enterprise" {
   // Get the price ID from the subscription
   const priceId = subscription.items.data[0]?.price.id;
 
@@ -882,13 +882,19 @@ function determineTierFromSubscription(
   }
 
   // Map price IDs to tiers
+  const starterPriceId = process.env.STRIPE_STARTER_MONTHLY_PRICE_ID;
   const proPriceId = process.env.STRIPE_PRO_MONTHLY_PRICE_ID;
+  const teamPriceId = process.env.STRIPE_TEAM_MONTHLY_PRICE_ID;
   const enterprisePriceId = process.env.STRIPE_ENTERPRISE_MONTHLY_PRICE_ID;
 
   if (priceId === enterprisePriceId) {
     return "enterprise";
+  } else if (priceId === teamPriceId) {
+    return "team";
   } else if (priceId === proPriceId) {
     return "pro";
+  } else if (priceId === starterPriceId) {
+    return "starter";
   }
 
   return "free";

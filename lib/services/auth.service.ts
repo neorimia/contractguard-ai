@@ -2,7 +2,8 @@
 import { db } from "@/db";
 import { users, type User, type NewUser } from "@/db/schema";
 import { eq } from "drizzle-orm";
-import { getTierLimit } from "@/lib/config/tier-limits";
+import { getTierLimit, getMonthlyTierLimit } from "@/lib/config/tier-limits";
+import { PRICING_LIMITS } from "@/lib/config/pricing";
 import { EmailService } from "./email.service";
 import { ReferralService } from "./referral.service";
 import {
@@ -266,7 +267,12 @@ export class AuthService {
         };
       }
 
-      // Check if we need to reset the counter
+      // Handle subscription plans with monthly limits
+      if (["starter", "pro", "team"].includes(user.tier)) {
+        return await this.checkMonthlyScanLimit(user);
+      }
+
+      // Handle free tier with daily limits (legacy)
       if (this.shouldResetScans(user.scansResetAt)) {
         await this.resetUserScans(userId);
         user.scansToday = 0;
@@ -302,6 +308,61 @@ export class AuthService {
   }
 
   /**
+   * Check monthly scan limit for subscription plans
+   */
+  private async checkMonthlyScanLimit(user: User): Promise<ScanLimitResult> {
+    try {
+      const limits = PRICING_LIMITS[user.tier as keyof typeof PRICING_LIMITS];
+
+      if (!limits) {
+        return {
+          allowed: false,
+          scansRemaining: 0,
+          resetAt: new Date(),
+        };
+      }
+
+      // Get current month's usage from crypto_audits table
+      const currentMonth = new Date();
+      const monthStart = new Date(
+        currentMonth.getFullYear(),
+        currentMonth.getMonth(),
+        1
+      );
+
+      const result = await db.execute(
+        `SELECT count(*)::int AS used
+         FROM crypto_audits
+         WHERE user_id=${user.id}
+           AND created_at >= '${monthStart.toISOString()}'`
+      );
+
+      const used = Number(result.rows[0]?.used) || 0;
+      const scansRemaining = Math.max(0, limits.monthlyCredits - used);
+
+      // Always allow scans for subscription users (with overage pricing)
+      const nextMonth = new Date(
+        currentMonth.getFullYear(),
+        currentMonth.getMonth() + 1,
+        1
+      );
+
+      return {
+        allowed: true,
+        scansRemaining: scansRemaining,
+        resetAt: nextMonth,
+      };
+    } catch (error) {
+      console.error("Error checking monthly scan limit:", error);
+      return {
+        allowed: false,
+        scansRemaining: 0,
+        resetAt: new Date(),
+      };
+    }
+  }
+
+  /**
    * Increment scan count for user
    */
   async incrementScanCount(userId: number): Promise<void> {
@@ -312,7 +373,14 @@ export class AuthService {
         throw new Error("User not found");
       }
 
-      // Check if we need to reset first
+      // For subscription plans, we don't need to track daily counts
+      // The scan usage is tracked in the audits table by date
+      if (["starter", "pro", "team"].includes(user.tier)) {
+        // No need to update daily counter for subscription plans
+        return;
+      }
+
+      // Handle free tier with daily limits (legacy)
       if (this.shouldResetScans(user.scansResetAt)) {
         await this.resetUserScans(userId);
         await db
@@ -642,7 +710,7 @@ export class AuthService {
   async updateUser(
     userId: number,
     data: {
-      tier?: "free" | "pro" | "enterprise";
+      tier?: "free" | "starter" | "pro" | "team" | "enterprise";
       stripeCustomerId?: string | null;
       stripeSubscriptionId?: string | null;
       subscriptionStatus?: string | null;

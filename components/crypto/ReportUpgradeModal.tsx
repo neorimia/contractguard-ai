@@ -51,8 +51,8 @@ export function ReportUpgradeModal({
   const [selectedOption, setSelectedOption] = useState<SelectedOption>(null);
   const [selectedInstantPackage, setSelectedInstantPackage] = useState(0);
   const [selectedSubscription, setSelectedSubscription] = useState<
-    "pro" | "team"
-  >("pro");
+    "starter" | "pro" | "team"
+  >("starter");
   const [isLoading, setIsLoading] = useState(false);
 
   const handleClose = () => {
@@ -145,6 +145,7 @@ export function ReportUpgradeModal({
   };
 
   const instantPriceOptions = PRICING_CONFIG.instant.packages;
+  const starterPlan = PRICING_CONFIG.starter;
   const proPlan = PRICING_CONFIG.pro;
   const teamPlan = PRICING_CONFIG.team;
 
@@ -268,9 +269,9 @@ export function ReportUpgradeModal({
                         </div>
                         <div>
                           <h3 className="text-xl font-bold text-white">
-                            Pro Subscription
+                            Starter Subscription
                           </h3>
-                          <p className="text-white/70">Unlimited access</p>
+                          <p className="text-white/70">30 scans per month</p>
                         </div>
                       </div>
                       <Badge
@@ -283,7 +284,7 @@ export function ReportUpgradeModal({
 
                     <div className="space-y-3">
                       <div className="text-3xl font-bold text-white">
-                        ${proPlan.price}
+                        ${starterPlan.price}
                         <span className="text-sm font-normal text-white/70 ml-1">
                           /month
                         </span>
@@ -292,19 +293,19 @@ export function ReportUpgradeModal({
                       <ul className="space-y-2 text-sm">
                         <li className="flex items-center gap-2 text-white/80">
                           <CheckCircle className="h-4 w-4 text-white" />
-                          Unlimited contract scans
+                          30 AI audits per month
                         </li>
                         <li className="flex items-center gap-2 text-white/80">
                           <CheckCircle className="h-4 w-4 text-white" />
-                          Advanced risk scoring
+                          Full security analysis
                         </li>
                         <li className="flex items-center gap-2 text-white/80">
                           <CheckCircle className="h-4 w-4 text-white" />
-                          Email alerts & monitoring
+                          PDF export functionality
                         </li>
                         <li className="flex items-center gap-2 text-white/80">
                           <CheckCircle className="h-4 w-4 text-white" />
-                          Priority support
+                          Email summaries
                         </li>
                       </ul>
                     </div>
@@ -322,7 +323,7 @@ export function ReportUpgradeModal({
                           setSelectedOption("subscription");
                         }}
                       >
-                        {user ? "Upgrade to Pro" : "Sign in for Pro"}
+                        {user ? "Start with Starter" : "Sign in for Starter"}
                         <ArrowRight className="h-4 w-4 ml-2" />
                       </Button>
                     </div>
@@ -482,11 +483,14 @@ export function ReportUpgradeModal({
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-                {[proPlan, teamPlan].map((plan, index) => {
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+                {[starterPlan, proPlan, teamPlan].map((plan, index) => {
                   const isSelected =
                     selectedSubscription === plan.id.split("_")[0];
-                  const planKey = plan.id.split("_")[0] as "pro" | "team";
+                  const planKey = plan.id.split("_")[0] as
+                    | "starter"
+                    | "pro"
+                    | "team";
 
                   return (
                     <div
@@ -498,6 +502,11 @@ export function ReportUpgradeModal({
                       }`}
                       onClick={() => setSelectedSubscription(planKey)}
                     >
+                      {planKey === "starter" && (
+                        <Badge className="mb-3 bg-white text-black">
+                          Most Popular
+                        </Badge>
+                      )}
                       {planKey === "pro" && (
                         <Badge className="mb-3 bg-white text-black">
                           Recommended
@@ -552,8 +561,8 @@ export function ReportUpgradeModal({
                   <>
                     <TrendingUp className="h-4 w-4 mr-2" />
                     {user
-                      ? `Upgrade to ${PRICING_CONFIG[selectedSubscription].label}`
-                      : "Sign in to upgrade"}
+                      ? `Subscribe to ${PRICING_CONFIG[selectedSubscription].label}`
+                      : "Sign in to subscribe"}
                   </>
                 )}
               </Button>

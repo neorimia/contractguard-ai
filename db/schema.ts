@@ -13,33 +13,7 @@ import {
   uniqueIndex,
 } from "drizzle-orm/pg-core";
 
-export const audits = pgTable("audits", {
-  id: serial("id").primaryKey(),
-  contractAddress: text("contract_address").notNull().unique(),
-  chain: text("chain").notNull().default("ethereum"),
-
-  // Contract data
-  sourceCode: text("source_code"),
-  bytecode: text("bytecode"),
-  isVerified: boolean("is_verified").default(false),
-
-  // Analysis results
-  riskScore: integer("risk_score"),
-  summary: text("summary"),
-  issues: jsonb("issues").$type<Issue[]>(),
-  recommendation: text("recommendation"), // BUY, AVOID, CAUTION
-
-  // Enrichment data
-  holderCount: integer("holder_count"),
-  liquidity: text("liquidity"),
-  ownerBalance: text("owner_balance"),
-
-  // Metadata
-  createdAt: timestamp("created_at").defaultNow(),
-  updatedAt: timestamp("updated_at").defaultNow(),
-  views: integer("views").default(0),
-  shares: integer("shares").default(0),
-});
+// Legacy audits table removed - using crypto_audits instead
 
 export const users = pgTable("users", {
   id: serial("id").primaryKey(),
@@ -685,6 +659,9 @@ export const cryptoAudits = pgTable(
     riskScore: integer("risk_score").notNull(), // 0-100
     riskCategory: varchar("risk_category", { length: 50 }), // 'very_low', 'low', 'medium', 'high', 'critical'
 
+    // User tracking for subscription limits
+    userId: integer("user_id").references(() => users.id), // Track which user created this audit
+
     // Analysis results
     flags: jsonb("flags").$type<RiskFlag[]>(), // Array of red flags
     metadata: jsonb("metadata").$type<ContractMetadata>(),
@@ -708,6 +685,11 @@ export const cryptoAudits = pgTable(
       table.chain
     ),
     riskScoreIdx: index("risk_score_idx").on(table.riskScore),
+    userIdIdx: index("crypto_audits_user_id_idx").on(table.userId),
+    userCreatedIdx: index("crypto_audits_user_created_idx").on(
+      table.userId,
+      table.createdAt
+    ),
   })
 );
 
@@ -771,8 +753,7 @@ export interface Issue {
   code?: string;
 }
 
-export type Audit = typeof audits.$inferSelect;
-export type NewAudit = typeof audits.$inferInsert;
+// Audit types removed - using cryptoAudits instead
 export type User = typeof users.$inferSelect;
 export type NewUser = typeof users.$inferInsert;
 export type Feedback = typeof feedback.$inferSelect;
