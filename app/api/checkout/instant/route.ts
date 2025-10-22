@@ -92,7 +92,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json(
         {
           error: "Invalid package",
-          details: "Please select a valid instant report package",
+          details: "Please select a valid instant credits package",
         },
         { status: 400 }
       );
@@ -174,9 +174,9 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Check instant report purchase limits (for contract-specific purchases)
+    // Check instant credits purchase limits (for contract-specific purchases)
     if (contractAddress) {
-      const limitCheck = await paymentService.checkInstantReportLimits(
+      const limitCheck = await paymentService.checkInstantCreditsLimits(
         localUserId,
         undefined // No guest session since authentication is required
       );
@@ -186,7 +186,7 @@ export async function POST(req: NextRequest) {
           {
             error: "Purchase limit reached",
             details: limitCheck.reason,
-            limitInfo: limitCheck.limitInfo,
+            remainingPurchases: limitCheck.remainingPurchases,
           },
           { status: 429 }
         );
@@ -206,10 +206,13 @@ export async function POST(req: NextRequest) {
       ? `${siteUrl}/report/${contractAddress}?chain=${chain}&canceled=true`
       : `${siteUrl}/pricing?canceled=true`;
 
-    // Get or create Stripe customer for authenticated user
-    let customerId: string;
+    // For instant purchases, we can use customer_email instead of creating a customer
+    // This avoids the Stripe customer creation API call that might be failing
+    let customerId: string | undefined;
+    let customerEmail: string | undefined;
+
     try {
-      console.log("Creating Stripe customer for user:", {
+      console.log("Attempting to create Stripe customer for user:", {
         email: stackUser.primaryEmail,
         userId: localUserId,
         name: stackUser.displayName,
@@ -235,23 +238,15 @@ export async function POST(req: NextRequest) {
         });
       }
 
-      return NextResponse.json(
-        {
-          error: "Account setup failed",
-          details: "Unable to set up payment account. Please try again.",
-          debug:
-            process.env.NODE_ENV === "development"
-              ? error instanceof Error
-                ? error.message
-                : "Unknown error"
-              : undefined,
-        },
-        { status: 500 }
-      );
+      // For instant purchases, we can fallback to using customer_email
+      // This avoids the customer creation API call that might be failing
+      console.log("Falling back to customer_email approach");
+      customerEmail = userEmail || stackUser.primaryEmail;
+      customerId = undefined; // Don't use customer ID, use email instead
     }
 
     // Create Stripe checkout session for one-time payment
-    const session = await stripe.checkout.sessions.create({
+    const sessionParams: any = {
       mode: "payment", // ← One-time payment mode
       payment_method_types: ["card"],
       line_items: [
@@ -262,27 +257,31 @@ export async function POST(req: NextRequest) {
       ],
       success_url: successUrl,
       cancel_url: cancelUrl,
+    };
 
-      // Customer and metadata
-      customer: customerId,
+    // Use customer ID if available, otherwise use customer_email
+    if (customerId) {
+      sessionParams.customer = customerId;
+    } else {
+      sessionParams.customer_email =
+        customerEmail || userEmail || stackUser.primaryEmail;
+    }
 
-      // Pre-fill customer email if provided
-      customer_email: userEmail || stackUser.primaryEmail,
+    // Add metadata and other parameters
+    sessionParams.metadata = {
+      type: "instant_credits",
+      credits: pkg.credits.toString(),
+      userId: localUserId.toString(),
+      contractAddress: contractAddress || "",
+      chain: contractAddress ? chain : "",
+      packageIndex: packageIndex?.toString() || "0",
+      price: pkg.price.toString(),
+    };
 
-      // Track purchase metadata
-      metadata: {
-        type: contractAddress ? "instant_report" : "instant_credits",
-        credits: pkg.credits.toString(),
-        userId: localUserId.toString(),
-        contractAddress: contractAddress || "",
-        chain: contractAddress ? chain : "",
-        packageIndex: packageIndex?.toString() || "0",
-        price: pkg.price.toString(),
-      },
+    // Allow promo codes
+    sessionParams.allow_promotion_codes = true;
 
-      // Allow promo codes
-      allow_promotion_codes: true,
-    });
+    const session = await stripe.checkout.sessions.create(sessionParams);
 
     // Create purchase record
     const [purchaseRecord] = await db
@@ -291,7 +290,7 @@ export async function POST(req: NextRequest) {
         userId: localUserId,
         guestSessionId: null, // No guest sessions for authenticated purchases
         guestEmail: null, // No guest email for authenticated purchases
-        type: contractAddress ? "instant_credits" : "instant_credits", // Use existing type, will be processed as instant report
+        type: "instant_credits",
         credits: pkg.credits,
         amount: Math.round(pkg.price * 100), // Convert to cents
         currency: "usd",
@@ -311,26 +310,12 @@ export async function POST(req: NextRequest) {
 
     const purchaseId = purchaseRecord.id;
 
-    // Create instant report record for contract-specific purchases
-    let instantReportId: string | undefined;
-    if (contractAddress) {
-      const instantReport = await paymentService.createInstantReport({
-        userId: localUserId,
-        guestSessionId: undefined, // No guest sessions for authenticated purchases
-        contractAddress,
-        chain,
-        purchaseId,
-        amount: Math.round(pkg.price * 100),
-        expiresInHours: 24,
-      });
-      instantReportId = instantReport.id;
-    }
+    // Instant credits purchase completed
 
     return NextResponse.json({
       url: session.url,
       sessionId: session.id,
       purchaseId,
-      instantReportId,
       price: pkg.price,
       credits: pkg.credits,
       packageIndex,
@@ -347,7 +332,7 @@ export async function POST(req: NextRequest) {
         {
           error: "Payment configuration error",
           details:
-            "Instant report pricing is not properly configured. Please contact support.",
+            "Instant credits pricing is not properly configured. Please contact support.",
         },
         { status: 500 }
       );

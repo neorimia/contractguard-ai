@@ -1,7 +1,7 @@
 /**
  * Hybrid Pricing Section
  *
- * Tabbed pricing interface combining instant reports and subscriptions
+ * Tabbed pricing interface combining instant credits and subscriptions
  */
 
 "use client";
@@ -171,7 +171,7 @@ export default function PricingSectionHybrid() {
                     : "text-black/60 dark:text-white/60 hover:text-black/80 dark:hover:text-white/80"
                 }`}
               >
-                Instant Reports
+                Instant Credits
               </button>
               <button
                 type="button"
@@ -201,7 +201,7 @@ export default function PricingSectionHybrid() {
             </div>
           </div>
 
-          {/* Instant Reports Section */}
+          {/* Instant Credits Section */}
           {selectedTab === "instant" && (
             <div key="instant-content">
               <div className="text-center mb-6">

@@ -7,6 +7,10 @@ import { siteConfig } from "@/config/site";
 import { ThemeProvider } from "next-themes";
 import JsonLd from "@/components/seo/json-ld";
 import { organizationLd, websiteLd } from "@/lib/seo/jsonld";
+
+// Generate static JSON-LD data to avoid hydration mismatches
+const staticOrganizationLd = organizationLd();
+const staticWebsiteLd = websiteLd();
 import { StackAuthProvider } from "@/lib/stack";
 import { AuthErrorBoundary } from "@/components/auth/AuthErrorBoundary";
 import { PostHogProvider } from "@/components/analytics/PostHogProvider";
@@ -104,8 +108,8 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning className="scroll-smooth">
       <head>
-        <JsonLd data={organizationLd()} />
-        <JsonLd data={websiteLd()} />
+        <JsonLd data={staticOrganizationLd} />
+        <JsonLd data={staticWebsiteLd} />
       </head>
       <body
         className={`${geistSans.variable} ${geistSans.className} antialiased`}

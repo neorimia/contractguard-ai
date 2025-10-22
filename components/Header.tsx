@@ -206,7 +206,7 @@ export function Header() {
                             <User className="h-4 w-4" />
                             Account Settings
                           </button>
-                          <button
+                          {/* <button
                             onClick={() => {
                               setShowUserMenu(false);
                               router.push("/referrals");
@@ -215,7 +215,7 @@ export function Header() {
                           >
                             <Gift className="h-4 w-4" />
                             Referrals
-                          </button>
+                          </button> */}
                           <button
                             onClick={() => {
                               setShowUserMenu(false);

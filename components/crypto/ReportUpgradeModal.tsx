@@ -175,7 +175,7 @@ export function ReportUpgradeModal({
               </DialogHeader>
 
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                {/* Instant Report Option */}
+                {/* Instant Credits Option */}
                 <motion.div whileHover={{ scale: 1.02 }} className="relative">
                   <div
                     className="p-6 rounded-xl border-2 border-white/30 bg-gradient-to-br from-black/40 to-black/20 cursor-pointer hover:border-white/50 transition-all"
@@ -194,7 +194,7 @@ export function ReportUpgradeModal({
                         </div>
                         <div>
                           <h3 className="text-xl font-bold text-white">
-                            Instant Report
+                            Instant Credits
                           </h3>
                           <p className="text-white/70">One-time access</p>
                         </div>
@@ -206,7 +206,7 @@ export function ReportUpgradeModal({
                       <div className="text-3xl font-bold text-white">
                         ${instantPriceOptions[1].price}
                         <span className="text-sm font-normal text-white/70 ml-1">
-                          for {instantPriceOptions[1].credits} reports
+                          for {instantPriceOptions[1].credits} credits
                         </span>
                       </div>
 
@@ -375,7 +375,7 @@ export function ReportUpgradeModal({
                 </Button>
                 <div>
                   <h2 className="text-2xl font-bold text-white">
-                    Choose Instant Report Package
+                    Choose Instant Credits Package
                   </h2>
                   <p className="text-white/70">
                     One-time purchase, no subscription
@@ -443,7 +443,7 @@ export function ReportUpgradeModal({
                       <CreditCard className="h-4 w-4 mr-2" />
                       Purchase $
                       {instantPriceOptions[selectedInstantPackage].price}{" "}
-                      Instant Report
+                      Instant Credits
                     </>
                   )}
                 </Button>

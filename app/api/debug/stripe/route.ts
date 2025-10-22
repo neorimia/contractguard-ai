@@ -1,6 +1,6 @@
 /**
  * Stripe Debug Endpoint
- * 
+ *
  * Simple endpoint to test Stripe configuration and connectivity
  * Only available in development mode
  */
@@ -34,7 +34,7 @@ export async function GET(req: NextRequest) {
         apiVersion: "2025-09-30.clover",
         typescript: true,
       });
-      
+
       // Try to list customers (this will test API connectivity)
       const customers = await stripe.customers.list({ limit: 1 });
       stripeTest = {

@@ -5,13 +5,7 @@
  */
 
 import { db } from "@/db";
-import {
-  instantReports,
-  users,
-  User,
-  type CryptoAudit,
-  type RiskFlag,
-} from "@/db/schema";
+import { users, User, type CryptoAudit, type RiskFlag } from "@/db/schema";
 import { and, eq } from "drizzle-orm";
 import {
   ReportAccessLevel,
@@ -26,7 +20,7 @@ import {
  *
  * Priority hierarchy:
  * 1. Pro/Team subscription → full access
- * 2. Valid instant report purchase → full access (24h)
+ * 2. Instant credits > 0 → full access
  * 3. Free tier / Anonymous → summary only
  *
  * @param userId - App user ID (nullable for anonymous)
@@ -56,6 +50,13 @@ export async function determineReportAccess(
       };
     }
 
+    console.log("determineReportAccess - User found:", {
+      userId: user.id,
+      tier: user.tier,
+      instantCredits: user.instantCredits,
+      accountType: user.accountType,
+    });
+
     // Check subscription tier
     if (user.tier === "pro" || user.tier === "team") {
       return {
@@ -66,38 +67,20 @@ export async function determineReportAccess(
       };
     }
 
-    // Check for valid instant report purchase
-    const instantReport = await db.query.instantReports.findFirst({
-      where: and(
-        eq(instantReports.userId, userId),
-        eq(instantReports.contractAddress, contractAddress.toLowerCase()),
-        eq(instantReports.chain, chain),
-        eq(instantReports.isActive, true)
-      ),
-    });
-
-    if (instantReport) {
-      const now = new Date();
-      const expiresAt = new Date(instantReport.expiresAt);
-
-      if (expiresAt > now) {
-        return {
-          hasAccess: true,
-          accessLevel: "full",
-          accessType: "instant_report",
-          userId,
-          instantReportId: instantReport.id,
-          instantReportExpiresAt: expiresAt,
-        };
-      }
-    }
+    // Check for instant credits - if user has credits, they get full access
 
     // Check for instant credits - if user has credits, they get full access
     if (user.instantCredits && user.instantCredits > 0) {
+      console.log("User has instant credits, granting full access:", {
+        userId,
+        instantCredits: user.instantCredits,
+        accessLevel: "full",
+        accessType: "instant_credit",
+      });
       return {
         hasAccess: true,
         accessLevel: "full",
-        accessType: "instant_report",
+        accessType: "instant_credit",
         userId,
       };
     }
@@ -113,31 +96,7 @@ export async function determineReportAccess(
 
   // Case 2: Anonymous session (guest user)
   if (guestSessionId) {
-    // Check for guest instant report purchase
-    const instantReport = await db.query.instantReports.findFirst({
-      where: and(
-        eq(instantReports.guestSessionId, guestSessionId),
-        eq(instantReports.contractAddress, contractAddress.toLowerCase()),
-        eq(instantReports.chain, chain),
-        eq(instantReports.isActive, true)
-      ),
-    });
-
-    if (instantReport) {
-      const now = new Date();
-      const expiresAt = new Date(instantReport.expiresAt);
-
-      if (expiresAt > now) {
-        return {
-          hasAccess: true,
-          accessLevel: "full",
-          accessType: "instant_report",
-          guestSessionId,
-          instantReportId: instantReport.id,
-          instantReportExpiresAt: expiresAt,
-        };
-      }
-    }
+    // Check for instant credits - if user has credits, they get full access
 
     // Check for guest user with instant credits
     const guestUser = await db.query.users.findFirst({
@@ -148,7 +107,7 @@ export async function determineReportAccess(
       return {
         hasAccess: true,
         accessLevel: "full",
-        accessType: "instant_report",
+        accessType: "instant_credit",
         guestSessionId,
         userId: guestUser.id,
       };
@@ -218,10 +177,10 @@ export function transformToSummaryReport(
     accessLevel: "summary",
     upgradeRequired: true,
     upgradeOptions: {
-      instantReport: {
+      instantCredits: {
         price: 499, // $4.99 in cents
-        description: "One-time access to full report",
-        validFor: "24 hours",
+        description: "One-time purchase of instant credits",
+        validFor: "Never expires",
       },
       proSubscription: {
         price: 2900, // $29/month in cents
@@ -248,7 +207,7 @@ export function transformToFullReport(
     holderData?: any;
     liquidityData?: any;
   },
-  accessType: "pro" | "team" | "instant_report",
+  accessType: "pro" | "team" | "instant_credit",
   expiresAt?: Date
 ): FullReportData {
   return {
@@ -279,10 +238,7 @@ export function transformToFullReport(
     heuristicResults: audit.heuristicResults,
 
     createdAt: audit.createdAt || new Date(),
-    expiresAt:
-      accessType === "instant_report"
-        ? expiresAt
-        : audit.expiresAt || undefined,
+    expiresAt: audit.expiresAt || undefined,
 
     accessLevel: "full",
     accessType,
