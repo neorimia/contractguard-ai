@@ -13,7 +13,7 @@ import { EmailService } from "@/lib/services/email.service";
 import { ReferralService } from "@/lib/services/referral.service";
 import { ReferralGamificationService } from "@/lib/services/referral-gamification.service";
 import { db } from "@/db";
-import { purchases, users, referrals, instantReports } from "@/db/schema";
+import { purchases, users, referrals } from "@/db/schema";
 import { eq, sql } from "drizzle-orm";
 import { paymentService } from "@/lib/services/payment.service";
 import Stripe from "stripe";
@@ -177,52 +177,30 @@ async function handleInstantPurchase(session: Stripe.Checkout.Session) {
 
   console.log(`Purchase ${purchase.id} marked as completed`);
 
-  // Handle instant report purchases - activate the instant report record
+  // Handle instant credits purchases - add credits to user account
   if (purchase.metadata?.contractAddress) {
-    try {
-      // Use payment service to find and activate the instant report
-      const instantReport = await paymentService.getInstantReportByPurchaseId(
-        purchase.id
-      );
-
-      if (instantReport) {
-        // Ensure the instant report is active using payment service
-        await paymentService.updateInstantReportStatus(instantReport.id, true);
-
-        console.log(
-          `✅ Activated instant report ${instantReport.id} for contract ${purchase.metadata.contractAddress}`
-        );
-      } else {
-        console.warn(`No instant report found for purchase ${purchase.id}`);
-      }
-    } catch (error) {
-      console.error("Error activating instant report:", error);
-      // Don't fail the webhook - log error and continue
-    }
-
-    // For contract-specific instant reports, don't add general credits
-    // The user gets access to that specific contract only
+    // For contract-specific instant credits, add general credits to user account
+    // The user gets instant credits that can be used for any contract
     console.log(
-      "Contract-specific instant report - not adding general credits"
+      "Contract-specific instant credits purchase - adding general credits to user account"
     );
-    return;
   }
 
-  // Credit the user/guest account (only for general instant credit purchases)
+  // Credit the user/guest account with instant credits
   if (purchase.userId) {
     // Registered user → add instant credits
-    const user = await authService.getUserById(purchase.userId);
-    if (user) {
-      await db
-        .update(users)
-        .set({
-          instantCredits: sql`${users.instantCredits} + ${purchase.credits || 0}`,
-        })
-        .where(eq(users.id, purchase.userId));
+    const result = await paymentService.addInstantCredits(
+      purchase.userId,
+      purchase.credits || 0
+    );
 
+    if (result.success) {
       console.log(
-        `✅ Added ${purchase.credits} credits to user ${purchase.userId}`
+        `✅ Added ${purchase.credits} credits to user ${purchase.userId}. New balance: ${result.newBalance}`
       );
+    } else {
+      console.error(`Failed to add credits to user ${purchase.userId}`);
+    }
 
       // ============================================================
       // REFERRAL SYSTEM INTEGRATION

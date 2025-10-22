@@ -176,7 +176,7 @@ export async function POST(req: NextRequest) {
 
     // Check instant credits purchase limits (for contract-specific purchases)
     if (contractAddress) {
-      const limitCheck = await paymentService.checkInstantReportLimits(
+      const limitCheck = await paymentService.checkInstantCreditsLimits(
         localUserId,
         undefined // No guest session since authentication is required
       );
@@ -186,7 +186,7 @@ export async function POST(req: NextRequest) {
           {
             error: "Purchase limit reached",
             details: limitCheck.reason,
-            limitInfo: limitCheck.limitInfo,
+            remainingPurchases: limitCheck.remainingPurchases,
           },
           { status: 429 }
         );
