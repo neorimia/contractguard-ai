@@ -3,9 +3,6 @@
 import { useState, useEffect, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { useUser } from "@stackframe/stack";
-import { Header } from "@/components/Header";
-import { HeaderSkeleton } from "@/components/HeaderSkeleton";
-import { Footer } from "@/components/footer";
 import { Button } from "@/components/ui/button";
 import { Send, CheckCircle } from "lucide-react";
 import { Geist } from "next/font/google";
@@ -175,14 +172,14 @@ function FeedbackForm() {
                       onChange={(e) => {
                         if (feedback.includes("Reason:")) {
                           const parts = feedback.split(
-                            "\n\nAdditional comments:"
+                            "\n\nAdditional comments:",
                           );
                           setFeedback(
-                            `Reason: ${e.target.value}${parts[1] ? "\n\nAdditional comments:" + parts[1] : ""}`
+                            `Reason: ${e.target.value}${parts[1] ? "\n\nAdditional comments:" + parts[1] : ""}`,
                           );
                         } else {
                           setFeedback(
-                            `Reason: ${e.target.value}\n\n${feedback}`
+                            `Reason: ${e.target.value}\n\n${feedback}`,
                           );
                         }
                       }}
@@ -213,12 +210,12 @@ function FeedbackForm() {
               onChange={(e) => {
                 if (reason === "cancellation") {
                   const reasonText = feedback.split(
-                    "\n\nAdditional comments:"
+                    "\n\nAdditional comments:",
                   )[0];
                   setFeedback(
                     reasonText
                       ? `${reasonText}\n\nAdditional comments: ${e.target.value}`
-                      : e.target.value
+                      : e.target.value,
                   );
                 } else {
                   setFeedback(e.target.value);

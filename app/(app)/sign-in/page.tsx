@@ -3,6 +3,7 @@
 import { SignIn } from "@stackframe/stack";
 import Image from "next/image";
 import Link from "next/link";
+import { TooltipProvider } from "@/components/ui/tooltip";
 
 export default function LoginPage() {
   return (
@@ -17,6 +18,11 @@ export default function LoginPage() {
             fill
             className="object-cover object-bottom"
             priority
+            onError={(e) => {
+              const target = e.target as HTMLImageElement;
+              target.src =
+                "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiB2aWV3Qm94PSIwIDAgMTAwIDEwMCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3Qgd2lkdGg9IjEwMCIgaGVpZ2h0PSIxMDAiIGZpbGw9InVybCgjZ3JhZGllbnQwX2xpbmVhcl8xXzEpIi8+CjxkZWZzPgo8bGluZWFyR3JhZGllbnQgaWQ9ImdyYWRpZW50MF9saW5lYXJfMV8xIiB4MT0iMCIgeTE9IjAiIHgyPSIxMDAiIHkyPSIxMDAiIGdyYWRpZW50VW5pdHM9InVzZXJTcGFjZU9uVXNlIj4KPHN0b3Agc3RvcC1jb2xvcj0iIzAwMDAwMCIvPgo8c3RvcCBvZmZzZXQ9IjEiIHN0b3AtY29sb3I9IiMxMTExMTEiLz4KPC9saW5lYXJHcmFkaWVudD4KPC9kZWZzPgo8L3N2Zz4K";
+            }}
           />
         </div>
 
@@ -46,7 +52,9 @@ export default function LoginPage() {
 
       {/* Right side - Stack Auth Sign In */}
       <div className="flex flex-col justify-center items-center p-12">
-        <SignIn firstTab={"magic-link"} />
+        <TooltipProvider>
+          <SignIn firstTab={"magic-link"} />
+        </TooltipProvider>
       </div>
     </div>
   );

@@ -1,4 +1,3 @@
-import { Geist } from "next/font/google";
 import HeroSection from "@/components/HeroSection";
 import Feature from "@/components/Feature";
 import FAQSection from "@/components/FAQSection";
@@ -6,12 +5,7 @@ import type { Metadata } from "next";
 import { siteConfig } from "@/config/site";
 import JsonLd from "@/components/seo/json-ld";
 import { softwareApplicationLd, howToLd, faqPageLd } from "@/lib/seo/jsonld";
-import PricingSectionHybrid from "@/components/PricingSectionHybrid";
-
-const geist = Geist({
-  weight: ["400", "600"],
-  subsets: ["latin"],
-});
+import { PricingSectionHybridClient } from "@/components/PricingSectionHybridClient";
 
 export const metadata: Metadata = {
   title: "AI-Powered Smart Contract Security Scanner",
@@ -95,7 +89,7 @@ export default function Home() {
       <JsonLd data={faqPageLd(faqData)} />
       <HeroSection />
       <Feature />
-      <PricingSectionHybrid />
+      <PricingSectionHybridClient />
       <FAQSection />
     </>
   );

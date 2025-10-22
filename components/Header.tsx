@@ -13,6 +13,8 @@ import {
   MessageCircle,
   CreditCard,
   Gift,
+  Watch,
+  Bell,
 } from "lucide-react";
 import { useTheme } from "next-themes";
 import { useRouter } from "next/navigation";
@@ -23,6 +25,7 @@ export function Header() {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [showUserMenu, setShowUserMenu] = useState(false);
+  const [iconSrc, setIconSrc] = useState<string>("");
   const { theme, setTheme } = useTheme();
   const router = useRouter();
   const user = useUser();
@@ -35,6 +38,11 @@ export function Header() {
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
+
+  // Set initial icon source based on theme
+  useEffect(() => {
+    setIconSrc(theme === "dark" ? "/icon-white.svg" : "/icon.svg");
+  }, [theme]);
 
   // Close user menu when clicking outside
   useEffect(() => {
@@ -116,10 +124,23 @@ export function Header() {
                 aria-label="ContractGuard AI Home"
               >
                 <Image
-                  src={theme === "dark" ? "/icon-white.svg" : "/icon.svg"}
+                  src={iconSrc || "/icon.svg"}
                   alt="ContractGuard AI"
                   width={30}
                   height={30}
+                  onError={(e) => {
+                    const target = e.target as HTMLImageElement;
+                    // Try fallback icons in order
+                    if (target.src.includes("/icon-white.svg")) {
+                      target.src = "/icon.svg"; // Try default icon
+                    } else if (target.src.includes("/icon.svg")) {
+                      target.src = "/icon1.png"; // Try PNG fallback
+                    } else {
+                      // If all else fails, use a data URI for a simple fallback
+                      target.src =
+                        "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzAiIGhlaWdodD0iMzAiIHZpZXdCb3g9IjAgMCAzMCAzMCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3Qgd2lkdGg9IjMwIiBoZWlnaHQ9IjMwIiByeD0iNCIgZmlsbD0iIzAwMDAwMCIvPgo8dGV4dCB4PSIxNSIgeT0iMTgiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSIxNCIgZmlsbD0id2hpdGUiIHRleHQtYW5jaG9yPSJtaWRkbGUiPkM8L3RleHQ+Cjwvc3ZnPgo=";
+                    }
+                  }}
                 />
               </Link>
               {/* Desktop Navigation */}
@@ -196,6 +217,16 @@ export function Header() {
                           </p>
                         </div>
                         <div className="p-2">
+                          <button
+                            onClick={() => {
+                              setShowUserMenu(false);
+                              router.push("/watchlist");
+                            }}
+                            className="w-full text-left px-4 py-2 text-sm text-black dark:text-white hover:bg-black/5 dark:hover:bg-white/5 rounded-md transition-colors flex items-center gap-2"
+                          >
+                            <Bell className="h-4 w-4" />
+                            Watchlist
+                          </button>
                           <button
                             onClick={() => {
                               setShowUserMenu(false);
@@ -341,6 +372,16 @@ export function Header() {
                       Scan Contract
                     </Button>
                     <Button
+                      size="sm"
+                      className="w-full  bg-black dark:bg-white text-white dark:text-black"
+                      onClick={() => {
+                        setIsMobileMenuOpen(false);
+                        router.push("/watchlist");
+                      }}
+                    >
+                      Watchlist
+                    </Button>
+                    <Button
                       variant="ghost"
                       size="sm"
                       className="w-full justify-start px-0 text-black dark:text-white hover:bg-black/5 dark:hover:bg-white/5"
@@ -352,7 +393,7 @@ export function Header() {
                       <User className="h-4 w-4 mr-2" />
                       Account Settings
                     </Button>
-                    <Button
+                    {/* <Button
                       variant="ghost"
                       size="sm"
                       className="w-full justify-start px-0 text-black dark:text-white hover:bg-black/5 dark:hover:bg-white/5"
@@ -363,7 +404,7 @@ export function Header() {
                     >
                       <Gift className="h-4 w-4 mr-2" />
                       Referrals
-                    </Button>
+                    </Button> */}
                     <Button
                       variant="ghost"
                       size="sm"

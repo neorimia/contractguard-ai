@@ -1,14 +1,8 @@
-import { Geist } from "next/font/google";
-import PricingSectionHybrid from "@/components/PricingSectionHybrid";
+import { PricingSectionHybridClient } from "@/components/PricingSectionHybridClient";
 import PageHero from "@/components/PageHero";
 import type { Metadata } from "next";
 import { siteConfig } from "@/config/site";
 import JsonLd from "@/components/seo/json-ld";
-
-const geist = Geist({
-  weight: ["400", "600"],
-  subsets: ["latin"],
-});
 
 export const metadata: Metadata = {
   title: "Pricing - Simple, Transparent Plans for Smart Contract Security",
@@ -192,7 +186,7 @@ export default function PricingPage() {
         description="Pay per scan or subscribe for unlimited access. One-time audits or professional monitoring — transparent pricing that fits your needs."
       />
 
-      <PricingSectionHybrid />
+      <PricingSectionHybridClient />
 
       {/* Additional Value Props */}
       <section className="py-16 px-4">

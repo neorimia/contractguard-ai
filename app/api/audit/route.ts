@@ -16,7 +16,7 @@ import { RiskScoringService } from "@/lib/services/crypto/risk-scoring.service";
 import { ContractAnalysisData } from "@/lib/services/crypto/types";
 import { ReferralService } from "@/lib/services/referral.service";
 import { accessValidationService } from "@/lib/services/access-validation.service";
-import { getClientInfo } from "@/lib/utils/client-info";
+import { getClientInfo } from "@/lib/utils/server-client-info";
 import { Redis } from "@upstash/redis";
 import { stackServerApp } from "@/stack/server";
 import {

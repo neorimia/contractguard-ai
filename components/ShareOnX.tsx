@@ -31,7 +31,7 @@ export default function ShareOnX({ result, contractAddress }: ShareOnXProps) {
 ${getRiskEmoji(result.riskScore || 0)} Risk Score: ${result.riskScore}/100
 ${result.recommendation === "AVOID" ? "🚫" : result.recommendation === "CAUTION" ? "⚠️" : "✅"} Recommendation: ${result.recommendation}
 
-${result.summary ? result.summary.slice(0, 120) + "..." : ""}
+${result?.sourceCode ? "Full security analysis completed" : "Basic security check completed"}
 
 Scan your contracts at`;
 
@@ -82,6 +82,19 @@ Scan your contracts at`;
                   alt="ContractGuard AI"
                   width={20}
                   height={20}
+                  onError={(e) => {
+                    const target = e.target as HTMLImageElement;
+                    // Try fallback icons in order
+                    if (target.src.includes("/icon-white.svg")) {
+                      target.src = "/icon.svg"; // Try default icon
+                    } else if (target.src.includes("/icon.svg")) {
+                      target.src = "/icon1.png"; // Try PNG fallback
+                    } else {
+                      // If all else fails, use a data URI for a simple fallback
+                      target.src =
+                        "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAiIGhlaWdodD0iMjAiIHZpZXdCb3g9IjAgMCAyMCAyMCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3Qgd2lkdGg9IjIwIiBoZWlnaHQ9IjIwIiByeD0iNCIgZmlsbD0iIzAwMDAwMCIvPgo8dGV4dCB4PSIxMCIgeT0iMTIiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSIxMCIgZmlsbD0id2hpdGUiIHRleHQtYW5jaG9yPSJtaWRkbGUiPkM8L3RleHQ+Cjwvc3ZnPgo=";
+                    }
+                  }}
                 />
               </div>
             </div>

@@ -352,8 +352,14 @@ export class AccessValidationService {
         return true;
       }
 
-      // Pro/Team - unlimited, no deduction
+      // Pro/Team - track usage but don't limit
       if (accessType === "pro" || accessType === "team") {
+        await db
+          .update(users)
+          .set({
+            scansToday: sql`${users.scansToday} + 1`,
+          })
+          .where(eq(users.id, userId));
         return true;
       }
 

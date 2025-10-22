@@ -2,7 +2,7 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { ReferralService } from "@/lib/services/referral.service";
-import { getClientInfo } from "@/lib/utils/client-info";
+import { getClientInfo } from "@/lib/utils/server-client-info";
 
 export async function POST(request: NextRequest) {
   try {
@@ -29,10 +29,7 @@ export async function POST(request: NextRequest) {
     });
 
     if (!result.success) {
-      return NextResponse.json(
-        { error: result.error },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: result.error }, { status: 400 });
     }
 
     return NextResponse.json({
