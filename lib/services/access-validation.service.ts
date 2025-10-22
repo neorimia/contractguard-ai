@@ -3,7 +3,7 @@
  *
  * Server-side validation for scan access with priority logic:
  * Priority Order (Highest to Lowest):
- * 1. Pro/Team subscription → unlimited access
+ * 1. Subscription plans (Starter/Pro/Team) → monthly limits with overage
  * 2. Instant credits → deduct one credit
  * 3. Soft account → free tier (3/day)
  * 4. Free account → free tier (3/day)
@@ -20,8 +20,10 @@ import {
   getAnonymousScanCount,
   incrementAnonymousScanCount,
 } from "@/lib/middleware/session-tracking";
+import { PRICING_LIMITS } from "@/lib/config/pricing";
 
 export type AccessType =
+  | "starter"
   | "pro"
   | "team"
   | "instant_credit"
@@ -44,6 +46,52 @@ export interface AccessValidationResult {
 }
 
 export class AccessValidationService {
+  /**
+   * Check monthly usage for subscription plans
+   * @param userId - Database user ID
+   * @param tier - User subscription tier
+   * @returns Monthly usage information
+   */
+  private async checkMonthlyUsage(
+    userId: number,
+    tier: "starter" | "pro" | "team"
+  ): Promise<{
+    used: number;
+    limit: number;
+    remaining: number;
+    overagePrice: number;
+  }> {
+    const limits = PRICING_LIMITS[tier];
+    if (!limits) {
+      throw new Error(`Invalid subscription tier: ${tier}`);
+    }
+
+    // Get current month's usage from crypto_audits table
+    const currentMonth = new Date();
+    const monthStart = new Date(
+      currentMonth.getFullYear(),
+      currentMonth.getMonth(),
+      1
+    );
+
+    const result = await db.execute(
+      `SELECT count(*)::int AS used
+       FROM crypto_audits
+       WHERE user_id=${userId}
+         AND created_at >= '${monthStart.toISOString()}'`
+    );
+
+    const used = Number(result.rows[0]?.used) || 0;
+    const remaining = Math.max(0, limits.monthlyCredits - used);
+
+    return {
+      used,
+      limit: limits.monthlyCredits,
+      remaining,
+      overagePrice: limits.extraScanPrice,
+    };
+  }
+
   /**
    * Validate anonymous user access (cookie-based, no account)
    * @param sessionId - Anonymous session ID from cookie
@@ -189,66 +237,33 @@ export class AccessValidationService {
         return this.validateSoftAccess(userId);
       }
 
-      // Priority 1: Check for Pro/Team subscription
-      if (
-        user.tier === "pro" ||
-        user.tier === "enterprise" ||
-        user.tier === "team"
-      ) {
-        // Check daily scan limit for Pro (100/day), Team/Enterprise unlimited
-        if (user.tier === "pro") {
-          const now = new Date();
-          const resetAt = user.scansResetAt
-            ? new Date(user.scansResetAt)
-            : null;
+      // Priority 1: Check for subscription plans (Starter/Pro/Team)
+      if (["starter", "pro", "team"].includes(user.tier)) {
+        try {
+          const usage = await this.checkMonthlyUsage(
+            userId,
+            user.tier as "starter" | "pro" | "team"
+          );
 
-          // Reset daily counter if needed
-          if (!resetAt || now >= resetAt) {
-            await this.resetDailyScans(userId);
-            return {
-              hasAccess: true,
-              accessType: "pro",
-              scansRemaining: 100, // Pro tier limit
-              instantCredits: user.instantCredits || 0,
-              accountType: (user.accountType as AccountType) || "full",
-              resetAt: new Date(Date.now() + 24 * 60 * 60 * 1000), // Next day reset
-            };
-          }
-
-          // Check if Pro scans available
-          const scansUsed = user.scansToday || 0;
-          const proLimit = 100; // Pro tier daily limit
-          const scansRemaining = Math.max(0, proLimit - scansUsed);
-
-          if (scansRemaining > 0) {
-            return {
-              hasAccess: true,
-              accessType: "pro",
-              scansRemaining,
-              instantCredits: user.instantCredits || 0,
-              accountType: (user.accountType as AccountType) || "full",
-              resetAt: resetAt,
-            };
-          }
-
-          // Pro limit reached
+          // Always allow scans for subscription users (with overage pricing)
           return {
-            hasAccess: false,
-            accessType: "pro",
-            scansRemaining: 0,
+            hasAccess: true,
+            accessType: user.tier as AccessType,
+            scansRemaining: usage.remaining,
             instantCredits: user.instantCredits || 0,
             accountType: (user.accountType as AccountType) || "full",
             reason:
-              "Pro daily limit reached (100 scans). Upgrade to Team for unlimited.",
-            resetAt: resetAt || new Date(Date.now() + 24 * 60 * 60 * 1000),
+              usage.remaining === 0
+                ? `Monthly limit exceeded. Additional scans cost $${usage.overagePrice} each.`
+                : undefined,
           };
-        } else {
-          // Team/Enterprise - unlimited
+        } catch (error) {
+          console.error("Error checking monthly usage:", error);
+          // Fallback to allowing access if there's an error
           return {
             hasAccess: true,
-            accessType:
-              user.tier === "enterprise" ? "team" : (user.tier as AccessType),
-            scansRemaining: -1, // -1 indicates unlimited
+            accessType: user.tier as AccessType,
+            scansRemaining: -1, // Unknown, but allow access
             instantCredits: user.instantCredits || 0,
             accountType: (user.accountType as AccountType) || "full",
           };

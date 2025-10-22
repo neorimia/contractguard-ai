@@ -176,7 +176,7 @@ export function PriceCard({
           {perks.map((perk, i) => (
             <div key={i} className="flex items-start gap-2">
               <Check className="h-3 w-3 text-green-600 dark:text-green-500 mt-0.5 flex-shrink-0" />
-              <span className="text-xs text-black/80 dark:text-white/80">
+              <span className="text-xs text-left text-black/80 dark:text-white/80">
                 {perk}
               </span>
             </div>

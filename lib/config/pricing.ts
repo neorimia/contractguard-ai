@@ -51,9 +51,9 @@ export const PRICING_CONFIG = {
     perks: [
       "30 full AI audits per month (≈1 per day)",
       "Plain-English explanations & risk scoring",
-      "Email summaries for watched tokens",
-      "Export summaries as PDF",
-      "Add-on scans at $0.30 each after 30/month",
+      "Email alerts for watched contracts",
+      "PDF export functionality",
+      // "Add-on scans at $0.30 each after 30/month",
     ],
   },
 
@@ -71,9 +71,8 @@ export const PRICING_CONFIG = {
       "Advanced risk scoring & liquidity analysis",
       "Email alerts for watched contracts",
       "PDF export functionality",
-      "AI chat for contract questions",
       "Priority support",
-      "Extra scans just $0.25 each after 150/month",
+      // "Extra scans just $0.25 each after 150/month",
     ],
   },
 
@@ -90,7 +89,7 @@ export const PRICING_CONFIG = {
       "Everything in Pro",
       "Multi-user dashboard",
       "Shared report library",
-      "API access (first 1000 scans included, $0.10/extra)",
+      "API access",
       "White-label options",
       "Dedicated account manager",
     ],

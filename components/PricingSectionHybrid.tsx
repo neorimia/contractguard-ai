@@ -210,7 +210,7 @@ export default function PricingSectionHybrid() {
                 </p>
               </div>
 
-              <div className="max-w-4xl mx-auto p-4 sm:p-6 rounded-xl relative backdrop-blur-sm border border-dashed border-black/10 dark:border-white/10 bg-black/[0.01] dark:bg-white/[0.01]">
+              <div className="max-w-6xl mx-auto p-4 sm:p-6 rounded-xl relative backdrop-blur-sm border border-dashed border-black/10 dark:border-white/10 bg-black/[0.01] dark:bg-white/[0.01]">
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6">
                   {PRICING_CONFIG.instant.packages.map((pkg, index) => (
                     <PriceCard
@@ -289,7 +289,7 @@ export default function PricingSectionHybrid() {
                 </div>
               </div>
 
-              <div className="max-w-4xl mx-auto p-4 sm:p-6 rounded-xl relative backdrop-blur-sm border  border-black/10 dark:border-white/10 bg-black/[0.01] dark:bg-white/[0.01]">
+              <div className="max-w-6xl mx-auto p-4 sm:p-6 rounded-xl relative backdrop-blur-sm border  border-black/10 dark:border-white/10 bg-black/[0.01] dark:bg-white/[0.01]">
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                   {/* Starter Plan */}
                   <PriceCard
@@ -297,7 +297,7 @@ export default function PricingSectionHybrid() {
                     isPopular={false}
                     animationDelay={0}
                     title={PRICING_CONFIG.starter.label}
-                    description="For active traders and DeFi users"
+                    description="For starters and casual traders"
                     price={
                       billingPeriod === "monthly"
                         ? PRICING_CONFIG.starter.price
@@ -323,7 +323,7 @@ export default function PricingSectionHybrid() {
                     isPopular={true}
                     animationDelay={0}
                     title={PRICING_CONFIG.pro.label}
-                    description="For active traders and DeFi users"
+                    description="For active traders and pro users"
                     price={
                       billingPeriod === "monthly"
                         ? PRICING_CONFIG.pro.price
