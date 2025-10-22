@@ -1,25 +1,19 @@
 import type { Metadata } from "next";
-import { StackProvider, StackTheme } from "@stackframe/stack";
-import { stackClientApp } from "@/stack/client";
+import { StackProvider } from "@stackframe/stack";
 import { Geist } from "next/font/google";
 import "./globals.css";
 import { siteConfig } from "@/config/site";
-import { ThemeProvider } from "next-themes";
 import JsonLd from "@/components/seo/json-ld";
 import { organizationLd, websiteLd } from "@/lib/seo/jsonld";
-
 // Generate static JSON-LD data to avoid hydration mismatches
 const staticOrganizationLd = organizationLd();
 const staticWebsiteLd = websiteLd();
-import { StackAuthProvider } from "@/lib/stack";
-import { AuthErrorBoundary } from "@/components/auth/AuthErrorBoundary";
-import { PostHogProvider } from "@/components/analytics/PostHogProvider";
-import { UserIdentifier } from "@/components/analytics/UserIdentifier";
 import { Suspense } from "react";
-import { Header } from "@/components/Header";
+import { HeaderClient } from "@/components/HeaderClient";
 import { Footer } from "@/components/footer";
-import { HeaderSkeleton } from "@/components/HeaderSkeleton";
 import CookieBanner from "@/components/CookieBanner";
+import { stackServerApp } from "@/stack/server";
+import { ClientProviders } from "@/components/ClientProviders";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -115,37 +109,19 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistSans.className} antialiased`}
         suppressHydrationWarning
       >
-        <StackProvider app={stackClientApp}>
-          <StackTheme>
-            <StackAuthProvider>
-              <PostHogProvider>
+        <StackProvider app={stackServerApp}>
+          <ClientProviders>
+            <main className="relative min-h-screen w-full bg-white dark:bg-black overflow-hidden">
+              <div className="relative bg-white/95 dark:bg-black/5 pt-14">
+                <HeaderClient />
+                {children}
                 <Suspense fallback={null}>
-                  <UserIdentifier />
+                  <Footer />
                 </Suspense>
-                <ThemeProvider
-                  attribute="class"
-                  defaultTheme="system"
-                  enableSystem
-                  disableTransitionOnChange
-                >
-                  <AuthErrorBoundary>
-                    <main className="relative min-h-screen w-full bg-white dark:bg-black overflow-hidden">
-                      <div className="relative bg-white/95 dark:bg-black/5 pt-14">
-                        <Suspense fallback={<HeaderSkeleton />}>
-                          <Header />
-                        </Suspense>
-                        {children}
-                        <Suspense fallback={null}>
-                          <Footer />
-                        </Suspense>
-                      </div>
-                    </main>
-                    <CookieBanner />
-                  </AuthErrorBoundary>
-                </ThemeProvider>
-              </PostHogProvider>
-            </StackAuthProvider>
-          </StackTheme>
+              </div>
+            </main>
+            <CookieBanner />
+          </ClientProviders>
         </StackProvider>
       </body>
     </html>

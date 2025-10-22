@@ -32,6 +32,10 @@ export function Footer() {
   const currentYear = new Date().getFullYear();
   const { theme } = useTheme();
   const [mounted, setMounted] = useState(false);
+  const [iconSrc, setIconSrc] = useState<string>("");
+  useEffect(() => {
+    setIconSrc(theme === "dark" ? "/logo-white.svg" : "/logo.svg");
+  }, [theme]);
 
   // Wait until after client-side hydration to show theme-dependent content
   useEffect(() => {
@@ -47,12 +51,22 @@ export function Footer() {
               className="text-4xl font-bold tracking-tighter text-black dark:text-white hover:opacity-90 transition-opacity"
             >
               <Image
-                src={
-                  mounted && theme === "dark" ? "/logo-white.svg" : "/logo.svg"
-                }
+                src={iconSrc || "/logo.svg"}
                 alt="ContractGuard AI"
                 width={130}
                 height={50}
+                onError={(e) => {
+                  const target = e.target as HTMLImageElement;
+                  target.src = "/logo.svg";
+                  if (target.src.includes("/logo-white.svg")) {
+                    target.src = "/logo.svg";
+                  } else if (target.src.includes("/logo.svg")) {
+                    target.src = "/logo1.png";
+                  } else {
+                    target.src =
+                      "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTMwIiBoZWlnaHQ9IjUwIiB2aWV3Qm94PSIwIDAgMTMwIDUwIiBmaWxsPSJub25lIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPgogIDxyZWN0IHdpZHRoPSIxMzAiIGhlaWdodD0iNTAiIHJ4PSI0IiBmaWxsPSIjMDAwMDAwIi8+CiAgPHRleHQgeD0iNjUiIHk9IjI4IiBmb250LWZhbWlseT0iQXJpYWwiIGZvbnQtc2l6ZT0iMTQiIGZpbGw9IndoaXRlIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIj5DPC90ZXh0PgogPC9zdmc+";
+                  }
+                }}
               />
             </Link>
             <p className="mt-2 text-sm text-black/60 dark:text-white/60">

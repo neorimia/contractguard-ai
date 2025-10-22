@@ -1,6 +1,5 @@
 // lib/utils/client-info.ts
 
-import { headers } from "next/headers";
 import type { NextRequest } from "next/server";
 
 export interface ClientInfo {
@@ -12,13 +11,13 @@ export interface ClientInfo {
 }
 
 /**
- * Extract client information from request
- * Works with both Next.js headers() and NextRequest
+ * Extract client information from NextRequest (server-side only)
+ * This function should only be used in server components or API routes
  */
-export async function getClientInfo(
-  request?: NextRequest
+export async function getClientInfoFromRequest(
+  request: NextRequest
 ): Promise<ClientInfo> {
-  const headersList = request ? request.headers : await headers();
+  const headersList = request.headers;
 
   const ip =
     headersList.get("x-forwarded-for")?.split(",")[0]?.trim() ||
@@ -35,6 +34,28 @@ export async function getClientInfo(
     fingerprint,
     deviceType: getDeviceType(userAgent),
     referer,
+  };
+}
+
+/**
+ * Create a basic client info object for client-side usage
+ * This is a fallback when server-side headers are not available
+ */
+export function createBasicClientInfo(): ClientInfo {
+  if (typeof window === "undefined") {
+    return {
+      ip: "unknown",
+      userAgent: "unknown",
+      deviceType: "unknown",
+    };
+  }
+
+  const userAgent = navigator.userAgent;
+  return {
+    ip: "unknown", // Cannot get IP on client-side
+    userAgent,
+    deviceType: getDeviceType(userAgent),
+    referer: document.referrer || undefined,
   };
 }
 

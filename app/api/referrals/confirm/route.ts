@@ -4,7 +4,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { ReferralService } from "@/lib/services/referral.service";
 import { AuthService } from "@/lib/services/auth.service";
 import { stackServerApp } from "@/stack/server";
-import { getClientInfo } from "@/lib/utils/client-info";
+import { getClientInfo } from "@/lib/utils/server-client-info";
 
 export async function POST(request: NextRequest) {
   try {

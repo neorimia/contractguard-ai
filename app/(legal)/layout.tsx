@@ -1,4 +1,4 @@
-import { Header } from "@/components/Header";
+import { HeaderClient } from "@/components/HeaderClient";
 import { Footer } from "@/components/footer";
 import { Geist } from "next/font/google";
 
@@ -14,7 +14,7 @@ export default function LegalLayout({
 }) {
   return (
     <div className={geist.className}>
-      <Header />
+      <HeaderClient />
       <main>{children}</main>
       <Footer />
     </div>

@@ -95,6 +95,12 @@ export const users = pgTable("users", {
   stripeSubscriptionId: text("stripe_subscription_id"),
   subscriptionStatus: text("subscription_status"), // active, cancelled, past_due
 
+  // Email Alert Preferences
+  alertsEnabled: boolean("alerts_enabled").default(true),
+  alertEmail: text("alert_email"), // Optional: different email for alerts
+  maxAlertsPerDay: integer("max_alerts_per_day").default(10), // Rate limiting
+  lastAlertSent: timestamp("last_alert_sent", { withTimezone: true }),
+
   // Timestamps
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
@@ -806,3 +812,170 @@ export type NewCryptoAudit = typeof cryptoAudits.$inferInsert;
 export type RiskHeuristic = typeof riskHeuristics.$inferSelect;
 export type NewRiskHeuristic = typeof riskHeuristics.$inferInsert;
 // Instant report types removed - using instant credits system instead
+
+// ============================================================================
+// EMAIL ALERTS & WATCHLIST TABLES - Contract monitoring system
+// ============================================================================
+
+// Watchlists - User contract watchlist with alert preferences
+export const watchlists = pgTable(
+  "watchlists",
+  {
+    id: text("id")
+      .primaryKey()
+      .$defaultFn(() => crypto.randomUUID()),
+
+    // Relationships
+    userId: integer("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    contractAddress: text("contract_address").notNull(),
+    chain: text("chain").notNull().default("ethereum"),
+
+    // Alert Configuration
+    alertEnabled: boolean("alert_enabled").default(true),
+    alertFrequency: text("alert_frequency", {
+      enum: ["instant", "hourly", "daily"],
+    })
+      .notNull()
+      .default("instant"),
+
+    // Alert Triggers
+    alertOnRiskIncrease: boolean("alert_on_risk_increase").default(true),
+    alertOnNewFlags: boolean("alert_on_new_flags").default(true),
+    alertOnLiquidityChange: boolean("alert_on_liquidity_change").default(false),
+    alertOnHolderChange: boolean("alert_on_holder_change").default(false),
+
+    // Thresholds
+    riskIncreaseThreshold: integer("risk_increase_threshold").default(10), // +10 points
+    liquidityChangeThreshold: integer("liquidity_change_threshold").default(20), // 20% change
+    holderChangeThreshold: integer("holder_change_threshold").default(15), // 15% change
+
+    // Metadata
+    nickname: text("nickname"), // User-defined name for contract
+    notes: text("notes"), // Private notes
+    lastAlertSent: timestamp("last_alert_sent", { withTimezone: true }),
+    lastChecked: timestamp("last_checked", { withTimezone: true }),
+
+    // Tracking
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow(),
+  },
+  (table) => ({
+    userContractIdx: uniqueIndex("user_contract_idx").on(
+      table.userId,
+      table.contractAddress,
+      table.chain
+    ),
+    userIdIdx: index("watchlist_user_id_idx").on(table.userId),
+    alertEnabledIdx: index("watchlist_alert_enabled_idx").on(
+      table.alertEnabled
+    ),
+  })
+);
+
+// Watchlist Snapshots - Historical snapshots for change detection
+export const watchlistSnapshots = pgTable(
+  "watchlist_snapshots",
+  {
+    id: text("id")
+      .primaryKey()
+      .$defaultFn(() => crypto.randomUUID()),
+
+    // Relationships
+    watchlistId: text("watchlist_id")
+      .notNull()
+      .references(() => watchlists.id, { onDelete: "cascade" }),
+
+    // Snapshot Data (from cryptoAudits table)
+    riskScore: integer("risk_score").notNull(),
+    riskCategory: text("risk_category"),
+    flagCount: integer("flag_count").notNull(),
+    flags: jsonb("flags").$type<RiskFlag[]>(),
+
+    // Enrichment Data
+    holderCount: integer("holder_count"),
+    liquidityUsd: numeric("liquidity_usd"),
+    topHolderConcentration: numeric("top_holder_concentration"),
+
+    // Metadata
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
+  },
+  (table) => ({
+    watchlistIdIdx: index("snapshot_watchlist_id_idx").on(table.watchlistId),
+    createdAtIdx: index("snapshot_created_at_idx").on(table.createdAt),
+  })
+);
+
+// Alert History - Track all alerts sent to users
+export const alertHistory = pgTable(
+  "alert_history",
+  {
+    id: text("id")
+      .primaryKey()
+      .$defaultFn(() => crypto.randomUUID()),
+
+    // Relationships
+    watchlistId: text("watchlist_id")
+      .notNull()
+      .references(() => watchlists.id, { onDelete: "cascade" }),
+    userId: integer("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+
+    // Alert Details
+    alertType: text("alert_type", {
+      enum: [
+        "risk_increase",
+        "new_flags",
+        "liquidity_change",
+        "holder_change",
+        "critical_alert",
+      ],
+    }).notNull(),
+    severity: text("severity", {
+      enum: ["low", "medium", "high", "critical"],
+    }).notNull(),
+
+    // Change Data
+    previousValue: jsonb("previous_value"),
+    currentValue: jsonb("current_value"),
+    changePercentage: numeric("change_percentage"),
+
+    // Email Delivery
+    emailSent: boolean("email_sent").default(false),
+    emailSentAt: timestamp("email_sent_at", { withTimezone: true }),
+    emailError: text("email_error"),
+
+    // User Interaction
+    opened: boolean("opened").default(false),
+    openedAt: timestamp("opened_at", { withTimezone: true }),
+    clicked: boolean("clicked").default(false),
+    clickedAt: timestamp("clicked_at", { withTimezone: true }),
+
+    // Metadata
+    metadata: jsonb("metadata").$type<{
+      contractAddress?: string;
+      chain?: string;
+      riskScoreChange?: number;
+      newFlags?: RiskFlag[];
+      triggerReason?: string;
+    }>(),
+
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
+  },
+  (table) => ({
+    watchlistIdIdx: index("alert_watchlist_id_idx").on(table.watchlistId),
+    userIdIdx: index("alert_user_id_idx").on(table.userId),
+    createdAtIdx: index("alert_created_at_idx").on(table.createdAt),
+    emailSentIdx: index("alert_email_sent_idx").on(table.emailSent),
+  })
+);
+
+// Type Exports for Watchlist System
+export type Watchlist = typeof watchlists.$inferSelect;
+export type NewWatchlist = typeof watchlists.$inferInsert;
+export type WatchlistSnapshot = typeof watchlistSnapshots.$inferSelect;
+export type NewWatchlistSnapshot = typeof watchlistSnapshots.$inferInsert;
+export type AlertHistory = typeof alertHistory.$inferSelect;
+export type NewAlertHistory = typeof alertHistory.$inferInsert;

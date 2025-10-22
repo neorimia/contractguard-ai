@@ -1,6 +1,5 @@
 import { Geist } from "next/font/google";
-import { Footer } from "@/components/footer";
-import { Header } from "@/components/Header";
+import { HeaderClient } from "@/components/HeaderClient";
 import Feature from "@/components/Feature";
 import PageHero from "@/components/PageHero";
 import type { Metadata } from "next";
@@ -99,7 +98,7 @@ export default function FeaturesPage() {
   return (
     <>
       <JsonLd data={featuresLd} />
-      <Header />
+      <HeaderClient />
 
       <PageHero
         title="Powerful security features"

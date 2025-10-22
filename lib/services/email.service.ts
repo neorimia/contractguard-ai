@@ -299,6 +299,132 @@ export class EmailService {
   }
 
   /**
+   * Send contract alert email
+   */
+  async sendContractAlert(
+    to: string,
+    context: {
+      userName?: string;
+      contractAddress: string;
+      contractNickname?: string;
+      chain: string;
+      alertType:
+        | "risk_increase"
+        | "new_flags"
+        | "liquidity_change"
+        | "holder_change"
+        | "critical_alert";
+      severity: "low" | "medium" | "high" | "critical";
+
+      // Change details
+      previousRiskScore?: number;
+      currentRiskScore?: number;
+      riskScoreChange?: number;
+
+      newFlags?: Array<{
+        type: string;
+        severity: string;
+        title: string;
+        description: string;
+      }>;
+
+      liquidityChange?: {
+        previous: string;
+        current: string;
+        percentage?: number;
+      };
+
+      holderChange?: {
+        previous: number;
+        current: number;
+        percentage?: number;
+      };
+
+      // Actions
+      viewContractUrl: string;
+      manageAlertsUrl: string;
+      unsubscribeUrl: string;
+    }
+  ): Promise<void> {
+    try {
+      const subjectMap = {
+        risk_increase: "⚠️ Risk Alert",
+        new_flags: "🚩 New Security Flags Detected",
+        liquidity_change: "💧 Liquidity Changed",
+        holder_change: "👥 Holder Distribution Changed",
+        critical_alert: "🚨 CRITICAL ALERT",
+      };
+
+      const contractName =
+        context.contractNickname ||
+        `${context.contractAddress.slice(0, 8)}...${context.contractAddress.slice(-6)}`;
+
+      await resend.emails.send({
+        from: "ContractGuard Alerts <alerts@contractguard.ai>",
+        to,
+        subject: `${subjectMap[context.alertType]}: ${contractName}`,
+        html: this.getContractAlertTemplate(context),
+        headers: {
+          "X-Entity-Ref-ID": context.contractAddress,
+        },
+      });
+
+      console.log(`[${this.serviceName}] Contract alert sent to ${to}`);
+    } catch (error) {
+      console.error(
+        `[${this.serviceName}] Failed to send contract alert:`,
+        error
+      );
+      throw new Error("Failed to send contract alert");
+    }
+  }
+
+  /**
+   * Send weekly watchlist digest
+   */
+  async sendWeeklyDigest(
+    to: string,
+    context: {
+      userName?: string;
+      weekStart: Date;
+      weekEnd: Date;
+
+      contracts: Array<{
+        address: string;
+        nickname?: string;
+        chain: string;
+        currentRiskScore: number;
+        riskScoreChange: number;
+        newFlagsCount: number;
+        status: "safe" | "caution" | "danger";
+      }>;
+
+      totalAlerts: number;
+      criticalAlerts: number;
+
+      viewDashboardUrl: string;
+      manageAlertsUrl: string;
+    }
+  ): Promise<void> {
+    try {
+      await resend.emails.send({
+        from: "ContractGuard Digest <digest@contractguard.ai>",
+        to,
+        subject: `📊 Weekly Watchlist Report - ${context.totalAlerts} alerts`,
+        html: this.getWeeklyDigestTemplate(context),
+      });
+
+      console.log(`[${this.serviceName}] Weekly digest sent to ${to}`);
+    } catch (error) {
+      console.error(
+        `[${this.serviceName}] Failed to send weekly digest:`,
+        error
+      );
+      // Don't throw - digest failure shouldn't block main flow
+    }
+  }
+
+  /**
    * Email template for verification
    */
   private getVerificationEmailTemplate(
@@ -620,5 +746,54 @@ export class EmailService {
 </body>
 </html>
         `.trim();
+  }
+
+  /**
+   * Email template for contract alerts
+   */
+  private getContractAlertTemplate(context: any): string {
+    const { render } = require("@react-email/render");
+    const { ContractAlertEmail } = require("../../emails/ContractAlertEmail");
+
+    const emailComponent = ContractAlertEmail({
+      userName: context.userName,
+      contractNickname: context.contractNickname,
+      contractAddress: context.contractAddress,
+      chain: context.chain,
+      alertType: context.alertType,
+      severity: context.severity,
+      previousRiskScore: context.previousRiskScore,
+      currentRiskScore: context.currentRiskScore,
+      riskScoreChange: context.riskScoreChange,
+      newFlags: context.newFlags,
+      liquidityChange: context.liquidityChange,
+      holderChange: context.holderChange,
+      viewContractUrl: context.viewContractUrl,
+      manageAlertsUrl: context.manageAlertsUrl,
+      unsubscribeUrl: context.unsubscribeUrl,
+    });
+
+    return render(emailComponent);
+  }
+
+  /**
+   * Email template for weekly digest
+   */
+  private getWeeklyDigestTemplate(context: any): string {
+    const { render } = require("@react-email/render");
+    const { WeeklyDigestEmail } = require("../../emails/WeeklyDigestEmail");
+
+    const emailComponent = WeeklyDigestEmail({
+      userName: context.userName,
+      weekStart: new Date(context.weekStart),
+      weekEnd: new Date(context.weekEnd),
+      contracts: context.contracts,
+      totalAlerts: context.totalAlerts,
+      criticalAlerts: context.criticalAlerts,
+      viewDashboardUrl: context.viewDashboardUrl,
+      manageAlertsUrl: context.manageAlertsUrl,
+    });
+
+    return render(emailComponent);
   }
 }

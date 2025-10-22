@@ -9,7 +9,7 @@ import {
   getReferralCookie,
   clearReferralCookie,
 } from "@/lib/utils/referral-cookies";
-import { getClientInfo } from "@/lib/utils/client-info";
+import { getClientInfo } from "@/lib/utils/server-client-info";
 import crypto from "crypto";
 
 interface UserProfile {
@@ -34,7 +34,7 @@ export class AuthService {
   async syncUser(
     stackUserId: string,
     email: string,
-    profile?: UserProfile,
+    profile?: UserProfile
   ): Promise<User> {
     try {
       // Check if user already exists by Stack ID
@@ -110,7 +110,7 @@ export class AuthService {
 
         if (referralCode) {
           console.log(
-            `Referral signup detected for user ${createdUser.id} with code: ${referralCode}`,
+            `Referral signup detected for user ${createdUser.id} with code: ${referralCode}`
           );
 
           const referralService = new ReferralService();
@@ -124,12 +124,12 @@ export class AuthService {
 
           if (result.success) {
             console.log(
-              `Referral signup bonus applied successfully for user ${createdUser.id}`,
+              `Referral signup bonus applied successfully for user ${createdUser.id}`
             );
 
             if (result.reward) {
               console.log(
-                `Reward granted: ${result.reward.type} x${result.reward.amount}`,
+                `Reward granted: ${result.reward.type} x${result.reward.amount}`
               );
             }
           } else {
@@ -374,7 +374,7 @@ export class AuthService {
     subscriptionData?: {
       stripeSubscriptionId?: string;
       subscriptionStatus?: string;
-    },
+    }
   ): Promise<void> {
     try {
       await db
@@ -652,7 +652,7 @@ export class AuthService {
       verificationToken?: string | null;
       verificationTokenExpires?: Date | null;
       lastLoginAt?: Date;
-    },
+    }
   ): Promise<User> {
     try {
       const [updatedUser] = await db

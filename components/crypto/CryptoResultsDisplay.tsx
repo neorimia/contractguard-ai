@@ -15,6 +15,7 @@ import { PDFExportButton } from "./PDFExportButton";
 import { SummaryReportView } from "./SummaryReportView";
 import { ReportResponse } from "@/lib/types/report-types";
 import ShareOnX from "@/components/ShareOnX";
+import { AddToWatchlistButton } from "@/components/watchlist/AddToWatchlistButton";
 import {
   Shield,
   Code,
@@ -132,14 +133,25 @@ export function CryptoResultsDisplay({
           <h2 className="text-4xl font-semibold tracking-tight">
             Results<span className="text-neutral-500">.</span>
           </h2>
-          <PDFExportButton className="mt-4" result={result} />
+          {contractAddress && (
+            <div className="flex flex-col md:flex-row gap-3 mt-4">
+              <PDFExportButton result={result} />
+              <AddToWatchlistButton
+                contractAddress={contractAddress}
+                chain={result.chain}
+                className="bg-white text-black hover:bg-gray-100"
+              />
+            </div>
+          )}
         </div>
         <div className="flex items-center gap-3">
           {contractAddress && (
-            <ShareOnX
-              result={result as any}
-              contractAddress={contractAddress}
-            />
+            <>
+              <ShareOnX
+                result={result as any}
+                contractAddress={contractAddress}
+              />
+            </>
           )}
         </div>
       </div>
@@ -293,9 +305,18 @@ export function CryptoResultsDisplay({
                     </>
                   )}
 
-                  {section.id === "heuristics" && result.heuristicResults && (
-                    <HeuristicsBreakdown results={result.heuristicResults} />
-                  )}
+                  {section.id === "heuristics" &&
+                    (result.heuristicResults ? (
+                      <HeuristicsBreakdown results={result.heuristicResults} />
+                    ) : (
+                      <div className="text-center py-8 text-neutral-500">
+                        <Code className="h-12 w-12 mx-auto mb-3 opacity-50" />
+                        <p>Heuristics breakdown not available</p>
+                        <p className="text-sm mt-1">
+                          This feature requires additional blockchain data
+                        </p>
+                      </div>
+                    ))}
 
                   {section.id === "metadata" && (
                     <ContractMetadataCard
