@@ -7,6 +7,7 @@ import { PaymentFailedEmail } from "@/emails/PaymentFailedEmail";
 import { CancellationEmail } from "@/emails/CancellationEmail";
 import { FeedbackNotificationEmail } from "@/emails/FeedbackNotificationEmail";
 import { WelcomeBonusEmail } from "@/emails/WelcomeBonusEmail";
+import { PurchaseReceiptEmail } from "@/emails/PurchaseReceiptEmail";
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
@@ -235,6 +236,44 @@ export class EmailService {
   }
 
   /**
+   * Send purchase receipt email
+   */
+  async sendPurchaseReceipt(
+    to: string,
+    context: {
+      firstName?: string;
+      amount: number;
+      credits: number;
+      purchaseId: string;
+      purchaseType:
+        | "instant_credits"
+        | "pro_subscription"
+        | "team_subscription";
+      receiptUrl?: string;
+      isGuest?: boolean;
+    }
+  ): Promise<void> {
+    try {
+      const html = await render(PurchaseReceiptEmail(context));
+
+      await resend.emails.send({
+        from: "ContractGuard AI <billing@contractguard.ai>",
+        to,
+        subject: "Purchase Receipt - ContractGuard AI 🧾",
+        html,
+      });
+
+      console.log(`[${this.serviceName}] Purchase receipt sent to ${to}`);
+    } catch (error) {
+      console.error(
+        `[${this.serviceName}] Failed to send purchase receipt:`,
+        error
+      );
+      // Don't throw - email failure shouldn't block main flow
+    }
+  }
+
+  /**
    * Send magic link for soft signup (email-only registration)
    */
   async sendMagicLink(
@@ -254,10 +293,7 @@ export class EmailService {
 
       console.log(`[${this.serviceName}] Magic link sent to ${to}`);
     } catch (error) {
-      console.error(
-        `[${this.serviceName}] Error sending magic link:`,
-        error
-      );
+      console.error(`[${this.serviceName}] Error sending magic link:`, error);
       throw new Error("Failed to send magic link");
     }
   }

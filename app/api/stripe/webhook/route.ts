@@ -188,6 +188,13 @@ async function handleInstantPurchase(session: Stripe.Checkout.Session) {
 
   // Credit the user/guest account with instant credits
   if (purchase.userId) {
+    // Fetch user data for email
+    const [user] = await db
+      .select()
+      .from(users)
+      .where(eq(users.id, purchase.userId))
+      .limit(1);
+
     // Registered user → add instant credits
     const result = await paymentService.addInstantCredits(
       purchase.userId,
@@ -202,52 +209,67 @@ async function handleInstantPurchase(session: Stripe.Checkout.Session) {
       console.error(`Failed to add credits to user ${purchase.userId}`);
     }
 
-      // ============================================================
-      // REFERRAL SYSTEM INTEGRATION
-      // Award referral credit for instant purchase
-      // ============================================================
-      try {
-        console.log(`Checking for referral reward for user ${purchase.userId}`);
+    // ============================================================
+    // REFERRAL SYSTEM INTEGRATION
+    // Award referral credit for instant purchase
+    // ============================================================
+    try {
+      console.log(`Checking for referral reward for user ${purchase.userId}`);
 
-        const referralResult = await referralService.processInstantPurchase({
-          referredUserId: purchase.userId,
-          purchaseAmount: purchase.amount,
-        });
+      const referralResult = await referralService.processInstantPurchase({
+        referredUserId: purchase.userId,
+        purchaseAmount: purchase.amount,
+      });
 
-        if (referralResult.success) {
-          console.log(`✅ Referral reward applied for user ${purchase.userId}`);
-          if (referralResult.reward) {
-            console.log(
-              `✅ Referrer received: ${referralResult.reward.type} x${referralResult.reward.amount}`
-            );
-          }
-        } else if (referralResult.error === "no_referral_found") {
+      if (referralResult.success) {
+        console.log(`✅ Referral reward applied for user ${purchase.userId}`);
+        if (referralResult.reward) {
           console.log(
-            `ℹ️ No referral found for user ${purchase.userId} (not referred)`
-          );
-        } else {
-          console.warn(
-            `⚠️ Referral reward failed for user ${purchase.userId}: ${referralResult.error}`
+            `✅ Referrer received: ${referralResult.reward.type} x${referralResult.reward.amount}`
           );
         }
-      } catch (referralError) {
-        console.error(
-          "❌ Error processing instant purchase referral:",
-          referralError
-        );
-        // Don't fail webhook - log error and continue
-      }
-      // ============================================================
-
-      // Send receipt email
-      if (purchase.guestEmail || user.email) {
-        const siteUrl =
-          process.env.NEXT_PUBLIC_SITE_URL || "https://contractguard.ai";
-
-        // TODO: Implement sendPurchaseReceipt email template
+      } else if (referralResult.error === "no_referral_found") {
         console.log(
-          `TODO: Send purchase receipt to ${purchase.guestEmail || user.email}`
+          `ℹ️ No referral found for user ${purchase.userId} (not referred)`
         );
+      } else {
+        console.warn(
+          `⚠️ Referral reward failed for user ${purchase.userId}: ${referralResult.error}`
+        );
+      }
+    } catch (referralError) {
+      console.error(
+        "❌ Error processing instant purchase referral:",
+        referralError
+      );
+      // Don't fail webhook - log error and continue
+    }
+    // ============================================================
+
+    // Send receipt email
+    if (purchase.guestEmail || user?.email) {
+      try {
+        await emailService.sendPurchaseReceipt(
+          purchase.guestEmail || user.email,
+          {
+            firstName:
+              user?.displayName || user?.email?.split("@")[0] || "there",
+            amount: purchase.amount,
+            credits: purchase.credits || 0,
+            purchaseId: purchase.id,
+            purchaseType: purchase.type as
+              | "instant_credits"
+              | "pro_subscription"
+              | "team_subscription",
+            isGuest: !!purchase.guestEmail,
+          }
+        );
+        console.log(
+          `✅ Purchase receipt sent to ${purchase.guestEmail || user.email}`
+        );
+      } catch (emailError) {
+        console.error("❌ Failed to send purchase receipt:", emailError);
+        // Don't fail webhook - log error and continue
       }
     }
   } else if (purchase.guestSessionId) {
@@ -292,11 +314,23 @@ async function handleInstantPurchase(session: Stripe.Checkout.Session) {
 
     // Send receipt to guest email
     if (purchase.guestEmail) {
-      const siteUrl =
-        process.env.NEXT_PUBLIC_SITE_URL || "https://contractguard.ai";
-
-      // TODO: Implement sendGuestPurchaseReceipt email template
-      console.log(`TODO: Send guest receipt to ${purchase.guestEmail}`);
+      try {
+        await emailService.sendPurchaseReceipt(purchase.guestEmail, {
+          firstName: "there",
+          amount: purchase.amount,
+          credits: purchase.credits || 0,
+          purchaseId: purchase.id,
+          purchaseType: purchase.type as
+            | "instant_credits"
+            | "pro_subscription"
+            | "team_subscription",
+          isGuest: true,
+        });
+        console.log(`✅ Guest purchase receipt sent to ${purchase.guestEmail}`);
+      } catch (emailError) {
+        console.error("❌ Failed to send guest purchase receipt:", emailError);
+        // Don't fail webhook - log error and continue
+      }
     }
   }
 }
@@ -746,13 +780,29 @@ async function handlePaymentIntentSucceeded(
 
       // Send receipt email
       if (purchase.guestEmail || user.email) {
-        const siteUrl =
-          process.env.NEXT_PUBLIC_SITE_URL || "https://contractguard.ai";
-
-        // TODO: Implement sendPurchaseReceipt email template
-        console.log(
-          `TODO: Send purchase receipt to ${purchase.guestEmail || user.email}`
-        );
+        try {
+          await emailService.sendPurchaseReceipt(
+            purchase.guestEmail || user.email,
+            {
+              firstName:
+                user?.displayName || user?.email?.split("@")[0] || "there",
+              amount: purchase.amount,
+              credits: purchase.credits || 0,
+              purchaseId: purchase.id,
+              purchaseType: purchase.type as
+                | "instant_credits"
+                | "pro_subscription"
+                | "team_subscription",
+              isGuest: !!purchase.guestEmail,
+            }
+          );
+          console.log(
+            `✅ Purchase receipt sent to ${purchase.guestEmail || user.email}`
+          );
+        } catch (emailError) {
+          console.error("❌ Failed to send purchase receipt:", emailError);
+          // Don't fail webhook - log error and continue
+        }
       }
     }
   } else if (purchase.guestSessionId) {
@@ -797,11 +847,23 @@ async function handlePaymentIntentSucceeded(
 
     // Send receipt to guest email
     if (purchase.guestEmail) {
-      const siteUrl =
-        process.env.NEXT_PUBLIC_SITE_URL || "https://contractguard.ai";
-
-      // TODO: Implement sendGuestPurchaseReceipt email template
-      console.log(`TODO: Send guest receipt to ${purchase.guestEmail}`);
+      try {
+        await emailService.sendPurchaseReceipt(purchase.guestEmail, {
+          firstName: "there",
+          amount: purchase.amount,
+          credits: purchase.credits || 0,
+          purchaseId: purchase.id,
+          purchaseType: purchase.type as
+            | "instant_credits"
+            | "pro_subscription"
+            | "team_subscription",
+          isGuest: true,
+        });
+        console.log(`✅ Guest purchase receipt sent to ${purchase.guestEmail}`);
+      } catch (emailError) {
+        console.error("❌ Failed to send guest purchase receipt:", emailError);
+        // Don't fail webhook - log error and continue
+      }
     }
   }
 }
