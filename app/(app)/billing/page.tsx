@@ -656,7 +656,7 @@ export default function BillingPage() {
                   <div className="p-6">
                     <div className="flex items-center justify-between mb-6">
                       <h2 className="text-xl font-semibold text-black dark:text-white">
-                        Instant Report Credits
+                        Instant Credits
                       </h2>
                       <span className="px-3 py-1 text-xs font-medium rounded-full bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-300 flex items-center gap-1">
                         <Coins className="h-3 w-3" />
@@ -674,7 +674,7 @@ export default function BillingPage() {
                           {instantCredits.balance}
                         </span>
                         <span className="text-lg text-black/60 dark:text-white/60">
-                          {instantCredits.balance === 1 ? "report" : "reports"}
+                          {instantCredits.balance === 1 ? "credit" : "credits"}
                         </span>
                       </div>
                       {instantCredits.usedToday > 0 && (

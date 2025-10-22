@@ -92,7 +92,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json(
         {
           error: "Invalid package",
-          details: "Please select a valid instant report package",
+          details: "Please select a valid instant credits package",
         },
         { status: 400 }
       );
@@ -174,7 +174,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Check instant report purchase limits (for contract-specific purchases)
+    // Check instant credits purchase limits (for contract-specific purchases)
     if (contractAddress) {
       const limitCheck = await paymentService.checkInstantReportLimits(
         localUserId,
@@ -310,7 +310,7 @@ export async function POST(req: NextRequest) {
 
     const purchaseId = purchaseRecord.id;
 
-    // Instant reports removed - only instant credits are used now
+    // Instant credits purchase completed
 
     return NextResponse.json({
       url: session.url,

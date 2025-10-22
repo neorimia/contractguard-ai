@@ -243,7 +243,7 @@ export async function POST(req: NextRequest) {
       // Determine upgrade message based on current state
       let upgradeMessage = "Upgrade to Pro for unlimited scans!";
       if (accessStatus.accessType === "instant_credit") {
-        upgradeMessage = "Buy more instant reports or upgrade to Pro.";
+        upgradeMessage = "Buy more instant credits or upgrade to Pro.";
       }
 
       return NextResponse.json(

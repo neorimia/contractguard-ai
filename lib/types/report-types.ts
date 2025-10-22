@@ -11,7 +11,7 @@ import { RiskFlag, ContractMetadata } from "@/db/schema";
  */
 export type ReportAccessLevel =
   | "summary" // Free users, anonymous users - limited data
-  | "full"; // Pro/Team users, instant report purchasers - complete data
+  | "full"; // Pro/Team users, instant credit holders - complete data
 
 /**
  * Summary Report Data - Limited information for free users
@@ -48,10 +48,10 @@ export interface SummaryReportData {
   accessLevel: "summary";
   upgradeRequired: boolean;
   upgradeOptions: {
-    instantReport: {
+    instantCredits: {
       price: number; // cents
       description: string;
-      validFor: string; // "24 hours"
+      validFor: string; // "Never expires"
     };
     proSubscription: {
       price: number; // cents
@@ -142,9 +142,8 @@ export interface ReportAccessStatus {
   userId?: number;
   guestSessionId?: string;
 
-  // For instant reports
-  instantReportId?: string;
-  instantReportExpiresAt?: Date;
+  // For instant credits
+  instantCredits?: number;
 
   // Reason for access denial
   reason?: string;

@@ -20,7 +20,7 @@ import {
  *
  * Priority hierarchy:
  * 1. Pro/Team subscription → full access
- * 2. Valid instant report purchase → full access (24h)
+ * 2. Instant credits > 0 → full access
  * 3. Free tier / Anonymous → summary only
  *
  * @param userId - App user ID (nullable for anonymous)
@@ -67,7 +67,7 @@ export async function determineReportAccess(
       };
     }
 
-    // Instant reports removed - only instant credits are used now
+    // Check for instant credits - if user has credits, they get full access
 
     // Check for instant credits - if user has credits, they get full access
     if (user.instantCredits && user.instantCredits > 0) {
@@ -96,7 +96,7 @@ export async function determineReportAccess(
 
   // Case 2: Anonymous session (guest user)
   if (guestSessionId) {
-    // Instant reports removed - only instant credits are used now
+    // Check for instant credits - if user has credits, they get full access
 
     // Check for guest user with instant credits
     const guestUser = await db.query.users.findFirst({
@@ -177,10 +177,10 @@ export function transformToSummaryReport(
     accessLevel: "summary",
     upgradeRequired: true,
     upgradeOptions: {
-      instantReport: {
+      instantCredits: {
         price: 499, // $4.99 in cents
-        description: "One-time access to full report",
-        validFor: "24 hours",
+        description: "One-time purchase of instant credits",
+        validFor: "Never expires",
       },
       proSubscription: {
         price: 2900, // $29/month in cents

@@ -114,7 +114,7 @@ export function SummaryReportView({
   const RiskIcon = riskConfig.icon;
 
   // Calculate savings for instant credits vs subscription
-  const instantPrice = data.upgradeOptions.instantReport.price / 100;
+  const instantPrice = data.upgradeOptions.instantCredits.price / 100;
   const monthlyPrice = data.upgradeOptions.proSubscription.price / 100;
   const dailyInstantCost = instantPrice; // Assuming 1 report per day
   const dailyProCost = monthlyPrice / 30;
@@ -385,7 +385,7 @@ export function SummaryReportView({
                   ${instantPrice}
                 </div>
                 <p className="text-sm text-white/70">
-                  {data.upgradeOptions.instantReport.description}
+                  {data.upgradeOptions.instantCredits.description}
                 </p>
                 <ul className="text-sm space-y-2">
                   <li className="flex items-center gap-2 text-white/80">
@@ -398,7 +398,7 @@ export function SummaryReportView({
                   </li>
                   <li className="flex items-center gap-2 text-white/80">
                     <Clock className="h-4 w-4 text-white" />
-                    {data.upgradeOptions.instantReport.validFor} access
+                    {data.upgradeOptions.instantCredits.validFor} access
                   </li>
                 </ul>
               </div>

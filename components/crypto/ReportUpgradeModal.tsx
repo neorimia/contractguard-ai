@@ -206,7 +206,7 @@ export function ReportUpgradeModal({
                       <div className="text-3xl font-bold text-white">
                         ${instantPriceOptions[1].price}
                         <span className="text-sm font-normal text-white/70 ml-1">
-                          for {instantPriceOptions[1].credits} reports
+                          for {instantPriceOptions[1].credits} credits
                         </span>
                       </div>
 
