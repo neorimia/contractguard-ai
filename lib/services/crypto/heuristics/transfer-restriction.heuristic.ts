@@ -99,7 +99,11 @@ export class TransferRestrictionHeuristic extends BaseHeuristic {
       confidence: 80,
       flag: {
         type: "transfer_restrictions",
-        severity,
+        severity: severity.toUpperCase() as
+          | "LOW"
+          | "MEDIUM"
+          | "HIGH"
+          | "CRITICAL",
         title: "Transfer Restrictions Detected",
         description: `This contract implements transfer restrictions that could prevent holders from selling tokens. ${issues.length} restriction mechanism(s) found.`,
         evidence: issues.join(" | "),

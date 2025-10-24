@@ -1,13 +1,13 @@
 "use client";
 
 import { cn } from "@/lib/utils";
-import { Audit } from "@/db/schema";
+import { CryptoAudit } from "@/db/schema";
 import { trackEvent, AnalyticsEvents } from "@/lib/analytics/posthog";
 import Image from "next/image";
 import { useTheme } from "next-themes";
 
 interface ShareOnXProps {
-  result: Audit;
+  result: CryptoAudit;
   contractAddress?: string;
 }
 
@@ -29,9 +29,9 @@ export default function ShareOnX({ result, contractAddress }: ShareOnXProps) {
   const tweetText = `I just scanned a smart contract with ContractGuard AI!
 
 ${getRiskEmoji(result.riskScore || 0)} Risk Score: ${result.riskScore}/100
-${result.recommendation === "AVOID" ? "🚫" : result.recommendation === "CAUTION" ? "⚠️" : "✅"} Recommendation: ${result.recommendation}
+${result.riskCategory === "critical" ? "🚫" : result.riskCategory === "high" ? "⚠️" : "✅"} Risk Level: ${result.riskCategory}
 
-${result?.sourceCode ? "Full security analysis completed" : "Basic security check completed"}
+${result?.metadata?.sourceCode ? "Full security analysis completed" : "Basic security check completed"}
 
 Scan your contracts at`;
 
@@ -42,7 +42,7 @@ Scan your contracts at`;
     trackEvent(AnalyticsEvents.RESULT_SHARED, {
       contractAddress: contractAddress || result.contractAddress,
       riskScore: result.riskScore,
-      recommendation: result.recommendation,
+      riskCategory: result.riskCategory,
       platform: "twitter",
     });
   };
@@ -158,9 +158,9 @@ Scan your contracts at`;
               </span>
             </div>
             <p className="text-gray-700 dark:text-gray-300 text-sm">
-              Recommendation:{" "}
+              Risk Level:{" "}
               <strong className="text-gray-900 dark:text-white">
-                {result.recommendation}
+                {result.riskCategory}
               </strong>
             </p>
             {contractAddress && contractAddress.length >= 18 && (

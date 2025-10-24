@@ -9,63 +9,26 @@ const redis = new Redis({
   token: process.env.UPSTASH_REDIS_TOKEN!,
 });
 
-interface RateLimitConfig {
-  free: { limit: number; window: number };
-  pro: { limit: number; window: number };
-  enterprise: { limit: number; window: number };
-}
-
-const RATE_LIMITS: RateLimitConfig = {
-  free: { limit: 3, window: 24 * 60 * 60 }, // 3 per day
-  pro: { limit: 100, window: 24 * 60 * 60 }, // 100 per day
-  enterprise: { limit: -1, window: 24 * 60 * 60 }, // unlimited
-};
+// Rate limiting now uses AuthService.checkScanLimit() which respects
+// the monthly limits from PRICING_LIMITS configuration
+// This ensures consistency across all scan limit checks
 
 export async function checkRateLimit(
   identifier: string, // IP or user ID
   tier: "free" | "pro" | "enterprise" = "free"
 ): Promise<{ allowed: boolean; remaining: number; resetAt: number }> {
-  const config = RATE_LIMITS[tier];
-  const key = `ratelimit:${tier}:${identifier}`;
+  // This function is deprecated - use AuthService.checkScanLimit() instead
+  // which properly handles monthly limits from PRICING_LIMITS
+  console.warn(
+    "checkRateLimit is deprecated. Use AuthService.checkScanLimit() instead."
+  );
 
-  try {
-    const current = await redis.get<number>(key);
-    const now = Math.floor(Date.now() / 1000);
-
-    if (!current) {
-      // First request
-      await redis.set(key, 1, { ex: config.window });
-      return {
-        allowed: true,
-        remaining: config.limit - 1,
-        resetAt: now + config.window,
-      };
-    }
-
-    if (current >= config.limit) {
-      // Rate limit exceeded
-      const ttl = await redis.ttl(key);
-      return {
-        allowed: false,
-        remaining: 0,
-        resetAt: now + ttl,
-      };
-    }
-
-    // Increment counter
-    await redis.incr(key);
-    const ttl = await redis.ttl(key);
-
-    return {
-      allowed: true,
-      remaining: config.limit - current - 1,
-      resetAt: now + ttl,
-    };
-  } catch (error) {
-    console.error("Rate limit check failed:", error);
-    // Fail open - allow request if Redis fails
-    return { allowed: true, remaining: 0, resetAt: 0 };
-  }
+  // For backward compatibility, return a permissive result
+  return {
+    allowed: true,
+    remaining: -1, // Unknown
+    resetAt: Math.floor(Date.now() / 1000) + 24 * 60 * 60, // 24 hours from now
+  };
 }
 
 // Middleware function with user authentication integration
@@ -87,13 +50,27 @@ export async function rateLimitMiddleware(req: NextRequest) {
       await authService.checkScanLimit(user.id);
 
     if (!allowed) {
+      // Generate appropriate error message based on user tier
+      let errorMessage = "Scan limit exceeded";
+      let upgradeUrl = "/pricing";
+
+      if (user.tier === "free") {
+        errorMessage =
+          "You've used all your free scans. Upgrade to a subscription plan for more scans!";
+      } else if (["starter", "pro", "team"].includes(user.tier)) {
+        errorMessage = `You've used all your monthly scans. Additional scans are available with overage pricing.`;
+        upgradeUrl = "/billing"; // Direct to billing for overage
+      } else {
+        errorMessage = "Your limit will reset soon.";
+      }
+
       return NextResponse.json(
         {
           error: "Scan limit exceeded",
-          message: `You've used all your scans for today. ${user.tier === "free" ? "Upgrade to Pro for more scans!" : "Your limit will reset soon."}`,
+          message: errorMessage,
           scansRemaining: 0,
           resetAt: resetAt.toISOString(),
-          upgradeUrl: "/pricing",
+          upgradeUrl,
           status: "error",
         },
         {
@@ -124,13 +101,3 @@ export async function rateLimitMiddleware(req: NextRequest) {
     );
   }
 }
-
-// Usage in API route
-// import { rateLimitMiddleware } from '@/lib/middleware/rate-limit';
-//
-// export async function POST(req: NextRequest) {
-//   const rateLimit = await rateLimitMiddleware(req, 'free');
-//   if (!rateLimit.allowed) return rateLimit;
-//
-//   // Continue with API logic...
-// }

@@ -23,17 +23,27 @@ export async function POST(req: NextRequest) {
     if (!stackUser || !stackUser.primaryEmail) {
       return NextResponse.json(
         { error: "Unauthorized", status: "error" },
-        { status: 401 }
+        { status: 401 },
       );
     }
 
-    // 2. Get app user
-    const appUser = await authService.getUserByStackId(stackUser.id);
+    // 2. Get or sync app user
+    let appUser = await authService.getUserByStackId(stackUser.id);
 
     if (!appUser) {
-      return NextResponse.json(
-        { error: "User not found", status: "error" },
-        { status: 404 }
+      // User doesn't exist in our database yet - sync them
+      console.log("Syncing new user from Stack Auth:", {
+        stackUserId: stackUser.id,
+        email: stackUser.primaryEmail,
+      });
+
+      appUser = await authService.syncUser(
+        stackUser.id,
+        stackUser.primaryEmail,
+        {
+          displayName: stackUser.displayName || undefined,
+          avatarUrl: undefined, // Stack Auth doesn't provide avatarUrl in this context
+        },
       );
     }
 
@@ -46,7 +56,7 @@ export async function POST(req: NextRequest) {
     if (!isValidSubscriptionTier(normalizedTier)) {
       return NextResponse.json(
         { error: "Invalid tier", status: "error" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -55,10 +65,10 @@ export async function POST(req: NextRequest) {
     if (!pricingPlan) {
       return NextResponse.json(
         { error: "Invalid pricing plan", status: "error" },
-        { status: 400 }
+        { status: 400 },
       );
     }
-
+    console.log("pricingPlan", pricingPlan);
     // Map tier to price ID (support custom priceId override)
     const stripePriceId = priceId || pricingPlan.stripePriceId;
 
@@ -70,7 +80,7 @@ export async function POST(req: NextRequest) {
           details: `The ${normalizedTier} plan is not properly configured. Please contact support.`,
           status: "error",
         },
-        { status: 500 }
+        { status: 500 },
       );
     }
 
@@ -117,7 +127,7 @@ export async function POST(req: NextRequest) {
         details: error.message,
         status: "error",
       },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

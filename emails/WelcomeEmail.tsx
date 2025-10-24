@@ -5,15 +5,16 @@ import { EmailHeader } from "./components/EmailHeader";
 import { EmailButton } from "./components/EmailButton";
 import { EmailFooter } from "./components/EmailFooter";
 import { InfoBox } from "./components/InfoBox";
+import { PRICING_CONFIG } from "../lib/config/pricing";
 
 interface WelcomeEmailProps {
   displayName?: string;
-  scansRemaining: number;
+  tier?: "free" | "starter" | "pro" | "team";
 }
 
 export function WelcomeEmail({
   displayName = "there",
-  scansRemaining = 3,
+  tier = "free",
 }: WelcomeEmailProps) {
   const siteUrl =
     process.env.NEXT_PUBLIC_SITE_URL || "https://contractguard.ai";
@@ -36,17 +37,25 @@ export function WelcomeEmail({
         <Text style={styles.heading}>What You Can Do</Text>
         <ul style={styles.list}>
           <li style={styles.listItem}>
-            Scan {scansRemaining} contracts per day (Free tier)
+            AI-powered smart contract security analysis
           </li>
           <li style={styles.listItem}>
-            Get AI-powered risk assessments in seconds
+            Detect scams, honeypots, and rug pull patterns
           </li>
           <li style={styles.listItem}>
-            Detect honeypots and rug pull patterns
+            Plain-English risk scoring and explanations
           </li>
-          <li style={styles.listItem}>Share results on social media</li>
           <li style={styles.listItem}>
-            Access detailed audit reports with plain English explanations
+            Multi-chain support (Ethereum, Base, and more)
+          </li>
+          <li style={styles.listItem}>
+            Share audit reports on social media
+          </li>
+          <li style={styles.listItem}>
+            Email alerts for watched contracts (subscription plans)
+          </li>
+          <li style={styles.listItem}>
+            PDF export functionality (subscription plans)
           </li>
         </ul>
 
@@ -66,13 +75,26 @@ export function WelcomeEmail({
 
         <InfoBox type="info">
           <Text style={styles.infoText}>
-            💡 <strong style={styles.strong}>Pro Tip:</strong> Upgrade to Pro
-            for 100 scans per day, advanced features, and priority support—all
-            for just $29/month.
+            💡 <strong style={styles.strong}>Ready for more scans?</strong>{" "}
+            Choose a plan that fits your needs:
           </Text>
+          <ul style={{ ...styles.list, marginTop: "12px", marginBottom: "12px" }}>
+            <li style={styles.listItem}>
+              <strong style={styles.strong}>Starter:</strong> $
+              {PRICING_CONFIG.starter.price}/mo — {PRICING_CONFIG.starter.monthlyCredits} scans/month (≈1 per day)
+            </li>
+            <li style={styles.listItem}>
+              <strong style={styles.strong}>Pro:</strong> $
+              {PRICING_CONFIG.pro.price}/mo — {PRICING_CONFIG.pro.monthlyCredits} scans/month (≈5 per day) + Priority support
+            </li>
+            <li style={styles.listItem}>
+              <strong style={styles.strong}>Team:</strong> $
+              {PRICING_CONFIG.team.price}/mo — {PRICING_CONFIG.team.monthlyCredits} scans/month + API access
+            </li>
+          </ul>
           <EmailButton
             href={`${siteUrl}/pricing`}
-            text="UPGRADE TO PRO"
+            text="VIEW PRICING PLANS"
             variant="secondary"
             style={{ marginTop: "16px" }}
           />

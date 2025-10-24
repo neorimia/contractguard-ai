@@ -43,7 +43,11 @@ export abstract class BaseHeuristic {
       confidence,
       flag: {
         type: flagType,
-        severity,
+        severity: severity.toUpperCase() as
+          | "LOW"
+          | "MEDIUM"
+          | "HIGH"
+          | "CRITICAL",
         title,
         description,
         evidence,

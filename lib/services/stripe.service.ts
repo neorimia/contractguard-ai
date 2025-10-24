@@ -23,7 +23,11 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
 
 // Stripe Product/Price IDs (configure these in .env)
 export const STRIPE_PRICES = {
+  STARTER_MONTHLY:
+    process.env.STRIPE_STARTER_MONTHLY_PRICE_ID || "price_starter_monthly",
   PRO_MONTHLY: process.env.STRIPE_PRO_MONTHLY_PRICE_ID || "price_pro_monthly",
+  TEAM_MONTHLY:
+    process.env.STRIPE_TEAM_MONTHLY_PRICE_ID || "price_team_monthly",
   ENTERPRISE_MONTHLY:
     process.env.STRIPE_ENTERPRISE_MONTHLY_PRICE_ID ||
     "price_enterprise_monthly",
@@ -283,9 +287,7 @@ export class StripeService {
   /**
    * Get payment methods for a customer
    */
-  async getPaymentMethods(
-    customerId: string
-  ): Promise<Stripe.PaymentMethod[]> {
+  async getPaymentMethods(customerId: string): Promise<Stripe.PaymentMethod[]> {
     try {
       const paymentMethods = await this.stripe.paymentMethods.list({
         customer: customerId,

@@ -366,7 +366,7 @@ export default function PricingSection() {
                         <div className="flex-shrink-0 rounded-full mt-0.5">
                           <Check className="h-3 w-3 text-black dark:text-white" />
                         </div>
-                        <span className="text-xs text-black/80 dark:text-white/80">
+                        <span className="text-xs text-left text-black/80 dark:text-white/80">
                           {feature}
                         </span>
                       </motion.li>

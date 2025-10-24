@@ -87,6 +87,8 @@ export function CryptoScanInterface() {
     instantCredits: number;
     accountType?: string;
   } | null>(null);
+  // AI provider selection state
+  const [selectedAI, setSelectedAI] = useState<"chatgpt" | "claude">("chatgpt");
 
   // New paywall-related state
   const [reportAccess, setReportAccess] = useState<ReportResponse | null>(null);
@@ -203,6 +205,7 @@ export function CryptoScanInterface() {
         body: JSON.stringify({
           contractAddress: address.trim(),
           chain,
+          aiProvider: selectedAI,
         }),
       });
 
@@ -369,6 +372,17 @@ export function CryptoScanInterface() {
     if (e.key === "Enter" && !loading) {
       analyzeContract();
     }
+  };
+
+  // Helper function to determine if AI selector should be shown
+  const shouldShowAISelector = (): boolean => {
+    if (!userAccessStatus) return false;
+
+    return (
+      userAccessStatus.accessType === "pro" ||
+      userAccessStatus.accessType === "team" ||
+      userAccessStatus.accessType === "instant_credit"
+    );
   };
 
   // Paywall modal handlers
@@ -558,6 +572,52 @@ export function CryptoScanInterface() {
                     </Tabs>
                   </div>
                 </div>
+                {/* Alert for unsupported chains */}
+                {chain && !SUPPORTED_CHAINS.find((c) => c.value === chain) && (
+                  <div className="bg-red-500/10 border-red-500/20 p-4 rounded-lg">
+                    <p className="text-red-400 text-sm">
+                      Unsupported blockchain. Please select a supported
+                      blockchain.
+                    </p>
+                  </div>
+                )}
+
+                {/* AI Provider Selection */}
+                {shouldShowAISelector() && (
+                  <div className="space-y-3">
+                    <Label className="text-white text-sm font-medium">
+                      Select AI Provider
+                    </Label>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button
+                          variant="outline"
+                          disabled={loading}
+                          className="w-full justify-between bg-neutral-950 border-neutral-800 text-white hover:bg-neutral-900 hover:text-white h-12"
+                        >
+                          <span>
+                            {selectedAI === "chatgpt" ? "ChatGPT" : "Claude"}
+                          </span>
+                          <ChevronDown className="h-4 w-4 opacity-50" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent className="w-[calc(100vw-2rem)] sm:w-[300px] bg-neutral-900 border-neutral-800">
+                        <DropdownMenuItem
+                          onClick={() => setSelectedAI("chatgpt")}
+                          className="text-white hover:bg-neutral-800 cursor-pointer"
+                        >
+                          <span>ChatGPT</span>
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                          onClick={() => setSelectedAI("claude")}
+                          className="text-white hover:bg-neutral-800 cursor-pointer"
+                        >
+                          <span>Claude</span>
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </div>
+                )}
 
                 {/* Address Input */}
                 <div className="space-y-3">

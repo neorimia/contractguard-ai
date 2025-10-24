@@ -83,7 +83,7 @@ export default function PricingSectionHybrid() {
   };
 
   // Handle subscription upgrade
-  const handleSubscription = async (tier: "pro" | "team") => {
+  const handleSubscription = async (tier: "starter" | "pro" | "team") => {
     trackEvent(AnalyticsEvents.CHECKOUT_INITIATED, {
       tier,
       userId: user?.id,
@@ -210,7 +210,7 @@ export default function PricingSectionHybrid() {
                 </p>
               </div>
 
-              <div className="max-w-4xl mx-auto p-4 sm:p-6 rounded-xl relative backdrop-blur-sm border border-dashed border-black/10 dark:border-white/10 bg-black/[0.01] dark:bg-white/[0.01]">
+              <div className="max-w-6xl mx-auto p-4 sm:p-6 rounded-xl relative backdrop-blur-sm border border-dashed border-black/10 dark:border-white/10 bg-black/[0.01] dark:bg-white/[0.01]">
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6">
                   {PRICING_CONFIG.instant.packages.map((pkg, index) => (
                     <PriceCard
@@ -289,15 +289,41 @@ export default function PricingSectionHybrid() {
                 </div>
               </div>
 
-              <div className="max-w-4xl mx-auto p-4 sm:p-6 rounded-xl relative backdrop-blur-sm border  border-black/10 dark:border-white/10 bg-black/[0.01] dark:bg-white/[0.01]">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="max-w-6xl mx-auto p-4 sm:p-6 rounded-xl relative backdrop-blur-sm border  border-black/10 dark:border-white/10 bg-black/[0.01] dark:bg-white/[0.01]">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  {/* Starter Plan */}
+                  <PriceCard
+                    key="starter"
+                    isPopular={false}
+                    animationDelay={0}
+                    title={PRICING_CONFIG.starter.label}
+                    description="For starters and casual traders"
+                    price={
+                      billingPeriod === "monthly"
+                        ? PRICING_CONFIG.starter.price
+                        : PRICING_CONFIG.starter.price * 12 * 0.8
+                    }
+                    priceLabel={`/${billingPeriod === "monthly" ? "month" : "year"}`}
+                    saveNote={
+                      billingPeriod === "yearly"
+                        ? `Billed annually • Save $${(PRICING_CONFIG.starter.price * 12 * 0.2).toFixed(2)}/year`
+                        : undefined
+                    }
+                    perks={PRICING_CONFIG.starter.perks}
+                    buttonText={
+                      user ? "Subscribe to Starter" : "Sign in to Subscribe"
+                    }
+                    buttonLoading={loadingTier === "starter"}
+                    onButtonClick={() => handleSubscription("starter")}
+                    buttonDisabled={loadingTier !== null}
+                  />
                   {/* Pro Plan */}
                   <PriceCard
                     key="pro"
                     isPopular={true}
                     animationDelay={0}
                     title={PRICING_CONFIG.pro.label}
-                    description="For active traders and DeFi users"
+                    description="For active traders and pro users"
                     price={
                       billingPeriod === "monthly"
                         ? PRICING_CONFIG.pro.price
@@ -319,6 +345,31 @@ export default function PricingSectionHybrid() {
                   />
 
                   {/* Team/API Plan */}
+                  {/*<PriceCard*/}
+                  {/*  key="team"*/}
+                  {/*  isPopular={false}*/}
+                  {/*  animationDelay={0.1}*/}
+                  {/*  title={PRICING_CONFIG.team.label}*/}
+                  {/*  description="For teams and API integrations"*/}
+                  {/*  price={*/}
+                  {/*    billingPeriod === "monthly"*/}
+                  {/*      ? PRICING_CONFIG.team.price*/}
+                  {/*      : PRICING_CONFIG.team.price * 12 * 0.8*/}
+                  {/*  }*/}
+                  {/*  priceLabel={`/${billingPeriod === "monthly" ? "month" : "year"}`}*/}
+                  {/*  saveNote={*/}
+                  {/*    billingPeriod === "yearly"*/}
+                  {/*      ? `Billed annually • Save $${(PRICING_CONFIG.team.price * 12 * 0.2).toFixed(2)}/year`*/}
+                  {/*      : undefined*/}
+                  {/*  }*/}
+                  {/*  perks={PRICING_CONFIG.team.perks}*/}
+                  {/*  buttonText={*/}
+                  {/*    user ? "Subscribe to Team" : "Sign in to Subscribe"*/}
+                  {/*  }*/}
+                  {/*  buttonLoading={loadingTier === "team"}*/}
+                  {/*  onButtonClick={() => handleSubscription("team")}*/}
+                  {/*  buttonDisabled={loadingTier !== null}*/}
+                  {/*/>  */}
                   <PriceCard
                     key="team"
                     isPopular={false}
@@ -337,12 +388,10 @@ export default function PricingSectionHybrid() {
                         : undefined
                     }
                     perks={PRICING_CONFIG.team.perks}
-                    buttonText={
-                      user ? "Subscribe to Team" : "Sign in to Subscribe"
-                    }
+                    buttonText={"Not available now"}
                     buttonLoading={loadingTier === "team"}
                     onButtonClick={() => handleSubscription("team")}
-                    buttonDisabled={loadingTier !== null}
+                    buttonDisabled={true}
                   />
                 </div>
               </div>

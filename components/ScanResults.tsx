@@ -10,11 +10,11 @@ import {
   Shield,
   Info,
 } from "lucide-react";
-import { Audit, Issue } from "@/db/schema";
+import { CryptoAudit, Issue, RiskFlag } from "@/db/schema";
 import ShareOnX from "@/components/ShareOnX";
 
 interface ScanResultsProps {
-  result: Audit;
+  result: CryptoAudit;
   contractAddress?: string;
 }
 
@@ -32,11 +32,16 @@ export default function ScanResults({
 
   // Categorize issues
   const criticalIssues =
-    (result.issues as Issue[])?.filter((i) => i.severity === "CRITICAL") || [];
+    (result.flags as RiskFlag[])?.filter(
+      (flag) => flag.severity === "CRITICAL"
+    ) || [];
   const highIssues =
-    (result.issues as Issue[])?.filter((i) => i.severity === "HIGH") || [];
+    (result.flags as RiskFlag[])?.filter((flag) => flag.severity === "HIGH") ||
+    [];
   const mediumIssues =
-    (result.issues as Issue[])?.filter((i) => i.severity === "MEDIUM") || [];
+    (result.flags as RiskFlag[])?.filter(
+      (flag) => flag.severity === "MEDIUM"
+    ) || [];
 
   const getRiskColor = (score: number) => {
     if (score >= 70) return "text-red-500";
@@ -137,12 +142,14 @@ export default function ScanResults({
                   <div className="absolute inset-0 bg-gradient-to-br from-neutral-800 to-neutral-900" />
                   <div className="relative space-y-4">
                     <div className="text-4xl">
-                      {result.recommendation === "AVOID" && "🚫"}
-                      {result.recommendation === "CAUTION" && "⚠️"}
-                      {result.recommendation === "BUY" && "✅"}
+                      {result.riskCategory === "critical" && "🚫"}
+                      {result.riskCategory === "high" && "⚠️"}
+                      {result.riskCategory === "medium" && "⚠️"}
+                      {result.riskCategory === "low" && "✅"}
+                      {result.riskCategory === "very_low" && "✅"}
                     </div>
                     <div className="text-2xl font-semibold">
-                      {result.recommendation}
+                      {result.riskCategory}
                     </div>
                     <div className="text-sm text-white/60">Recommendation</div>
                   </div>
@@ -153,10 +160,12 @@ export default function ScanResults({
               <div className="rounded-xl bg-neutral-900 p-6">
                 <h4 className="text-lg font-semibold mb-3 flex items-center gap-2">
                   <Info className="h-5 w-5" />
-                  Analysis Summary
+                  Risk Analysis
                 </h4>
                 <p className="text-neutral-400 leading-relaxed">
-                  {result.summary}
+                  This contract has been analyzed for security risks and
+                  potential issues. Review the flags below for detailed
+                  findings.
                 </p>
               </div>
             </div>
@@ -261,19 +270,25 @@ export default function ScanResults({
                 <DetailCard
                   icon="💧"
                   label="Liquidity"
-                  value={result.liquidity || "N/A"}
+                  value={
+                    result.liquidityUsd ? `$${result.liquidityUsd}` : "N/A"
+                  }
                 />
                 <DetailCard
                   icon="💰"
-                  label="Owner Balance"
-                  value={result.ownerBalance || "N/A"}
+                  label="Top Holder Concentration"
+                  value={
+                    result.topHolderConcentration
+                      ? `${result.topHolderConcentration}%`
+                      : "N/A"
+                  }
                 />
               </div>
             </div>
           </SectionItem>
 
           {/* Source Code */}
-          {result.sourceCode && (
+          {result.metadata?.sourceCode && (
             <SectionItem
               section={{ id: "code", title: "Source Code" }}
               expandedSection={expandedSection}
@@ -291,21 +306,9 @@ export default function ScanResults({
                     </span>
                   </div>
                   <pre className="p-4 bg-black/40 rounded-lg text-xs text-neutral-300 overflow-x-auto border border-neutral-800 font-mono max-h-96 overflow-y-auto">
-                    {result.sourceCode}
+                    {result.metadata?.sourceCode}
                   </pre>
                 </div>
-
-                {result.bytecode && (
-                  <div className="rounded-xl bg-neutral-900 p-6 border border-neutral-800">
-                    <h4 className="text-lg font-semibold mb-4 flex items-center gap-2">
-                      <Info className="h-5 w-5" />
-                      Bytecode
-                    </h4>
-                    <pre className="p-4 bg-black/40 rounded-lg text-xs text-neutral-300 overflow-x-auto border border-neutral-800 font-mono max-h-48 overflow-y-auto break-all">
-                      {result.bytecode}
-                    </pre>
-                  </div>
-                )}
               </div>
             </SectionItem>
           )}
@@ -435,7 +438,7 @@ function IssuesContent({
   color,
   severity,
 }: {
-  issues: Issue[];
+  issues: RiskFlag[];
   color: "red" | "orange" | "yellow";
   severity: string;
 }) {
@@ -473,16 +476,11 @@ function IssuesContent({
             {issue.description}
           </p>
           <div className="flex items-center gap-2 text-sm mb-4">
-            <span className="text-neutral-400">💡 Impact:</span>
+            <span className="text-neutral-400">💡 Evidence:</span>
             <span className={`font-medium ${textColorClasses[color]}`}>
-              {issue.impact}
+              {issue.evidence}
             </span>
           </div>
-          {issue.code && (
-            <pre className="p-4 bg-black/40 rounded-lg text-xs text-neutral-300 overflow-x-auto border border-neutral-800 font-mono">
-              {issue.code}
-            </pre>
-          )}
         </motion.div>
       ))}
     </div>
