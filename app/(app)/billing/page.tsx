@@ -100,9 +100,9 @@ export default function BillingPage() {
   const [instantCredits, setInstantCredits] =
     useState<InstantCreditsData | null>(null);
   const [usage, setUsage] = useState<UsageData | null>(null);
-  const [userTier, setUserTier] = useState<"free" | "pro" | "enterprise">(
-    "free"
-  );
+  const [userTier, setUserTier] = useState<
+    "free" | "starter" | "pro" | "team"
+  >("free");
 
   const [loadingPortal, setLoadingPortal] = useState(false);
   const [loadingCancel, setLoadingCancel] = useState(false);
@@ -127,7 +127,7 @@ export default function BillingPage() {
     try {
       const response = await fetch("/api/user/profile");
       const data = (await response.json()) as {
-        tier?: "free" | "pro" | "enterprise";
+        tier?: "free" | "starter" | "pro" | "team";
       };
       console.log("Fetched user tier response:", data);
       if (data.tier) {
@@ -511,20 +511,27 @@ export default function BillingPage() {
                       </h2>
                       <span
                         className={`px-3 py-1 text-xs font-medium rounded-full flex items-center gap-1 ${
-                          userTier === "enterprise"
+                          userTier === "team"
                             ? "bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300"
-                            : "bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300"
+                            : userTier === "pro"
+                              ? "bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300"
+                              : "bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300"
                         }`}
                       >
-                        {userTier === "enterprise" ? (
+                        {userTier === "team" ? (
                           <>
                             <Crown className="h-3 w-3" />
-                            Enterprise
+                            Team
+                          </>
+                        ) : userTier === "pro" ? (
+                          <>
+                            <Zap className="h-3 w-3" />
+                            Pro
                           </>
                         ) : (
                           <>
                             <Zap className="h-3 w-3" />
-                            Pro
+                            Starter
                           </>
                         )}
                       </span>
@@ -564,18 +571,39 @@ export default function BillingPage() {
                       <div className="flex items-center gap-2 text-sm text-black dark:text-white">
                         <CheckCircle className="h-4 w-4 text-green-600 dark:text-green-400" />
                         <span>
-                          {userTier === "pro" ? "100" : "Unlimited"} scans per
-                          day
+                          {userTier === "starter"
+                            ? "30 scans/month (≈1 per day)"
+                            : userTier === "pro"
+                              ? "150 scans/month (≈5 per day)"
+                              : "1,000 scans/month"}
                         </span>
                       </div>
                       <div className="flex items-center gap-2 text-sm text-black dark:text-white">
                         <CheckCircle className="h-4 w-4 text-green-600 dark:text-green-400" />
-                        <span>Priority support</span>
+                        <span>Email alerts for watched contracts</span>
                       </div>
                       <div className="flex items-center gap-2 text-sm text-black dark:text-white">
                         <CheckCircle className="h-4 w-4 text-green-600 dark:text-green-400" />
-                        <span>Advanced analytics</span>
+                        <span>PDF export functionality</span>
                       </div>
+                      {(userTier === "pro" || userTier === "team") && (
+                        <div className="flex items-center gap-2 text-sm text-black dark:text-white">
+                          <CheckCircle className="h-4 w-4 text-green-600 dark:text-green-400" />
+                          <span>Priority support</span>
+                        </div>
+                      )}
+                      {userTier === "team" && (
+                        <>
+                          <div className="flex items-center gap-2 text-sm text-black dark:text-white">
+                            <CheckCircle className="h-4 w-4 text-green-600 dark:text-green-400" />
+                            <span>API access</span>
+                          </div>
+                          <div className="flex items-center gap-2 text-sm text-black dark:text-white">
+                            <CheckCircle className="h-4 w-4 text-green-600 dark:text-green-400" />
+                            <span>White-label options</span>
+                          </div>
+                        </>
+                      )}
                     </div>
 
                     {/* Cancellation Notice */}
@@ -610,13 +638,15 @@ export default function BillingPage() {
 
                     {/* Action Buttons */}
                     <div className="flex flex-col md:flex-row gap-3">
-                      {userTier !== "enterprise" && (
+                      {userTier !== "team" && (
                         <Button
                           className="flex-1 bg-black dark:bg-white text-white dark:text-black hover:bg-black/90 dark:hover:bg-white/90"
                           onClick={() => router.push("/pricing")}
                         >
                           <Crown className="mr-2 h-4 w-4" />
-                          Upgrade to Enterprise
+                          {userTier === "starter"
+                            ? "Upgrade to Pro"
+                            : "Upgrade to Team"}
                         </Button>
                       )}
 
@@ -638,14 +668,14 @@ export default function BillingPage() {
                     Free Tier
                   </h2>
                   <p className="text-sm text-black/60 dark:text-white/60 mb-6">
-                    Upgrade to unlock more scans and advanced features
+                    Upgrade to unlock monthly credits and advanced features
                   </p>
                   <Button
                     className="w-full bg-black dark:bg-white text-white dark:text-black"
                     onClick={() => router.push("/pricing")}
                   >
                     <Zap className="mr-2 h-4 w-4" />
-                    Upgrade to Pro
+                    View Plans
                   </Button>
                 </div>
               )}
