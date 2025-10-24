@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useUser } from "@stackframe/stack";
 import { Button } from "@/components/ui/button";
@@ -18,71 +18,34 @@ import {
   ShoppingCart,
 } from "lucide-react";
 import { trackEvent } from "@/lib/analytics/posthog";
+import {
+  type SubscriptionData,
+  type PaymentMethodData,
+  type InvoiceData,
+  type InstantCreditsData,
+  type UsageData,
+  billingResponseSchema,
+  invoicesResponseSchema,
+  usageResponseSchema,
+  creditsResponseSchema,
+  userTierResponseSchema,
+} from "./schemas";
 
-// Types
-interface SubscriptionData {
-  id: string;
-  status: string;
-  tier: string;
-  currentPeriodStart: string;
-  currentPeriodEnd: string;
-  cancelAtPeriodEnd: boolean;
-  canceledAt: string | null;
-  amount: number;
-  currency: string;
-  interval: string;
-}
+// Security: Validate URLs are from trusted domains
+const TRUSTED_DOMAINS = [
+  "https://billing.stripe.com",
+  "https://checkout.stripe.com",
+  "https://dashboard.stripe.com",
+];
 
-interface PaymentMethodData {
-  id: string;
-  type: string;
-  card: {
-    brand: string;
-    last4: string;
-    expMonth: number;
-    expYear: number;
-  };
-}
-
-interface InvoiceData {
-  id: string;
-  number: string;
-  status: string;
-  amountPaid: number;
-  currency: string;
-  created: string;
-  hostedInvoiceUrl: string;
-  invoicePdf: string;
-  description: string;
-}
-
-interface PurchaseData {
-  id: string;
-  type: "instant_credits" | "pro_subscription" | "team_subscription";
-  credits: number | null;
-  amount: number;
-  currency: string;
-  status: "pending" | "completed" | "failed" | "refunded";
-  createdAt: string;
-  completedAt: string | null;
-}
-
-interface InstantCreditsData {
-  balance: number;
-  usedToday: number;
-  totalPurchased: number;
-  recentPurchases: PurchaseData[];
-}
-
-interface UsageData {
-  current: {
-    scansToday: number;
-    scansThisMonth: number;
-    limit: number;
-    resetAt: string;
-  };
-  tier: string;
-}
+const isValidRedirectUrl = (url: string): boolean => {
+  try {
+    new URL(url); // Validate URL format
+    return TRUSTED_DOMAINS.some((domain) => url.startsWith(domain));
+  } catch {
+    return false;
+  }
+};
 
 export default function BillingPage() {
   const user = useUser();
@@ -115,32 +78,32 @@ export default function BillingPage() {
     text: string;
   } | null>(null);
 
-  // Redirect if not logged in
-  useEffect(() => {
-    if (!user) {
-      router.push("/");
-    }
-  }, [user, router]);
+  // Redirect if not logged in - immediate return for security
+  if (!user) {
+    return null;
+  }
 
   // Fetch user tier from database
-  const fetchUserTier = useCallback(async () => {
+  const fetchUserTier = async () => {
     try {
       const response = await fetch("/api/user/profile");
-      const data = (await response.json()) as {
-        tier?: "free" | "starter" | "pro" | "team";
-      };
-      console.log("Fetched user tier response:", data);
-      if (data.tier) {
-        setUserTier(data.tier);
+      const data = await response.json();
+
+      // Validate response with Zod
+      const validated = userTierResponseSchema.safeParse(data);
+      if (validated.success && validated.data.tier) {
+        setUserTier(validated.data.tier);
+        console.log("Fetched user tier:", validated.data.tier);
+      } else {
+        console.error("Invalid user tier response:", validated.error);
       }
-      console.log("Fetched user tier");
     } catch (error) {
       console.error("Failed to fetch user tier:", error);
     }
-  }, []);
+  };
 
   // Fetch billing data
-  const fetchBillingData = useCallback(async () => {
+  const fetchBillingData = async () => {
     try {
       setLoading(true);
 
@@ -153,35 +116,58 @@ export default function BillingPage() {
           fetch("/api/user/credits"),
         ]);
 
-      const billingData = await billingRes.json();
-      const invoicesData = await invoicesRes.json();
-      const usageData = await usageRes.json();
-      const creditsData = await creditsRes.json();
+      // Parse and validate responses
+      const [billingData, invoicesData, usageData, creditsData] =
+        await Promise.all([
+          billingRes.json(),
+          invoicesRes.json(),
+          usageRes.json(),
+          creditsRes.json(),
+        ]);
 
+      // Validate billing data with Zod
+      const validatedBilling = billingResponseSchema.safeParse(billingData);
+      if (validatedBilling.success) {
+        setSubscription(validatedBilling.data.data.subscription);
+        setPaymentMethod(validatedBilling.data.data.paymentMethod);
+        setUserTier(validatedBilling.data.data.tier || "free");
+      } else {
+        console.error("Invalid billing data:", validatedBilling.error);
+      }
+
+      // Validate invoices data
+      const validatedInvoices = invoicesResponseSchema.safeParse(invoicesData);
+      if (validatedInvoices.success) {
+        setInvoices(validatedInvoices.data.data.invoices);
+      } else {
+        console.error("Invalid invoices data:", validatedInvoices.error);
+      }
+
+      // Validate usage data
+      const validatedUsage = usageResponseSchema.safeParse(usageData);
+      if (validatedUsage.success) {
+        setUsage(validatedUsage.data.data);
+      } else {
+        console.error("Invalid usage data:", validatedUsage.error);
+      }
+
+      // Validate credits data
+      const validatedCredits = creditsResponseSchema.safeParse(creditsData);
+      if (validatedCredits.success) {
+        setInstantCredits(validatedCredits.data.data);
+      } else {
+        console.error("Invalid credits data:", validatedCredits.error);
+      }
+
+      // Track page view (using raw data for tracking)
       if (billingData.status === "success") {
-        setSubscription(billingData.data.subscription);
-        setPaymentMethod(billingData.data.paymentMethod);
-        setUserTier(billingData.data.tier || "free");
+        trackEvent("billing_page_viewed", {
+          tier: billingData.data?.tier || "free",
+          hasSubscription: !!billingData.data?.subscription,
+          hasInstantCredits:
+            validatedCredits.success && validatedCredits.data.data.balance > 0,
+        });
       }
-
-      if (invoicesData.status === "success") {
-        setInvoices(invoicesData.data.invoices);
-      }
-
-      if (usageData.status === "success") {
-        setUsage(usageData.data);
-      }
-
-      if (creditsData.status === "success") {
-        setInstantCredits(creditsData.data);
-      }
-
-      // Track page view
-      trackEvent("billing_page_viewed", {
-        tier: billingData.data?.tier || "free",
-        hasSubscription: !!billingData.data?.subscription,
-        hasInstantCredits: creditsData.data?.balance > 0,
-      });
       console.log("Fetched billing data");
     } catch (error) {
       console.error("Failed to fetch billing data:", error);
@@ -192,15 +178,13 @@ export default function BillingPage() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  };
 
   // Initial data fetch
   useEffect(() => {
-    if (user) {
-      fetchBillingData();
-      fetchUserTier();
-    }
-  }, [user, fetchBillingData, fetchUserTier]);
+    fetchBillingData();
+    fetchUserTier();
+  }, []);
 
   // Handle Stripe portal
   const handleManagePayment = async () => {
@@ -214,7 +198,15 @@ export default function BillingPage() {
       const data = await response.json();
 
       if (data.url) {
-        window.location.href = data.url;
+        if (isValidRedirectUrl(data.url)) {
+          window.location.href = data.url;
+        } else {
+          console.error("Invalid redirect URL:", data.url);
+          setMessage({
+            type: "error",
+            text: "Invalid payment portal URL. Please contact support.",
+          });
+        }
       } else {
         setMessage({
           type: "error",
@@ -254,7 +246,7 @@ export default function BillingPage() {
         });
         setShowCancelModal(false);
         // Refresh data
-        window.location.reload();
+        await fetchBillingData();
       } else {
         setMessage({
           type: "error",
@@ -288,7 +280,7 @@ export default function BillingPage() {
           text: "Subscription reactivated successfully!",
         });
         // Refresh data
-        window.location.reload();
+        await fetchBillingData();
       } else {
         setMessage({
           type: "error",
@@ -316,7 +308,7 @@ export default function BillingPage() {
 
   // Calculate billing progress
   const calculateProgress = () => {
-    if (!subscription) return 0;
+    if (!subscription || !subscription.currentPeriodStart || !subscription.currentPeriodEnd) return 0;
 
     const start = new Date(subscription.currentPeriodStart).getTime();
     const end = new Date(subscription.currentPeriodEnd).getTime();
@@ -482,6 +474,8 @@ export default function BillingPage() {
           {/* Messages */}
           {message && (
             <div
+              role="alert"
+              aria-live="polite"
               className={`mb-6 p-4 rounded-lg border flex items-start gap-3 ${
                 message.type === "success"
                   ? "bg-green-50 dark:bg-green-950/20 border-green-200 dark:border-green-900/50 text-green-800 dark:text-green-200"
@@ -489,9 +483,15 @@ export default function BillingPage() {
               }`}
             >
               {message.type === "success" ? (
-                <CheckCircle className="h-5 w-5 flex-shrink-0 mt-0.5" />
+                <CheckCircle
+                  className="h-5 w-5 flex-shrink-0 mt-0.5"
+                  aria-hidden="true"
+                />
               ) : (
-                <XCircle className="h-5 w-5 flex-shrink-0 mt-0.5" />
+                <XCircle
+                  className="h-5 w-5 flex-shrink-0 mt-0.5"
+                  aria-hidden="true"
+                />
               )}
               <p className="text-sm">{message.text}</p>
             </div>
@@ -541,16 +541,20 @@ export default function BillingPage() {
                       <h3 className="text-2xl font-bold text-black dark:text-white capitalize">
                         {userTier} Plan
                       </h3>
-                      <span className="text-xl font-semibold text-black dark:text-white">
-                        ${(subscription.amount / 100).toFixed(2)}/
-                        {subscription.interval}
-                      </span>
+                      {subscription.amount && subscription.interval && (
+                        <span className="text-xl font-semibold text-black dark:text-white">
+                          ${(subscription.amount / 100).toFixed(2)}/
+                          {subscription.interval}
+                        </span>
+                      )}
                     </div>
 
-                    <p className="text-sm text-black/60 dark:text-white/60 mb-6">
-                      Next billing date:{" "}
-                      {formatDate(subscription.currentPeriodEnd)}
-                    </p>
+                    {subscription.currentPeriodEnd && (
+                      <p className="text-sm text-black/60 dark:text-white/60 mb-6">
+                        Next billing date:{" "}
+                        {formatDate(subscription.currentPeriodEnd)}
+                      </p>
+                    )}
 
                     {/* Progress Bar */}
                     <div className="space-y-2 mb-6">
@@ -607,7 +611,7 @@ export default function BillingPage() {
                     </div>
 
                     {/* Cancellation Notice */}
-                    {subscription.cancelAtPeriodEnd && (
+                    {subscription.cancelAtPeriodEnd && subscription.currentPeriodEnd && (
                       <div className="mb-6 p-4 rounded-lg bg-yellow-50 dark:bg-yellow-950/20 border border-yellow-200 dark:border-yellow-900/50">
                         <div className="flex items-start gap-3">
                           <AlertTriangle className="h-5 w-5 text-yellow-600 dark:text-yellow-400 flex-shrink-0 mt-0.5" />
@@ -835,9 +839,22 @@ export default function BillingPage() {
                                 <Button
                                   variant="ghost"
                                   size="sm"
-                                  onClick={() =>
-                                    window.open(invoice.invoicePdf, "_blank")
-                                  }
+                                  onClick={() => {
+                                    // Validate PDF URL before opening
+                                    if (
+                                      isValidRedirectUrl(invoice.invoicePdf) ||
+                                      invoice.invoicePdf.startsWith(
+                                        "https://pay.stripe.com"
+                                      )
+                                    ) {
+                                      window.open(invoice.invoicePdf, "_blank");
+                                    } else {
+                                      console.error(
+                                        "Invalid invoice PDF URL:",
+                                        invoice.invoicePdf
+                                      );
+                                    }
+                                  }}
                                 >
                                   <Download className="h-4 w-4" />
                                 </Button>
@@ -1016,26 +1033,43 @@ export default function BillingPage() {
 
       {/* Cancel Subscription Modal */}
       {showCancelModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
+        <div
+          className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50"
+          role="dialog"
+          aria-labelledby="cancel-modal-title"
+          aria-describedby="cancel-modal-description"
+          aria-modal="true"
+        >
           <div className="bg-white dark:bg-black border border-black/10 dark:border-white/10 rounded-xl p-6 max-w-md w-full">
-            <h3 className="text-xl font-semibold text-black dark:text-white mb-4">
+            <h3
+              id="cancel-modal-title"
+              className="text-xl font-semibold text-black dark:text-white mb-4"
+            >
               Cancel Subscription
             </h3>
-            <p className="text-sm text-black/60 dark:text-white/60 mb-4">
+            <p
+              id="cancel-modal-description"
+              className="text-sm text-black/60 dark:text-white/60 mb-4"
+            >
               Are you sure you want to cancel your subscription? You'll have
               access until the end of your current billing period.
             </p>
 
             <div className="mb-4">
-              <label className="block text-sm font-medium text-black dark:text-white mb-2">
+              <label
+                htmlFor="cancel-reason"
+                className="block text-sm font-medium text-black dark:text-white mb-2"
+              >
                 Tell us why (optional)
               </label>
               <textarea
+                id="cancel-reason"
                 value={cancelReason}
                 onChange={(e) => setCancelReason(e.target.value)}
                 className="w-full px-3 py-2 border border-black/10 dark:border-white/10 rounded-lg bg-white dark:bg-black text-black dark:text-white"
                 rows={3}
                 placeholder="Your feedback helps us improve..."
+                aria-label="Cancellation reason"
               />
             </div>
 
