@@ -33,7 +33,7 @@ export async function determineReportAccess(
   userId: number | null,
   guestSessionId: string | null,
   contractAddress: string,
-  chain: string
+  chain: string,
 ): Promise<ReportAccessStatus> {
   // Case 1: Logged-in user
   if (userId) {
@@ -136,17 +136,21 @@ export async function determineReportAccess(
  * Shows limited information to encourage upgrade
  */
 export function transformToSummaryReport(
-  audit: CryptoAudit & { heuristicResults?: any }
+  audit: CryptoAudit & { heuristicResults?: any },
 ): SummaryReportData {
   // Get top 3 most severe issues
   const flags = (audit.flags || []) as RiskFlag[];
   const sortedFlags = [...flags].sort((a, b) => {
-    const severityOrder = { critical: 4, high: 3, medium: 2, low: 1 };
+    const severityOrder = { CRITICAL: 4, HIGH: 3, MEDIUM: 2, LOW: 1 };
     return severityOrder[b.severity] - severityOrder[a.severity];
   });
 
   const topIssues = sortedFlags.slice(0, 3).map((flag) => ({
-    severity: flag.severity,
+    severity: flag.severity.toLowerCase() as
+      | "low"
+      | "medium"
+      | "high"
+      | "critical",
     title: flag.title,
     description:
       flag.description.length > 100
@@ -167,7 +171,7 @@ export function transformToSummaryReport(
 
     holderCountRange: getHolderRange(audit.holderCount),
     liquidityRange: getLiquidityRange(
-      audit.liquidityUsd ? Number(audit.liquidityUsd) : null
+      audit.liquidityUsd ? Number(audit.liquidityUsd) : null,
     ),
     deployedAge: calculateTokenAge(audit.metadata?.deployDate),
 
@@ -208,7 +212,7 @@ export function transformToFullReport(
     liquidityData?: any;
   },
   accessType: "pro" | "team" | "instant_credit",
-  expiresAt?: Date
+  expiresAt?: Date,
 ): FullReportData {
   return {
     contractAddress: audit.contractAddress,
@@ -264,7 +268,7 @@ export function getHolderRange(holderCount: number | null | undefined): string {
  * Helper: Convert exact liquidity to range
  */
 export function getLiquidityRange(
-  liquidityUsd: number | null | undefined
+  liquidityUsd: number | null | undefined,
 ): string {
   if (!liquidityUsd || liquidityUsd === 0) return "Unknown";
   if (liquidityUsd < 1000) return "< $1K";
@@ -279,7 +283,7 @@ export function getLiquidityRange(
  * Helper: Calculate token age from deploy date
  */
 export function calculateTokenAge(
-  deployDate: string | null | undefined
+  deployDate: string | null | undefined,
 ): string {
   if (!deployDate) return "Unknown";
 
@@ -305,7 +309,7 @@ export function calculateTokenAge(
  * Helper: Get severity score for sorting
  */
 export function getSeverityScore(
-  severity: "low" | "medium" | "high" | "critical"
+  severity: "low" | "medium" | "high" | "critical",
 ): number {
   const scores = { low: 1, medium: 2, high: 3, critical: 4 };
   return scores[severity] || 0;

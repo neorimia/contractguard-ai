@@ -58,12 +58,12 @@ export class WatchlistMonitorService {
           and(
             eq(watchlists.alertEnabled, true),
             // Only check instant alerts for now (hourly/daily handled separately)
-            eq(watchlists.alertFrequency, "instant"),
-          ),
+            eq(watchlists.alertFrequency, "instant")
+          )
         );
 
       console.log(
-        `[${this.serviceName}] Found ${activeWatchlists.length} active watchlists`,
+        `[${this.serviceName}] Found ${activeWatchlists.length} active watchlists`
       );
 
       let alertsSent = 0;
@@ -75,7 +75,7 @@ export class WatchlistMonitorService {
       }
 
       console.log(
-        `[${this.serviceName}] Watchlist check completed. Sent ${alertsSent} alerts.`,
+        `[${this.serviceName}] Watchlist check completed. Sent ${alertsSent} alerts.`
       );
 
       return {
@@ -101,15 +101,15 @@ export class WatchlistMonitorService {
         .where(
           and(
             eq(cryptoAudits.contractAddress, watchlist.contractAddress),
-            eq(cryptoAudits.chain, watchlist.chain),
-          ),
+            eq(cryptoAudits.chain, watchlist.chain)
+          )
         )
         .orderBy(desc(cryptoAudits.createdAt))
         .limit(1);
 
       if (!latestAudit) {
         console.log(
-          `[${this.serviceName}] No audit found for ${watchlist.contractAddress}`,
+          `[${this.serviceName}] No audit found for ${watchlist.contractAddress}`
         );
         return 0;
       }
@@ -126,7 +126,7 @@ export class WatchlistMonitorService {
       if (!previousSnapshot) {
         await this.createSnapshot(watchlist.id, latestAudit);
         console.log(
-          `[${this.serviceName}] Created initial snapshot for ${watchlist.contractAddress}`,
+          `[${this.serviceName}] Created initial snapshot for ${watchlist.contractAddress}`
         );
         return 0;
       }
@@ -135,7 +135,7 @@ export class WatchlistMonitorService {
       const alertsSent = await this.detectChangesAndAlert(
         watchlist,
         previousSnapshot,
-        latestAudit,
+        latestAudit
       );
 
       // Create new snapshot
@@ -151,7 +151,7 @@ export class WatchlistMonitorService {
     } catch (error) {
       console.error(
         `[${this.serviceName}] Error checking watchlist ${watchlist.id}:`,
-        error,
+        error
       );
       return 0;
     }
@@ -163,7 +163,7 @@ export class WatchlistMonitorService {
   private async detectChangesAndAlert(
     watchlist: Watchlist,
     previousSnapshot: WatchlistSnapshot,
-    currentAudit: CryptoAudit,
+    currentAudit: CryptoAudit
   ): Promise<number> {
     const alerts: AlertData[] = [];
 
@@ -189,7 +189,7 @@ export class WatchlistMonitorService {
     if (watchlist.alertOnNewFlags) {
       const newFlags = this.detectNewFlags(
         previousSnapshot.flags || [],
-        currentAudit.flags || [],
+        currentAudit.flags || []
       );
 
       if (newFlags.length > 0) {
@@ -211,7 +211,7 @@ export class WatchlistMonitorService {
     ) {
       const liquidityChange = this.calculatePercentageChange(
         Number(previousSnapshot.liquidityUsd),
-        Number(currentAudit.liquidityUsd),
+        Number(currentAudit.liquidityUsd)
       );
 
       if (
@@ -235,7 +235,7 @@ export class WatchlistMonitorService {
     ) {
       const holderChange = this.calculatePercentageChange(
         previousSnapshot.holderCount,
-        currentAudit.holderCount,
+        currentAudit.holderCount
       );
 
       if (Math.abs(holderChange) >= (watchlist.holderChangeThreshold || 15)) {
@@ -264,7 +264,7 @@ export class WatchlistMonitorService {
   private async sendAlerts(
     watchlist: Watchlist,
     currentAudit: CryptoAudit,
-    alerts: AlertData[],
+    alerts: AlertData[]
   ): Promise<void> {
     // Get user info
     const [user] = await db
@@ -274,7 +274,7 @@ export class WatchlistMonitorService {
 
     if (!user) {
       console.log(
-        `[${this.serviceName}] User not found for watchlist ${watchlist.id}`,
+        `[${this.serviceName}] User not found for watchlist ${watchlist.id}`
       );
       return;
     }
@@ -282,7 +282,7 @@ export class WatchlistMonitorService {
     // Check rate limiting
     if (!this.canSendAlert(user)) {
       console.log(
-        `[${this.serviceName}] Rate limit reached for user ${user.id}`,
+        `[${this.serviceName}] Rate limit reached for user ${user.id}`
       );
       return;
     }
@@ -294,12 +294,12 @@ export class WatchlistMonitorService {
           watchlist,
           currentAudit,
           alert,
-          user,
+          user
         );
 
         await this.emailService.sendContractAlert(
           user.alertEmail || user.email,
-          emailContext,
+          emailContext
         );
 
         // Record alert in history
@@ -334,7 +334,7 @@ export class WatchlistMonitorService {
           .where(eq(watchlists.id, watchlist.id));
 
         console.log(
-          `[${this.serviceName}] Alert sent for ${watchlist.contractAddress}: ${alert.type}`,
+          `[${this.serviceName}] Alert sent for ${watchlist.contractAddress}: ${alert.type}`
         );
       } catch (error) {
         console.error(`[${this.serviceName}] Error sending alert:`, error);
@@ -367,7 +367,7 @@ export class WatchlistMonitorService {
    */
   private async createSnapshot(
     watchlistId: string,
-    audit: CryptoAudit,
+    audit: CryptoAudit
   ): Promise<void> {
     await db.insert(watchlistSnapshots).values({
       watchlistId,
@@ -386,7 +386,7 @@ export class WatchlistMonitorService {
    */
   private detectNewFlags(
     oldFlags: RiskFlag[],
-    newFlags: RiskFlag[],
+    newFlags: RiskFlag[]
   ): RiskFlag[] {
     const oldFlagTypes = new Set(oldFlags.map((f) => f.type));
     return newFlags.filter((f) => !oldFlagTypes.has(f.type));
@@ -397,7 +397,7 @@ export class WatchlistMonitorService {
    */
   private calculatePercentageChange(
     oldValue: number,
-    newValue: number,
+    newValue: number
   ): number {
     if (oldValue === 0) return newValue > 0 ? 100 : 0;
     return ((newValue - oldValue) / oldValue) * 100;
@@ -417,10 +417,10 @@ export class WatchlistMonitorService {
    * Calculate severity based on new flags
    */
   private calculateFlagSeverity(flags: RiskFlag[]): Severity {
-    const hasCritical = flags.some((f) => f.severity === "critical");
+    const hasCritical = flags.some((f) => f.severity === "CRITICAL");
     if (hasCritical) return "critical";
 
-    const hasHigh = flags.some((f) => f.severity === "high");
+    const hasHigh = flags.some((f) => f.severity === "HIGH");
     if (hasHigh) return "high";
 
     return "medium";
@@ -465,7 +465,7 @@ export class WatchlistMonitorService {
     watchlist: Watchlist,
     audit: CryptoAudit,
     alert: AlertData,
-    user: User,
+    user: User
   ): any {
     const baseUrl = process.env.NEXT_PUBLIC_SITE_URL;
 
@@ -509,7 +509,7 @@ export class WatchlistMonitorService {
    */
   private generateUnsubscribeToken(
     userId: number,
-    watchlistId: string,
+    watchlistId: string
   ): string {
     // TODO: Implement HMAC-based token generation for security
     return Buffer.from(`${userId}:${watchlistId}`).toString("base64");

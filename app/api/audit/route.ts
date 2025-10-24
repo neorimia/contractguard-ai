@@ -55,11 +55,11 @@ const authService = new AuthService();
 function mapIssueToRiskFlag(issue: Issue, confidence: number): RiskFlag {
   return {
     type: issue.type,
-    severity: issue.severity.toLowerCase() as
-      | "low"
-      | "medium"
-      | "high"
-      | "critical",
+    severity: issue.severity.toUpperCase() as
+      | "LOW"
+      | "MEDIUM"
+      | "HIGH"
+      | "CRITICAL",
     title: issue.type,
     description: issue.description,
     evidence: `${issue.impact}${issue.code ? `\n\nCode:\n${issue.code}` : ""}`,

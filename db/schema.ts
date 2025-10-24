@@ -710,7 +710,7 @@ export const riskHeuristics = pgTable("risk_heuristics", {
 // CryptoGuard Type Definitions
 export interface RiskFlag {
   type: string;
-  severity: "low" | "medium" | "high" | "critical";
+  severity: "LOW" | "MEDIUM" | "HIGH" | "CRITICAL";
   title: string;
   description: string;
   evidence: string;

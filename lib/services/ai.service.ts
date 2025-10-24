@@ -67,11 +67,6 @@ export class AIAnalysisService {
     enrichmentData?: any,
     preferredProvider?: "chatgpt" | "claude"
   ): Promise<AnalysisResult> {
-    console.log(`Analyzing contract with provider: ${preferredProvider}`);
-    console.log(`Enrichment data: ${JSON.stringify(enrichmentData)}`);
-    console.log(`Source code: ${sourceCode}`);
-    console.log(`Contract name: ${contractName}`);
-
     const prompt = this.buildAnalysisPrompt(
       sourceCode,
       contractName,

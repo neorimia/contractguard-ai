@@ -120,7 +120,11 @@ export class ContractActivityHeuristic extends BaseHeuristic {
       confidence: 70,
       flag: {
         type: "activity_concerns",
-        severity,
+        severity: severity.toUpperCase() as
+          | "LOW"
+          | "MEDIUM"
+          | "HIGH"
+          | "CRITICAL",
         title: "Contract Activity Concerns",
         description: `Unusual contract activity patterns detected. ${issues.length} concern(s) identified.`,
         evidence: issues.join(" | "),

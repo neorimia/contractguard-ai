@@ -97,7 +97,11 @@ export class PauseFreezeHeuristic extends BaseHeuristic {
       confidence: 85,
       flag: {
         type: "pause_freeze",
-        severity,
+        severity: severity.toUpperCase() as
+          | "LOW"
+          | "MEDIUM"
+          | "HIGH"
+          | "CRITICAL",
         title: "Pause/Freeze Mechanisms Detected",
         description: `This contract can pause or freeze token transfers, potentially trapping holder funds. ${issues.length} mechanism(s) detected.`,
         evidence: issues.join(" | "),

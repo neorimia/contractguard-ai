@@ -152,7 +152,11 @@ export class LiquidityPoolActivityHeuristic extends BaseHeuristic {
       confidence: 80,
       flag: {
         type: "liquidity_concerns",
-        severity,
+        severity: severity.toUpperCase() as
+          | "LOW"
+          | "MEDIUM"
+          | "HIGH"
+          | "CRITICAL",
         title: "Liquidity Pool Concerns",
         description: `Concerning liquidity patterns detected. ${issues.length} issue(s) found.`,
         evidence: issues.join(" | "),

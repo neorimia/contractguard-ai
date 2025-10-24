@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { Audit } from "@/db/schema";
+import { CryptoAudit } from "@/db/schema";
 import { Button } from "@/components/ui/button";
 import { ArrowRight } from "lucide-react";
 import ScanResults from "@/components/ScanResults";
@@ -43,7 +43,7 @@ interface AnonymousLimitError {
 export function ScanInterface() {
   const [address, setAddress] = useState("");
   const [loading, setLoading] = useState(false);
-  const [result, setResult] = useState<Audit | null>(null);
+  const [result, setResult] = useState<CryptoAudit | null>(null);
   const [error, setError] = useState("");
   const [showLimitDrawer, setShowLimitDrawer] = useState(false);
   const [limitError, setLimitError] = useState<ScanLimitError | null>(null);

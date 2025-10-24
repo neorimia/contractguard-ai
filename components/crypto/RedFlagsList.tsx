@@ -25,21 +25,21 @@ export function RedFlagsList({ flags }: RedFlagsListProps) {
 
   const getSeverityConfig = (severity: string) => {
     switch (severity) {
-      case "critical":
+      case "CRITICAL":
         return {
           color: "text-red-500",
           bgColor: "bg-red-500/10",
           borderColor: "border-red-500/20",
           badge: "bg-red-500 text-white",
         };
-      case "high":
+      case "HIGH":
         return {
           color: "text-orange-500",
           bgColor: "bg-orange-500/10",
           borderColor: "border-orange-500/20",
           badge: "bg-orange-500 text-white",
         };
-      case "medium":
+      case "MEDIUM":
         return {
           color: "text-yellow-500",
           bgColor: "bg-yellow-500/10",

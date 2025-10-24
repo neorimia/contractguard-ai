@@ -4,13 +4,18 @@ import { EmailLayout } from "./components/EmailLayout";
 import { EmailHeader } from "./components/EmailHeader";
 import { EmailButton } from "./components/EmailButton";
 import { EmailFooter } from "./components/EmailFooter";
+import { PRICING_CONFIG } from "../lib/config/pricing";
 
 interface PurchaseReceiptEmailProps {
   firstName?: string;
   amount: number;
   credits: number;
   purchaseId: string;
-  purchaseType: "instant_credits" | "pro_subscription" | "team_subscription";
+  purchaseType:
+    | "instant_credits"
+    | "starter_subscription"
+    | "pro_subscription"
+    | "team_subscription";
   receiptUrl?: string;
   isGuest?: boolean;
 }
@@ -37,10 +42,12 @@ export function PurchaseReceiptEmail({
     switch (purchaseType) {
       case "instant_credits":
         return "Instant Credits";
+      case "starter_subscription":
+        return "Starter Plan";
       case "pro_subscription":
-        return "Pro Subscription";
+        return "Pro Plan";
       case "team_subscription":
-        return "Team Subscription";
+        return "Team/API Plan";
       default:
         return "Purchase";
     }
@@ -50,10 +57,12 @@ export function PurchaseReceiptEmail({
     switch (purchaseType) {
       case "instant_credits":
         return `${credits} instant scan${credits > 1 ? "s" : ""}`;
+      case "starter_subscription":
+        return `Starter plan (${PRICING_CONFIG.starter.monthlyCredits} scans/month)`;
       case "pro_subscription":
-        return "Pro subscription (100 scans/day)";
+        return `Pro plan (${PRICING_CONFIG.pro.monthlyCredits} scans/month)`;
       case "team_subscription":
-        return "Team subscription (unlimited scans)";
+        return `Team/API plan (${PRICING_CONFIG.team.monthlyCredits} scans/month)`;
       default:
         return "Purchase";
     }
@@ -121,7 +130,8 @@ export function PurchaseReceiptEmail({
           </>
         )}
 
-        {(purchaseType === "pro_subscription" ||
+        {(purchaseType === "starter_subscription" ||
+          purchaseType === "pro_subscription" ||
           purchaseType === "team_subscription") && (
           <>
             <Text style={styles.heading}>Your Subscription is Active!</Text>
@@ -131,18 +141,30 @@ export function PurchaseReceiptEmail({
             </Text>
             <ul style={styles.list}>
               <li style={styles.listItem}>
-                {purchaseType === "pro_subscription"
-                  ? "100 scans per day"
-                  : "Unlimited scans"}
+                {purchaseType === "starter_subscription" &&
+                  `${PRICING_CONFIG.starter.monthlyCredits} AI audits per month (≈1 per day)`}
+                {purchaseType === "pro_subscription" &&
+                  `${PRICING_CONFIG.pro.monthlyCredits} AI audits per month (≈5 per day)`}
+                {purchaseType === "team_subscription" &&
+                  `${PRICING_CONFIG.team.monthlyCredits} AI audits per month`}
               </li>
               <li style={styles.listItem}>
-                Advanced AI analysis with multi-provider fallback
+                Plain-English explanations & risk scoring
               </li>
-              <li style={styles.listItem}>Historical contract analysis</li>
-              <li style={styles.listItem}>Priority support</li>
-              <li style={styles.listItem}>Ad-free experience</li>
+              <li style={styles.listItem}>
+                Email alerts for watched contracts
+              </li>
+              <li style={styles.listItem}>PDF export functionality</li>
+              {(purchaseType === "pro_subscription" ||
+                purchaseType === "team_subscription") && (
+                <li style={styles.listItem}>Priority support</li>
+              )}
               {purchaseType === "team_subscription" && (
-                <li style={styles.listItem}>Team collaboration features</li>
+                <>
+                  <li style={styles.listItem}>API access</li>
+                  <li style={styles.listItem}>White-label options</li>
+                  <li style={styles.listItem}>Dedicated account manager</li>
+                </>
               )}
             </ul>
           </>

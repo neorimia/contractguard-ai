@@ -102,7 +102,11 @@ export class TokenVestingHeuristic extends BaseHeuristic {
       confidence: 75,
       flag: {
         type: "vesting_issues",
-        severity,
+        severity: severity.toUpperCase() as
+          | "LOW"
+          | "MEDIUM"
+          | "HIGH"
+          | "CRITICAL",
         title: "Token Vesting Concerns",
         description: `Inadequate or missing token vesting mechanisms detected. ${issues.length} issue(s) found.`,
         evidence: issues.join(" | "),
