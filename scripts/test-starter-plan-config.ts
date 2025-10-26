@@ -59,14 +59,14 @@ function testStarterPlanConfiguration() {
   // Test 5: Environment Variables Check
   console.log("5️⃣ Checking Environment Variables");
   const requiredEnvVars = [
-    "STRIPE_STARTER_MONTHLY_PRICE_ID",
-    "STRIPE_PRO_MONTHLY_PRICE_ID",
-    "STRIPE_TEAM_MONTHLY_PRICE_ID",
-    "STRIPE_ENTERPRISE_MONTHLY_PRICE_ID",
+    "STRIPE_STARTER_MONTHLY",
+    "STRIPE_PRO_MONTHLY",
+    "STRIPE_TEAM_MONTHLY",
+    "STRIPE_ENTERPRISE_MONTHLY",
   ];
 
   const missingVars = requiredEnvVars.filter(
-    (varName) => !process.env[varName]
+    (varName) => !process.env[varName],
   );
 
   if (missingVars.length === 0) {
@@ -102,10 +102,10 @@ function testStarterPlanConfiguration() {
     } else {
       console.log(`❌ ${plan.name}: Configuration mismatch`);
       console.log(
-        `   Config: ${configCredits} credits, $${configPrice} overage`
+        `   Config: ${configCredits} credits, $${configPrice} overage`,
       );
       console.log(
-        `   Limits: ${limitsCredits} credits, $${limitsPrice} overage`
+        `   Limits: ${limitsCredits} credits, $${limitsPrice} overage`,
       );
     }
   });

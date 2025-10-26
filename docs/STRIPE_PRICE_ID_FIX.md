@@ -47,7 +47,7 @@ No such price: 'prod_TCM7QoEEKfs765'
 5. **Update `.env.local`:**
 
    ```env
-   STRIPE_PRO_MONTHLY_PRICE_ID=price_1ABC2CD3EF4GH5IJ6
+   STRIPE_PRO_MONTHLY=price_1ABC2CD3EF4GH5IJ6
    ```
 
 6. **Repeat for Enterprise:**
