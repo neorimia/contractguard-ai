@@ -67,7 +67,7 @@ async function testStarterPlanIntegration() {
     console.log("Free user can scan:", freeResult);
 
     console.log("✅ Usage checking logic working\n");
-  } catch (error) {
+  } catch (error: any) {
     console.log("⚠️ Usage checking requires database connection");
     console.log("Error:", error.message);
     console.log("✅ Configuration is correct (database not available)\n");
@@ -87,14 +87,14 @@ async function testStarterPlanIntegration() {
   // Test 6: Environment Variables Check
   console.log("6️⃣ Checking Environment Variables");
   const requiredEnvVars = [
-    "STRIPE_STARTER_MONTHLY_PRICE_ID",
-    "STRIPE_PRO_MONTHLY_PRICE_ID",
-    "STRIPE_TEAM_MONTHLY_PRICE_ID",
-    "STRIPE_ENTERPRISE_MONTHLY_PRICE_ID",
+    "STRIPE_STARTER_MONTHLY",
+    "STRIPE_PRO_MONTHLY",
+    "STRIPE_TEAM_MONTHLY",
+    "STRIPE_ENTERPRISE_MONTHLY",
   ];
 
   const missingVars = requiredEnvVars.filter(
-    (varName) => !process.env[varName]
+    (varName) => !process.env[varName],
   );
 
   if (missingVars.length === 0) {

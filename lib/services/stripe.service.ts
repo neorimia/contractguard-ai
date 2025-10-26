@@ -12,7 +12,7 @@ import Stripe from "stripe";
 
 if (!process.env.STRIPE_SECRET_KEY) {
   throw new Error(
-    "STRIPE_SECRET_KEY is not configured in environment variables"
+    "STRIPE_SECRET_KEY is not configured in environment variables",
   );
 }
 
@@ -24,13 +24,11 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
 // Stripe Product/Price IDs (configure these in .env)
 export const STRIPE_PRICES = {
   STARTER_MONTHLY:
-    process.env.STRIPE_STARTER_MONTHLY_PRICE_ID || "price_starter_monthly",
-  PRO_MONTHLY: process.env.STRIPE_PRO_MONTHLY_PRICE_ID || "price_pro_monthly",
-  TEAM_MONTHLY:
-    process.env.STRIPE_TEAM_MONTHLY_PRICE_ID || "price_team_monthly",
+    process.env.STRIPE_STARTER_MONTHLY || "price_starter_monthly",
+  PRO_MONTHLY: process.env.STRIPE_PRO_MONTHLY || "price_pro_monthly",
+  TEAM_MONTHLY: process.env.STRIPE_TEAM_MONTHLY || "price_team_monthly",
   ENTERPRISE_MONTHLY:
-    process.env.STRIPE_ENTERPRISE_MONTHLY_PRICE_ID ||
-    "price_enterprise_monthly",
+    process.env.STRIPE_ENTERPRISE_MONTHLY || "price_enterprise_monthly",
 };
 
 export class StripeService {
@@ -91,7 +89,7 @@ export class StripeService {
     } catch (error) {
       console.error("Stripe checkout session creation failed:", error);
       throw new Error(
-        `Failed to create checkout session: ${error instanceof Error ? error.message : "Unknown error"}`
+        `Failed to create checkout session: ${error instanceof Error ? error.message : "Unknown error"}`,
       );
     }
   }
@@ -113,7 +111,7 @@ export class StripeService {
     } catch (error) {
       console.error("Stripe portal session creation failed:", error);
       throw new Error(
-        `Failed to create portal session: ${error instanceof Error ? error.message : "Unknown error"}`
+        `Failed to create portal session: ${error instanceof Error ? error.message : "Unknown error"}`,
       );
     }
   }
@@ -150,7 +148,7 @@ export class StripeService {
     } catch (error) {
       console.error("Stripe customer creation failed:", error);
       throw new Error(
-        `Failed to get or create customer: ${error instanceof Error ? error.message : "Unknown error"}`
+        `Failed to get or create customer: ${error instanceof Error ? error.message : "Unknown error"}`,
       );
     }
   }
@@ -159,7 +157,7 @@ export class StripeService {
    * Get subscription details
    */
   async getSubscription(
-    subscriptionId: string
+    subscriptionId: string,
   ): Promise<Stripe.Subscription | null> {
     try {
       const subscription =
@@ -176,7 +174,7 @@ export class StripeService {
    */
   async cancelSubscription(
     subscriptionId: string,
-    immediately: boolean = false
+    immediately: boolean = false,
   ): Promise<Stripe.Subscription> {
     try {
       if (immediately) {
@@ -191,7 +189,7 @@ export class StripeService {
     } catch (error) {
       console.error("Failed to cancel subscription:", error);
       throw new Error(
-        `Failed to cancel subscription: ${error instanceof Error ? error.message : "Unknown error"}`
+        `Failed to cancel subscription: ${error instanceof Error ? error.message : "Unknown error"}`,
       );
     }
   }
@@ -200,7 +198,7 @@ export class StripeService {
    * Reactivate a subscription
    */
   async reactivateSubscription(
-    subscriptionId: string
+    subscriptionId: string,
   ): Promise<Stripe.Subscription> {
     try {
       return await this.stripe.subscriptions.update(subscriptionId, {
@@ -209,7 +207,7 @@ export class StripeService {
     } catch (error) {
       console.error("Failed to reactivate subscription:", error);
       throw new Error(
-        `Failed to reactivate subscription: ${error instanceof Error ? error.message : "Unknown error"}`
+        `Failed to reactivate subscription: ${error instanceof Error ? error.message : "Unknown error"}`,
       );
     }
   }
@@ -219,7 +217,7 @@ export class StripeService {
    */
   constructWebhookEvent(
     payload: string | Buffer,
-    signature: string
+    signature: string,
   ): Stripe.Event {
     const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
 
@@ -231,12 +229,12 @@ export class StripeService {
       return this.stripe.webhooks.constructEvent(
         payload,
         signature,
-        webhookSecret
+        webhookSecret,
       );
     } catch (error) {
       console.error("Webhook signature verification failed:", error);
       throw new Error(
-        `Webhook verification failed: ${error instanceof Error ? error.message : "Unknown error"}`
+        `Webhook verification failed: ${error instanceof Error ? error.message : "Unknown error"}`,
       );
     }
   }
@@ -259,14 +257,14 @@ export class StripeService {
    */
   async updateCustomer(
     customerId: string,
-    params: Stripe.CustomerUpdateParams
+    params: Stripe.CustomerUpdateParams,
   ): Promise<Stripe.Customer> {
     try {
       return await this.stripe.customers.update(customerId, params);
     } catch (error) {
       console.error("Failed to update customer:", error);
       throw new Error(
-        `Failed to update customer: ${error instanceof Error ? error.message : "Unknown error"}`
+        `Failed to update customer: ${error instanceof Error ? error.message : "Unknown error"}`,
       );
     }
   }
@@ -317,7 +315,7 @@ export class StripeService {
     } catch (error) {
       console.error("Failed to list invoices:", error);
       throw new Error(
-        `Failed to list invoices: ${error instanceof Error ? error.message : "Unknown error"}`
+        `Failed to list invoices: ${error instanceof Error ? error.message : "Unknown error"}`,
       );
     }
   }
