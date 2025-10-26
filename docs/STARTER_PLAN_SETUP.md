@@ -10,12 +10,12 @@ Add these environment variables to your `.env.local` file:
 
 ```bash
 # Starter Plan Stripe Configuration
-STRIPE_STARTER_MONTHLY_PRICE_ID=price_starter_monthly_xxxxx
+STRIPE_STARTER_MONTHLY=price_starter_monthly_xxxxx
 
 # Existing Stripe Configuration (verify these are set)
-STRIPE_PRO_MONTHLY_PRICE_ID=price_pro_monthly_xxxxx
-STRIPE_TEAM_MONTHLY_PRICE_ID=price_team_monthly_xxxxx
-STRIPE_ENTERPRISE_MONTHLY_PRICE_ID=price_enterprise_monthly_xxxxx
+STRIPE_PRO_MONTHLY=price_pro_monthly_xxxxx
+STRIPE_TEAM_MONTHLY=price_team_monthly_xxxxx
+STRIPE_ENTERPRISE_MONTHLY=price_enterprise_monthly_xxxxx
 ```
 
 ## Stripe Dashboard Setup

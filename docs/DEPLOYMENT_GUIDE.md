@@ -60,8 +60,8 @@ STACK_SECRET_SERVER_KEY=         # Stack secret key
 STRIPE_SECRET_KEY=sk_live_...    # Live secret key
 NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=pk_live_...  # Live publishable key
 STRIPE_WEBHOOK_SECRET=           # Will get after deployment
-STRIPE_PRO_MONTHLY_PRICE_ID=     # Live price ID
-STRIPE_ENTERPRISE_MONTHLY_PRICE_ID=  # Live enterprise price ID
+STRIPE_PRO_MONTHLY=     # Live price ID
+STRIPE_ENTERPRISE_MONTHLY=  # Live enterprise price ID
 
 # Site Configuration
 NEXT_PUBLIC_SITE_URL=https://your-domain.com

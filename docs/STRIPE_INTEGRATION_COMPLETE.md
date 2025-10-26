@@ -282,8 +282,8 @@ NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=pk_test_...
 STRIPE_WEBHOOK_SECRET=whsec_...
 
 # Stripe Price IDs (from Stripe Dashboard)
-STRIPE_PRO_MONTHLY_PRICE_ID=price_...
-STRIPE_ENTERPRISE_MONTHLY_PRICE_ID=price_...
+STRIPE_PRO_MONTHLY=price_...
+STRIPE_ENTERPRISE_MONTHLY=price_...
 
 # Site URL
 NEXT_PUBLIC_SITE_URL=http://localhost:3000
@@ -301,13 +301,13 @@ NEXT_PUBLIC_SITE_URL=http://localhost:3000
    - Name: ContractGuard Pro
    - Price: $29.00/month
    - Recurring: Monthly
-   - Copy the Price ID → `STRIPE_PRO_MONTHLY_PRICE_ID`
+   - Copy the Price ID → `STRIPE_PRO_MONTHLY`
 
 2. **Enterprise Monthly**
    - Name: ContractGuard Enterprise
    - Price: $199.00/month
    - Recurring: Monthly
-   - Copy the Price ID → `STRIPE_ENTERPRISE_MONTHLY_PRICE_ID`
+   - Copy the Price ID → `STRIPE_ENTERPRISE_MONTHLY`
 
 ### Webhook Setup:
 
