@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import { StackProvider } from "@stackframe/stack";
 import { Geist } from "next/font/google";
 import "./globals.css";
 import { siteConfig } from "@/config/site";
@@ -12,7 +11,6 @@ import { Suspense } from "react";
 import { HeaderClient } from "@/components/HeaderClient";
 import { Footer } from "@/components/footer";
 import CookieBanner from "@/components/CookieBanner";
-import { stackServerApp } from "@/stack/server";
 import { ClientProviders } from "@/components/ClientProviders";
 
 const geistSans = Geist({
@@ -109,20 +107,18 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistSans.className} antialiased`}
         suppressHydrationWarning
       >
-        <StackProvider app={stackServerApp}>
-          <ClientProviders>
-            <main className="relative min-h-screen w-full bg-white dark:bg-black overflow-hidden">
-              <div className="relative bg-white/95 dark:bg-black/5 pt-14">
-                <HeaderClient />
-                {children}
-                <Suspense fallback={null}>
-                  <Footer />
-                </Suspense>
-              </div>
-            </main>
-            <CookieBanner />
-          </ClientProviders>
-        </StackProvider>
+        <ClientProviders>
+          <main className="relative min-h-screen w-full bg-white dark:bg-black overflow-hidden">
+            <div className="relative bg-white/95 dark:bg-black/5 pt-14">
+              <HeaderClient />
+              {children}
+              <Suspense fallback={null}>
+                <Footer />
+              </Suspense>
+            </div>
+          </main>
+          <CookieBanner />
+        </ClientProviders>
       </body>
     </html>
   );
