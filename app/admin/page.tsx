@@ -1,8 +1,8 @@
 // app/admin/page.tsx
 import { Suspense } from "react";
 import { redirect } from "next/navigation";
-import { DashboardContent } from "@/components/admin/DashboardContent";
-import { DashboardSkeleton } from "@/components/admin/DashboardSkeleton";
+import { DashboardContent } from "@/app/admin/components/DashboardContent";
+import { DashboardSkeleton } from "@/app/admin/components/DashboardSkeleton";
 import { stackServerApp } from "@/stack/server";
 import { db } from "@/db";
 import { users } from "@/db/schema";

@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useEffect, useRef } from "react";
+import { useScanState } from "@/hooks/useScanState";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -63,56 +64,57 @@ const SUPPORTED_CHAINS = [
 ];
 
 export function CryptoScanInterface() {
-  const [address, setAddress] = useState("");
-  const [chain, setChain] = useState("ethereum");
-  const [loading, setLoading] = useState(false);
-  const [result, setResult] = useState<CryptoAnalysisResult | null>(null);
-  const [error, setError] = useState("");
-  const [showLimitDrawer, setShowLimitDrawer] = useState(false);
-  const [limitError, setLimitError] = useState<ScanLimitError | null>(null);
-  const [scanMetadata, setScanMetadata] = useState<ScanMetadata | null>(null);
-  const [anonymousScansPerformed, setAnonymousScansPerformed] = useState(0);
-  const [anonymousSessionId, setAnonymousSessionId] = useState<string | null>(
-    null
-  );
-  const [showSoftSignupPrompt, setShowSoftSignupPrompt] = useState(false);
-  const [showUpgradeModal, setShowUpgradeModal] = useState(false);
-  const [upgradeData, setUpgradeData] = useState<{
-    email: string;
-    scansRemaining: number;
-  } | null>(null);
-  const [userAccessStatus, setUserAccessStatus] = useState<{
-    accessType: string;
-    scansRemaining: number;
-    instantCredits: number;
-    accountType?: string;
-  } | null>(null);
-  // AI provider selection state
-  const [selectedAI, setSelectedAI] = useState<"chatgpt" | "claude">("chatgpt");
+  // Replace 17 useState variables with single useReducer for better state management
+  const { state, dispatch } = useScanState();
 
-  // New paywall-related state
-  const [reportAccess, setReportAccess] = useState<ReportResponse | null>(null);
-  const [showReportUpgradeModal, setShowReportUpgradeModal] = useState(false);
+  // Extract commonly used state values for cleaner code
+  const { address, chain, selectedAI } = state.form;
+  const { loading, error, showLimitDrawer, showSoftSignupPrompt, showUpgradeModal, showReportUpgradeModal } = state.ui;
+  const { result, reportAccess, limitError, upgradeData } = state.data;
+  const { userAccessStatus, anonymousScansPerformed, anonymousSessionId, scanMetadata } = state.access;
 
   const user = useUser();
   const resultsRef = useRef<HTMLDivElement>(null);
 
   // Fetch user access status for authenticated users
   useEffect(() => {
-    if (user) {
-      fetch("/api/user/access-status")
-        .then((res) => res.json())
-        .then((data) => {
-          setUserAccessStatus({
+    if (!user?.id) return;
+
+    const controller = new AbortController();
+
+    const fetchAccessStatus = async () => {
+      try {
+        const res = await fetch("/api/user/access-status", {
+          signal: controller.signal,
+        });
+
+        if (!res.ok) {
+          throw new Error(`Failed to fetch: ${res.status}`);
+        }
+
+        const data = await res.json();
+        dispatch({
+          type: "SET_USER_ACCESS_STATUS",
+          payload: {
             accessType: data.accessType || "free",
             scansRemaining: data.scansRemaining || 0,
             instantCredits: data.instantCredits || 0,
             accountType: data.accountType,
-          });
-        })
-        .catch((err) => console.error("Failed to fetch access status:", err));
-    }
-  }, [user]);
+          },
+        });
+      } catch (err: any) {
+        // Ignore abort errors (cleanup)
+        if (err.name !== "AbortError") {
+          console.error("Failed to fetch access status:", err);
+        }
+      }
+    };
+
+    fetchAccessStatus();
+
+    // Cleanup: abort pending request on unmount or user change
+    return () => controller.abort();
+  }, [user?.id, dispatch]);
 
   // Auto-scroll to results when available
   useEffect(() => {
@@ -128,7 +130,7 @@ export function CryptoScanInterface() {
 
   const analyzeContract = async () => {
     if (!address.trim()) {
-      setError("Please enter a contract address");
+      dispatch({ type: "SET_ERROR", payload: "Please enter a contract address" });
       return;
     }
 
@@ -139,18 +141,20 @@ export function CryptoScanInterface() {
     if (selectedChain?.type === "evm") {
       // EVM address validation (0x + 40 hex characters)
       if (!/^0x[a-fA-F0-9]{40}$/.test(trimmedAddress)) {
-        setError(
-          "Invalid EVM contract address format (must be 0x followed by 40 hex characters)"
-        );
+        dispatch({
+          type: "SET_ERROR",
+          payload: "Invalid EVM contract address format (must be 0x followed by 40 hex characters)",
+        });
         return;
       }
     } else if (selectedChain?.type === "solana") {
       // Solana address validation (base58, 32-44 characters)
       const base58Regex = /^[1-9A-HJ-NP-Za-km-z]{32,44}$/;
       if (!base58Regex.test(trimmedAddress)) {
-        setError(
-          "Invalid Solana address format (must be base58 encoded, 32-44 characters)"
-        );
+        dispatch({
+          type: "SET_ERROR",
+          payload: "Invalid Solana address format (must be base58 encoded, 32-44 characters)",
+        });
         return;
       }
     }
@@ -168,17 +172,19 @@ export function CryptoScanInterface() {
         intervention: "before_last_scan",
       });
 
-      // Update scan metadata to show current state
-      setScanMetadata({
-        accessType: "anonymous",
-        scansRemaining: 1,
-        sessionId: anonymousSessionId || undefined,
+      // Update scan metadata and show prompt using compound action
+      dispatch({
+        type: "ANONYMOUS_LIMIT_REACHED",
+        payload: {
+          scansPerformed: anonymousScansPerformed,
+          sessionId: anonymousSessionId || undefined,
+          scanMetadata: {
+            accessType: "anonymous",
+            scansRemaining: 1,
+            sessionId: anonymousSessionId || undefined,
+          },
+        },
       });
-
-      setShowSoftSignupPrompt(true);
-      setError(
-        "You've used your free scans. Sign up to continue with 3 free scans daily!"
-      );
       return;
     }
 
@@ -190,11 +196,8 @@ export function CryptoScanInterface() {
       isAnonymous: !user,
     });
 
-    setLoading(true);
-    setError("");
-    setResult(null);
-    setShowLimitDrawer(false);
-    setLimitError(null);
+    // Use compound action to start scan (sets loading true, clears errors and results)
+    dispatch({ type: "START_SCAN" });
 
     try {
       const response = await fetch("/api/audit", {
@@ -227,25 +230,19 @@ export function CryptoScanInterface() {
             accessType: "anonymous",
           });
 
-          // Update state from error response
-          if (data.scansPerformed) {
-            setAnonymousScansPerformed(data.scansPerformed);
-          }
-          if (data.sessionId) {
-            setAnonymousSessionId(data.sessionId);
-          }
-
-          // Update scan metadata to show 0 remaining
-          setScanMetadata({
-            accessType: "anonymous",
-            scansRemaining: 0,
-            sessionId: data.sessionId,
+          // Use compound action to handle anonymous limit reached
+          dispatch({
+            type: "ANONYMOUS_LIMIT_REACHED",
+            payload: {
+              scansPerformed: data.scansPerformed || 3,
+              sessionId: data.sessionId,
+              scanMetadata: {
+                accessType: "anonymous",
+                scansRemaining: 0,
+                sessionId: data.sessionId,
+              },
+            },
           });
-
-          setShowSoftSignupPrompt(true);
-          setError(
-            "You've used your free scans. Sign up to continue with 3 free scans daily!"
-          );
           return;
         }
 
@@ -260,11 +257,14 @@ export function CryptoScanInterface() {
             action: "upgrade_required",
           });
 
-          setUpgradeData({
-            email: user?.primaryEmail || "",
-            scansRemaining: data.scansRemaining || 0,
+          // Use compound action to handle soft account upgrade requirement
+          dispatch({
+            type: "SOFT_ACCOUNT_UPGRADE_REQUIRED",
+            payload: {
+              email: user?.primaryEmail || "",
+              scansRemaining: data.scansRemaining || 0,
+            },
           });
-          setShowUpgradeModal(true);
           return;
         }
 
@@ -282,8 +282,9 @@ export function CryptoScanInterface() {
             tier: data.tier || "free",
           });
 
-          setLimitError(data);
-          setShowLimitDrawer(true);
+          // Set limit error and show drawer
+          dispatch({ type: "SET_LIMIT_ERROR", payload: data });
+          dispatch({ type: "SET_SHOW_LIMIT_DRAWER", payload: true });
           return;
         }
 
@@ -309,36 +310,36 @@ export function CryptoScanInterface() {
       });
 
       // Set the audit result (for backward compatibility)
-      setResult(data.data || data);
+      dispatch({ type: "SET_RESULT", payload: data.data || data });
 
       // Set report access information (new paywall system)
       // The API now returns processed response based on access level
       if (data.data) {
-        setReportAccess(data.data);
+        dispatch({ type: "SET_REPORT_ACCESS", payload: data.data });
       } else if (data.accessLevel) {
         // Direct ReportResponse format
-        setReportAccess(data);
+        dispatch({ type: "SET_REPORT_ACCESS", payload: data });
       }
 
       // Handle anonymous scan metadata (check both wrapped and direct locations)
       if (data.data?.metadata || data.scanMetadata || data.metadata) {
         const metadata =
           data.data?.metadata || data.scanMetadata || data.metadata;
-        setScanMetadata(metadata);
+        dispatch({ type: "SET_SCAN_METADATA", payload: metadata });
 
         // Track anonymous scans performed
         if (metadata.accessType === "anonymous") {
           const scansPerformed = 3 - (metadata.scansRemaining || 0);
-          setAnonymousScansPerformed(scansPerformed);
+          dispatch({ type: "SET_ANONYMOUS_SCANS_PERFORMED", payload: scansPerformed });
 
           // Save sessionId for later use (when limit is reached)
           if (metadata.sessionId) {
-            setAnonymousSessionId(metadata.sessionId);
+            dispatch({ type: "SET_ANONYMOUS_SESSION_ID", payload: metadata.sessionId });
           }
 
           // Show soft signup prompt after 1st scan (early capture)
           if (scansPerformed >= 1) {
-            setShowSoftSignupPrompt(true);
+            dispatch({ type: "SET_SHOW_SOFT_SIGNUP_PROMPT", payload: true });
           }
         }
 
@@ -347,24 +348,26 @@ export function CryptoScanInterface() {
           user &&
           (updatedScansRemaining !== null || updatedInstantCredits !== null)
         ) {
-          setUserAccessStatus((prev) => ({
-            accessType: updatedAccessType || prev?.accessType || "free",
-            scansRemaining: updatedScansRemaining
-              ? parseInt(updatedScansRemaining)
-              : prev?.scansRemaining || 0,
-            instantCredits: updatedInstantCredits
-              ? parseInt(updatedInstantCredits)
-              : prev?.instantCredits || 0,
-            accountType: prev?.accountType,
-          }));
+          dispatch({
+            type: "UPDATE_USER_ACCESS_STATUS",
+            payload: {
+              accessType: updatedAccessType || userAccessStatus?.accessType || "free",
+              scansRemaining: updatedScansRemaining
+                ? parseInt(updatedScansRemaining)
+                : userAccessStatus?.scansRemaining || 0,
+              instantCredits: updatedInstantCredits
+                ? parseInt(updatedInstantCredits)
+                : userAccessStatus?.instantCredits || 0,
+            },
+          });
         }
       }
     } catch (err) {
       const errorMessage =
         err instanceof Error ? err.message : "Failed to analyze contract";
-      setError(errorMessage);
+      dispatch({ type: "SET_ERROR", payload: errorMessage });
     } finally {
-      setLoading(false);
+      dispatch({ type: "SET_LOADING", payload: false });
     }
   };
 
@@ -387,15 +390,15 @@ export function CryptoScanInterface() {
 
   // Paywall modal handlers
   const handleUpgradeClick = () => {
-    setShowReportUpgradeModal(true);
+    dispatch({ type: "SET_SHOW_REPORT_UPGRADE_MODAL", payload: true });
   };
 
   const handleInstantPurchaseClick = () => {
-    setShowReportUpgradeModal(true);
+    dispatch({ type: "SET_SHOW_REPORT_UPGRADE_MODAL", payload: true });
   };
 
   const handleReportUpgradeSuccess = () => {
-    setShowReportUpgradeModal(false);
+    dispatch({ type: "SET_SHOW_REPORT_UPGRADE_MODAL", payload: false });
     // Optionally refresh the report or re-scan
     if (address && chain) {
       analyzeContract();
@@ -404,7 +407,7 @@ export function CryptoScanInterface() {
 
   const handleReportUpgradeError = (error: string) => {
     console.error("Upgrade error:", error);
-    setError(error);
+    dispatch({ type: "SET_ERROR", payload: error });
   };
 
   return (
@@ -530,7 +533,7 @@ export function CryptoScanInterface() {
                         {SUPPORTED_CHAINS.map((c) => (
                           <DropdownMenuItem
                             key={c.value}
-                            onClick={() => setChain(c.value)}
+                            onClick={() => dispatch({ type: "SET_CHAIN", payload: c.value })}
                             className="text-white hover:bg-neutral-800 cursor-pointer"
                           >
                             <div className="flex items-center gap-3">
@@ -547,7 +550,7 @@ export function CryptoScanInterface() {
                   <div className="hidden sm:block">
                     <Tabs
                       value={chain}
-                      onValueChange={setChain}
+                      onValueChange={(value) => dispatch({ type: "SET_CHAIN", payload: value })}
                       className="w-full"
                     >
                       <TabsList className="grid grid-cols-8 gap-2 bg-transparent h-auto p-0">
@@ -603,13 +606,13 @@ export function CryptoScanInterface() {
                       </DropdownMenuTrigger>
                       <DropdownMenuContent className="w-[calc(100vw-2rem)] sm:w-[300px] bg-neutral-900 border-neutral-800">
                         <DropdownMenuItem
-                          onClick={() => setSelectedAI("chatgpt")}
+                          onClick={() => dispatch({ type: "SET_AI_PROVIDER", payload: "chatgpt" })}
                           className="text-white hover:bg-neutral-800 cursor-pointer"
                         >
                           <span>ChatGPT</span>
                         </DropdownMenuItem>
                         <DropdownMenuItem
-                          onClick={() => setSelectedAI("claude")}
+                          onClick={() => dispatch({ type: "SET_AI_PROVIDER", payload: "claude" })}
                           className="text-white hover:bg-neutral-800 cursor-pointer"
                         >
                           <span>Claude</span>
@@ -644,7 +647,7 @@ export function CryptoScanInterface() {
                     id="address"
                     type="text"
                     value={address}
-                    onChange={(e) => setAddress(e.target.value)}
+                    onChange={(e) => dispatch({ type: "SET_ADDRESS", payload: e.target.value })}
                     onKeyPress={handleKeyPress}
                     placeholder={
                       chain === "solana"
@@ -724,7 +727,7 @@ export function CryptoScanInterface() {
       {!user && (anonymousSessionId || scanMetadata?.sessionId) && (
         <SoftSignupPrompt
           isOpen={showSoftSignupPrompt}
-          onClose={() => setShowSoftSignupPrompt(false)}
+          onClose={() => dispatch({ type: "SET_SHOW_SOFT_SIGNUP_PROMPT", payload: false })}
           scansPerformed={anonymousScansPerformed}
           scansRemaining={scanMetadata?.scansRemaining || 0}
           anonymousSessionId={
@@ -778,7 +781,7 @@ export function CryptoScanInterface() {
       {limitError && (
         <ScanLimitDrawer
           isOpen={showLimitDrawer}
-          onClose={() => setShowLimitDrawer(false)}
+          onClose={() => dispatch({ type: "SET_SHOW_LIMIT_DRAWER", payload: false })}
           scansRemaining={limitError.scansRemaining}
           resetAt={limitError.resetAt}
           upgradeUrl={limitError.upgradeUrl || "/pricing"}
@@ -792,7 +795,7 @@ export function CryptoScanInterface() {
           email={upgradeData.email}
           accountType="soft"
           scansRemaining={upgradeData.scansRemaining}
-          onClose={() => setShowUpgradeModal(false)}
+          onClose={() => dispatch({ type: "SET_SHOW_UPGRADE_MODAL", payload: false })}
         />
       )}
 
@@ -802,7 +805,7 @@ export function CryptoScanInterface() {
         reportAccess.accessLevel === "summary" && (
           <ReportUpgradeModal
             open={showReportUpgradeModal}
-            onOpenChange={setShowReportUpgradeModal}
+            onOpenChange={(open) => dispatch({ type: "SET_SHOW_REPORT_UPGRADE_MODAL", payload: open })}
             data={reportAccess}
             onSuccess={handleReportUpgradeSuccess}
             onError={handleReportUpgradeError}

@@ -50,7 +50,7 @@ export function ScanInterface() {
   const [scanMetadata, setScanMetadata] = useState<ScanMetadata | null>(null);
   const [anonymousScansPerformed, setAnonymousScansPerformed] = useState(0);
   const [anonymousSessionId, setAnonymousSessionId] = useState<string | null>(
-    null
+    null,
   );
   const [showSoftSignupPrompt, setShowSoftSignupPrompt] = useState(false);
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
@@ -108,7 +108,7 @@ export function ScanInterface() {
     const trimmedAddress = address.trim();
     if (!/^0x[a-fA-F0-9]{40}$/.test(trimmedAddress)) {
       setError(
-        "Invalid Ethereum contract address format (must be 0x followed by 40 hex characters)"
+        "Invalid Ethereum contract address format (must be 0x followed by 40 hex characters)",
       );
       return;
     }
@@ -134,7 +134,7 @@ export function ScanInterface() {
 
       setShowSoftSignupPrompt(true);
       setError(
-        "You've used your free scans. Sign up to continue with 3 free scans daily!"
+        "You've used your free scans. Sign up to continue with 3 free scans daily!",
       );
       return;
     }
@@ -192,7 +192,7 @@ export function ScanInterface() {
 
           setShowSoftSignupPrompt(true);
           setError(
-            "You've used your free scans. Sign up to continue with 3 free scans daily!"
+            "You've used your free scans. Sign up to continue with 3 free scans daily!",
           );
           return;
         }

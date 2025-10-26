@@ -1,13 +1,14 @@
 "use client";
 
-import { AccountSettings } from "@stackframe/stack";
+import { AccountSettings } from "@/components/AccountSettings";
 import { useUser } from "@stackframe/stack";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { SubscriptionCard } from "@/components/SubscriptionCard";
 import { CheckCircle, XCircle } from "lucide-react";
-import { AnalyticsEvents, trackConversion } from "@/lib/analytics/posthog";
-import { trackEvent } from "@/lib/analytics/posthog";
+import { AnalyticsEvents, trackConversion, trackEvent } from "@/lib/analytics/posthog";
+import { PRICING_CONFIG } from "@/lib/config/pricing";
+import { useUserTier } from "@/hooks/useUserTier";
 
 export default function AccountPage() {
   const user = useUser();
@@ -18,11 +19,12 @@ export default function AccountPage() {
     text: string;
   } | null>(null);
   const [loadingPortal, setLoadingPortal] = useState(false);
-  const [userTier, setUserTier] = useState<
-    "free" | "starter" | "pro" | "team" | "enterprise"
-  >("free");
-  const [loadingTier, setLoadingTier] = useState(true);
-  const [tierError, setTierError] = useState<string | null>(null);
+
+  // Use custom hook for tier management
+  const { tier: userTier, isLoading: loadingTier, error: tierError } = useUserTier({
+    userId: user?.id,
+    enabled: !!user,
+  });
 
   // Check for success/cancel messages from Stripe redirect
   useEffect(() => {
@@ -43,105 +45,56 @@ export default function AccountPage() {
     }
   }, [searchParams, router]);
 
-  // Fetch user tier from database
+  // Handle successful checkout redirect
   useEffect(() => {
-    const fetchUserTier = async () => {
-      try {
-        setLoadingTier(true);
-        const response = await fetch("/api/user/profile");
+    if (searchParams.get("success") && userTier !== "free" && !loadingTier) {
+      // Track successful checkout completion
+      trackEvent(AnalyticsEvents.CHECKOUT_COMPLETED, {
+        sessionId: searchParams.get("session_id"),
+        source: "account_redirect",
+        tier: userTier,
+      });
 
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
+      // Track conversion with actual tier price
+      const tierPrices: Record<string, number> = {
+        starter: PRICING_CONFIG.starter.price,
+        pro: PRICING_CONFIG.pro.price,
+        team: PRICING_CONFIG.team.price,
+        enterprise: PRICING_CONFIG.team.price,
+      };
+      trackConversion(
+        "subscription_purchase",
+        tierPrices[userTier] || 0,
+        {
+          tier: userTier,
         }
+      );
 
-        const data = (await response.json()) as {
-          tier?: "free" | "starter" | "pro" | "team" | "enterprise";
-          status?: string;
-        };
+      // Dynamic success message based on tier
+      const tierNames = {
+        starter: "Starter",
+        pro: "Pro",
+        team: "Team",
+        enterprise: "Team",
+      };
+      const tierMessages = {
+        starter: "Your 30 monthly scans are now active.",
+        pro: "Your 150 monthly scans are now active.",
+        team: "Your 1000 monthly scans and API access are now active.",
+        enterprise: "Your 1000 monthly scans and API access are now active.",
+      };
 
-        if (data.status === "error") {
-          console.error("API returned error:", data);
-          setTierError("Failed to load subscription status");
-          return;
-        }
+      setMessage({
+        type: "success",
+        text: `🎉 Subscription successful! Welcome to ${tierNames[userTier]}! ${tierMessages[userTier]}`,
+      });
 
-        if (data.tier) {
-          const fetchedTier = data.tier as
-            | "free"
-            | "starter"
-            | "pro"
-            | "team"
-            | "enterprise";
-          setUserTier(fetchedTier);
-          setTierError(null); // Clear any previous errors
-
-          // Handle successful checkout
-          if (searchParams.get("success") && fetchedTier !== "free") {
-            // Track successful checkout completion
-            trackEvent(AnalyticsEvents.CHECKOUT_COMPLETED, {
-              sessionId: searchParams.get("session_id"),
-              source: "account_redirect",
-              tier: fetchedTier,
-            });
-
-            // Track conversion with actual tier price
-            const tierPrices = {
-              starter: 14,
-              pro: 29,
-              team: 99,
-              enterprise: 99,
-            };
-            trackConversion(
-              "subscription_purchase",
-              tierPrices[fetchedTier] || 0,
-              {
-                tier: fetchedTier,
-              }
-            );
-
-            // Dynamic success message based on tier
-            const tierNames = {
-              starter: "Starter",
-              pro: "Pro",
-              team: "Team",
-              enterprise: "Team",
-            };
-            const tierMessages = {
-              starter: "Your 30 monthly scans are now active.",
-              pro: "Your 150 monthly scans are now active.",
-              team: "Your 1000 monthly scans and API access are now active.",
-              enterprise: "Your 1000 monthly scans and API access are now active.",
-            };
-
-            setMessage({
-              type: "success",
-              text: `🎉 Subscription successful! Welcome to ${tierNames[fetchedTier]}! ${tierMessages[fetchedTier]}`,
-            });
-
-            // Clear URL parameters after 5 seconds
-            setTimeout(() => {
-              router.replace("/account");
-            }, 5000);
-          }
-        } else {
-          // Default to free if no tier is returned
-          setUserTier("free");
-          setTierError("No subscription tier found");
-        }
-      } catch (error) {
-        console.error("Failed to fetch user tier:", error);
-        // Set to free tier on error to prevent UI issues
-        setUserTier("free");
-        setTierError("Failed to load subscription status");
-      } finally {
-        setLoadingTier(false);
-      }
-    };
-
-    if (user) {
-      void fetchUserTier();
+      // Clear URL parameters after 5 seconds
+      setTimeout(() => {
+        router.replace("/account");
+      }, 5000);
     }
-  }, [user, searchParams, router]); // Re-fetch after Stripe redirect
+  }, [searchParams, userTier, loadingTier, router]);
 
   // Redirect to home if not logged in
   useEffect(() => {
@@ -152,6 +105,9 @@ export default function AccountPage() {
 
   // Handle subscription management
   const handleManageSubscription = async () => {
+    // Prevent multiple rapid clicks
+    if (loadingPortal) return;
+
     // Track portal opened
     trackEvent(AnalyticsEvents.PORTAL_OPENED, {
       tier: userTier,
@@ -242,8 +198,8 @@ export default function AccountPage() {
         />
 
         {/* Account Settings Component */}
-        <div className="border border-black/10 dark:border-white/10 rounded-xl overflow-hidden bg-white dark:bg-black">
-          <AccountSettings fullPage={false} />
+        <div className="mb-6">
+          <AccountSettings />
         </div>
       </div>
     </section>

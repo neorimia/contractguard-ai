@@ -446,6 +446,261 @@ export class AccessValidationService {
   }
 
   /**
+   * ATOMIC: Validate and consume scan in a single transaction
+   * Prevents race conditions from concurrent requests
+   *
+   * Uses row-level locking (FOR UPDATE) to ensure only one request
+   * can check and consume a scan at a time per user.
+   *
+   * @param userId - Database user ID
+   * @param anonymousSessionId - Optional anonymous session ID
+   * @returns Access validation result with consumption status
+   */
+  async validateAndConsumeScan(
+    userId?: number,
+    anonymousSessionId?: string
+  ): Promise<AccessValidationResult & { consumed: boolean }> {
+    try {
+      // Handle anonymous users (no transaction needed for cookie-based tracking)
+      if (!userId && anonymousSessionId) {
+        const result = await this.validateAnonymousAccess(anonymousSessionId);
+        if (result.hasAccess) {
+          await incrementAnonymousScanCount(anonymousSessionId);
+          return { ...result, consumed: true };
+        }
+        return { ...result, consumed: false };
+      }
+
+      // Require userId for authenticated users
+      if (!userId) {
+        return {
+          hasAccess: false,
+          accessType: "none",
+          scansRemaining: 0,
+          instantCredits: 0,
+          consumed: false,
+          reason: "Authentication required",
+        };
+      }
+
+      // Use database transaction with row-level locking
+      return await db.transaction(async (tx) => {
+        // Lock user row for update (prevents concurrent modifications)
+        const [user] = await tx
+          .select()
+          .from(users)
+          .where(eq(users.id, userId))
+          .for("update") // ROW-LEVEL LOCK
+          .limit(1);
+
+        if (!user) {
+          return {
+            hasAccess: false,
+            accessType: "none",
+            scansRemaining: 0,
+            instantCredits: 0,
+            consumed: false,
+            reason: "User not found",
+          };
+        }
+
+        // Soft account validation
+        if (user.accountType === "soft") {
+          const now = new Date();
+          const resetAt = user.scansResetAt
+            ? new Date(user.scansResetAt)
+            : null;
+
+          // Reset if needed
+          if (!resetAt || now >= resetAt) {
+            const tomorrow = new Date();
+            tomorrow.setDate(tomorrow.getDate() + 1);
+            tomorrow.setHours(0, 0, 0, 0);
+
+            await tx
+              .update(users)
+              .set({
+                scansToday: 1, // Consume first scan
+                scansResetAt: tomorrow,
+                instantCreditsUsedToday: 0,
+              })
+              .where(eq(users.id, userId));
+
+            return {
+              hasAccess: true,
+              accessType: "soft",
+              scansRemaining: 2, // 3 - 1 consumed
+              instantCredits: 0,
+              accountType: "soft",
+              consumed: true,
+            };
+          }
+
+          const scansUsed = user.scansToday || 0;
+          const scansRemaining = Math.max(0, 3 - scansUsed);
+
+          if (scansRemaining > 0) {
+            // Consume scan atomically
+            await tx
+              .update(users)
+              .set({
+                scansToday: sql`${users.scansToday} + 1`,
+              })
+              .where(eq(users.id, userId));
+
+            return {
+              hasAccess: true,
+              accessType: "soft",
+              scansRemaining: scansRemaining - 1,
+              instantCredits: 0,
+              accountType: "soft",
+              consumed: true,
+            };
+          }
+
+          return {
+            hasAccess: false,
+            accessType: "none",
+            scansRemaining: 0,
+            instantCredits: 0,
+            accountType: "soft",
+            consumed: false,
+            reason: "Daily limit reached",
+          };
+        }
+
+        // Priority 1: Subscription plans (Starter/Pro/Team)
+        if (["starter", "pro", "team"].includes(user.tier)) {
+          // Subscription users always have access (with overage)
+          await tx
+            .update(users)
+            .set({
+              scansToday: sql`${users.scansToday} + 1`,
+            })
+            .where(eq(users.id, userId));
+
+          // Calculate monthly usage
+          const currentMonth = new Date();
+          const monthStart = new Date(
+            currentMonth.getFullYear(),
+            currentMonth.getMonth(),
+            1
+          );
+
+          const result = await tx.execute(
+            `SELECT count(*)::int AS used
+             FROM crypto_audits
+             WHERE user_id=${userId}
+               AND created_at >= '${monthStart.toISOString()}'`
+          );
+
+          const used = Number(result.rows[0]?.used) || 0;
+          const limits =
+            PRICING_LIMITS[user.tier as "starter" | "pro" | "team"];
+          const remaining = Math.max(0, limits.monthlyCredits - used);
+
+          return {
+            hasAccess: true,
+            accessType: user.tier as AccessType,
+            scansRemaining: remaining,
+            instantCredits: user.instantCredits || 0,
+            accountType: (user.accountType as AccountType) || "full",
+            consumed: true,
+          };
+        }
+
+        // Priority 2: Instant credits
+        const instantCredits = user.instantCredits || 0;
+        if (instantCredits > 0) {
+          await tx
+            .update(users)
+            .set({
+              instantCredits: sql`GREATEST(${users.instantCredits} - 1, 0)`,
+              instantCreditsUsedToday: sql`${users.instantCreditsUsedToday} + 1`,
+            })
+            .where(eq(users.id, userId));
+
+          return {
+            hasAccess: true,
+            accessType: "instant_credit",
+            scansRemaining: instantCredits - 1,
+            instantCredits: instantCredits - 1,
+            accountType: (user.accountType as AccountType) || "full",
+            consumed: true,
+          };
+        }
+
+        // Priority 3: Free tier daily limit
+        const now = new Date();
+        const resetAt = user.scansResetAt ? new Date(user.scansResetAt) : null;
+
+        // Reset if needed
+        if (!resetAt || now >= resetAt) {
+          const tomorrow = new Date();
+          tomorrow.setDate(tomorrow.getDate() + 1);
+          tomorrow.setHours(0, 0, 0, 0);
+
+          await tx
+            .update(users)
+            .set({
+              scansToday: 1, // Consume first scan
+              scansResetAt: tomorrow,
+              instantCreditsUsedToday: 0,
+            })
+            .where(eq(users.id, userId));
+
+          return {
+            hasAccess: true,
+            accessType: "free",
+            scansRemaining: 2, // 3 - 1 consumed
+            instantCredits: 0,
+            accountType: (user.accountType as AccountType) || "full",
+            consumed: true,
+          };
+        }
+
+        // Check free scans
+        const scansUsed = user.scansToday || 0;
+        const scansRemaining = Math.max(0, 3 - scansUsed);
+
+        if (scansRemaining > 0) {
+          // Consume scan atomically
+          await tx
+            .update(users)
+            .set({
+              scansToday: sql`${users.scansToday} + 1`,
+            })
+            .where(eq(users.id, userId));
+
+          return {
+            hasAccess: true,
+            accessType: "free",
+            scansRemaining: scansRemaining - 1,
+            instantCredits: 0,
+            accountType: (user.accountType as AccountType) || "full",
+            consumed: true,
+          };
+        }
+
+        // No access available
+        return {
+          hasAccess: false,
+          accessType: "none",
+          scansRemaining: 0,
+          instantCredits: 0,
+          accountType: (user.accountType as AccountType) || "full",
+          consumed: false,
+          reason: "Daily limit reached",
+          resetAt: resetAt || new Date(Date.now() + 24 * 60 * 60 * 1000),
+        };
+      });
+    } catch (error) {
+      console.error("Validate and consume scan error:", error);
+      throw new Error("Failed to validate and consume scan");
+    }
+  }
+
+  /**
    * Check if guest user has access via guest session
    * @param guestSessionId - Guest session UUID
    * @returns Access validation result
