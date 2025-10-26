@@ -28,6 +28,8 @@ import {
   EyeOff,
   CheckCircle,
   AlertCircle,
+  ImageIcon,
+  Upload,
 } from "lucide-react";
 
 interface AccountSettingsProps {
@@ -42,11 +44,13 @@ export function AccountSettings({ className }: AccountSettingsProps) {
     text: string;
   } | null>(null);
   const [showPassword, setShowPassword] = useState(false);
+  const [uploadingImage, setUploadingImage] = useState(false);
 
   // Form states
   const [profileData, setProfileData] = useState({
     displayName: user?.displayName || "",
     email: user?.primaryEmail || "",
+    profileImageUrl: user?.profileImageUrl || "",
   });
 
   const [passwordData, setPasswordData] = useState({
@@ -95,6 +99,66 @@ export function AccountSettings({ className }: AccountSettingsProps) {
     return defaultMessage;
   };
 
+  // Handle avatar file upload
+  const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Validate file type
+    if (!file.type.startsWith("image/")) {
+      setMessage({
+        type: "error",
+        text: "Please select a valid image file (jpg, png, gif, webp).",
+      });
+      return;
+    }
+
+    // Validate file size (max 2MB)
+    const maxSize = 2 * 1024 * 1024; // 2MB in bytes
+    if (file.size > maxSize) {
+      setMessage({
+        type: "error",
+        text: "Image size must be less than 2MB. Please choose a smaller file.",
+      });
+      return;
+    }
+
+    setUploadingImage(true);
+    setMessage(null);
+
+    try {
+      // Convert file to base64
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        const base64String = reader.result as string;
+        setProfileData((prev) => ({
+          ...prev,
+          profileImageUrl: base64String,
+        }));
+        setUploadingImage(false);
+        setMessage({
+          type: "success",
+          text: "Image uploaded successfully! Don't forget to save changes.",
+        });
+      };
+      reader.onerror = () => {
+        setUploadingImage(false);
+        setMessage({
+          type: "error",
+          text: "Failed to read image file. Please try again.",
+        });
+      };
+      reader.readAsDataURL(file);
+    } catch (error) {
+      console.error("Upload error:", error);
+      setUploadingImage(false);
+      setMessage({
+        type: "error",
+        text: "Failed to upload image. Please try again.",
+      });
+    }
+  };
+
   const handleProfileUpdate = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
@@ -109,21 +173,53 @@ export function AccountSettings({ className }: AccountSettingsProps) {
       return;
     }
 
-    // Validate email format
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (profileData.email && !emailRegex.test(profileData.email)) {
-      setMessage({
-        type: "error",
-        text: "Please enter a valid email address.",
-      });
-      setIsLoading(false);
-      return;
+    // Validate email format with robust validation
+    if (profileData.email) {
+      const { isValidEmail } = await import("@/lib/validation/email");
+      if (!isValidEmail(profileData.email)) {
+        setMessage({
+          type: "error",
+          text: "Please enter a valid email address.",
+        });
+        setIsLoading(false);
+        return;
+      }
+    }
+
+    // Validate profile image URL if provided (skip validation for base64 images)
+    if (profileData.profileImageUrl && !profileData.profileImageUrl.startsWith("data:image/")) {
+      try {
+        new URL(profileData.profileImageUrl);
+        // Check if it's an image URL (basic validation)
+        if (
+          !profileData.profileImageUrl.match(
+            /\.(jpg|jpeg|png|gif|webp|svg)$/i
+          ) &&
+          !profileData.profileImageUrl.includes("gravatar") &&
+          !profileData.profileImageUrl.includes("googleusercontent")
+        ) {
+          setMessage({
+            type: "error",
+            text: "Please enter a valid image URL (jpg, png, gif, webp, or svg).",
+          });
+          setIsLoading(false);
+          return;
+        }
+      } catch {
+        setMessage({
+          type: "error",
+          text: "Please enter a valid image URL.",
+        });
+        setIsLoading(false);
+        return;
+      }
     }
 
     try {
       // Update user profile using Stack Auth API
       await user.update({
         displayName: profileData.displayName,
+        profileImageUrl: profileData.profileImageUrl || null,
         clientMetadata: {
           ...user.clientMetadata,
           preferences: preferences,
@@ -346,6 +442,34 @@ export function AccountSettings({ className }: AccountSettingsProps) {
             </CardHeader>
             <CardContent>
               <form onSubmit={handleProfileUpdate} className="space-y-4">
+                {/* Profile Image Preview */}
+                {profileData.profileImageUrl && (
+                  <div className="flex items-center gap-4 p-4 border rounded-lg bg-muted/50">
+                    <div className="relative w-20 h-20 rounded-full overflow-hidden bg-muted flex items-center justify-center">
+                      {profileData.profileImageUrl ? (
+                        <img
+                          src={profileData.profileImageUrl}
+                          alt="Profile preview"
+                          className="w-full h-full object-cover"
+                          onError={(e) => {
+                            const target = e.target as HTMLImageElement;
+                            target.style.display = "none";
+                            target.parentElement?.classList.add("bg-muted");
+                          }}
+                        />
+                      ) : (
+                        <User className="h-10 w-10 text-muted-foreground" />
+                      )}
+                    </div>
+                    <div className="flex-1">
+                      <p className="text-sm font-medium">Profile Image Preview</p>
+                      <p className="text-xs text-muted-foreground">
+                        This is how your profile image will appear
+                      </p>
+                    </div>
+                  </div>
+                )}
+
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="displayName">Display Name</Label>
@@ -378,6 +502,83 @@ export function AccountSettings({ className }: AccountSettingsProps) {
                         placeholder="Enter your email"
                       />
                     </div>
+                  </div>
+                </div>
+
+                {/* Profile Image Upload Section */}
+                <div className="space-y-4">
+                  <div className="space-y-2">
+                    <Label>Profile Image</Label>
+                    <div className="flex flex-col sm:flex-row gap-3">
+                      {/* Upload Button */}
+                      <div className="flex-1">
+                        <input
+                          type="file"
+                          id="avatar-upload"
+                          accept="image/*"
+                          className="hidden"
+                          onChange={handleAvatarUpload}
+                          disabled={uploadingImage}
+                        />
+                        <Button
+                          type="button"
+                          variant="outline"
+                          onClick={() =>
+                            document.getElementById("avatar-upload")?.click()
+                          }
+                          disabled={uploadingImage}
+                          className="w-full"
+                        >
+                          <Upload className="h-4 w-4 mr-2" />
+                          {uploadingImage ? "Uploading..." : "Upload Image"}
+                        </Button>
+                      </div>
+
+                      {/* Clear Button */}
+                      {profileData.profileImageUrl && (
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          onClick={() =>
+                            setProfileData((prev) => ({
+                              ...prev,
+                              profileImageUrl: "",
+                            }))
+                          }
+                          className="sm:w-auto"
+                        >
+                          <Trash2 className="h-4 w-4 mr-2" />
+                          Clear
+                        </Button>
+                      )}
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      Upload an image file (max 2MB) or enter a URL below
+                    </p>
+                  </div>
+
+                  {/* Profile Image URL Input */}
+                  <div className="space-y-2">
+                    <Label htmlFor="profileImageUrl">Or Enter Image URL</Label>
+                    <div className="flex items-center gap-2">
+                      <ImageIcon className="h-4 w-4 text-muted-foreground" />
+                      <Input
+                        id="profileImageUrl"
+                        type="url"
+                        value={profileData.profileImageUrl}
+                        onChange={(e) =>
+                          setProfileData((prev) => ({
+                            ...prev,
+                            profileImageUrl: e.target.value,
+                          }))
+                        }
+                        placeholder="https://example.com/image.jpg"
+                      />
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      Supports jpg, png, gif, webp, svg. Gravatar and Google profile
+                      images are also supported.
+                    </p>
                   </div>
                 </div>
 
@@ -550,7 +751,7 @@ export function AccountSettings({ className }: AccountSettingsProps) {
                       ...prev,
                       emailNotifications: checked,
                     }));
-                    handlePreferencesUpdate();
+                    void handlePreferencesUpdate();
                   }}
                 />
               </div>
@@ -570,7 +771,7 @@ export function AccountSettings({ className }: AccountSettingsProps) {
                       ...prev,
                       marketingEmails: checked,
                     }));
-                    handlePreferencesUpdate();
+                    void handlePreferencesUpdate();
                   }}
                 />
               </div>
@@ -600,7 +801,7 @@ export function AccountSettings({ className }: AccountSettingsProps) {
                   checked={preferences.darkMode}
                   onCheckedChange={(checked) => {
                     setPreferences((prev) => ({ ...prev, darkMode: checked }));
-                    handlePreferencesUpdate();
+                    void handlePreferencesUpdate();
                   }}
                 />
               </div>

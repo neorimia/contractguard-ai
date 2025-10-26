@@ -35,6 +35,7 @@ import {
 } from "@/lib/utils/report-access";
 import { getAnonymousSessionFromRequest } from "@/lib/middleware/session-tracking";
 import type { ReportResponse } from "@/lib/types/report-types";
+import { TIER_AI_PROVIDERS } from "@/lib/constants/scan-limits";
 
 const redis = new Redis({
   url: process.env.UPSTASH_REDIS_URL!,
@@ -281,6 +282,30 @@ export async function POST(req: NextRequest) {
       throw ErrorFactory.invalidAddress();
     }
 
+    // SECURITY: Validate AI provider based on user tier
+    const allowedProviders =
+      TIER_AI_PROVIDERS[
+        accessStatus.accessType as keyof typeof TIER_AI_PROVIDERS
+      ] || TIER_AI_PROVIDERS.free;
+
+    if (aiProvider && !allowedProviders.includes(aiProvider as any)) {
+      return NextResponse.json(
+        {
+          status: "error",
+          error: "Invalid AI provider",
+          message: `AI provider '${aiProvider}' is not available for ${accessStatus.accessType} tier. Upgrade to Pro for Claude access.`,
+          allowedProviders,
+          upgradeUrl: "/pricing",
+        },
+        { status: 403 }
+      );
+    }
+
+    // Use validated AI provider or default to chatgpt
+    const validatedAiProvider = allowedProviders.includes(aiProvider as any)
+      ? aiProvider
+      : "chatgpt";
+
     const normalizedAddress = contractAddress.toLowerCase();
 
     // 1. Check Redis cache first (5 minute TTL)
@@ -448,11 +473,11 @@ export async function POST(req: NextRequest) {
     // Debug mode: Force AI analysis if aiProvider is specified and confidence < 90%
     const shouldUseAI =
       heuristicAssessment.confidence < 70 ||
-      (aiProvider && heuristicAssessment.confidence < 90);
+      (validatedAiProvider && heuristicAssessment.confidence < 90);
 
     if (shouldUseAI) {
       console.log(
-        `Running AI analysis... (confidence: ${heuristicAssessment.confidence}%, provider: ${aiProvider || "default"})`
+        `Running AI analysis... (confidence: ${heuristicAssessment.confidence}%, provider: ${validatedAiProvider || "default"})`
       );
       try {
         const aiAnalysis = await aiService.analyzeContract(
@@ -465,7 +490,7 @@ export async function POST(req: NextRequest) {
               : "0",
             ownerBalance: "0",
           },
-          aiProvider // Pass AI provider preference
+          validatedAiProvider // Use validated AI provider
         );
 
         // Merge heuristic and AI results
