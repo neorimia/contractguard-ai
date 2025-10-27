@@ -7,7 +7,7 @@ import { useEffect, useState } from "react";
 import { SubscriptionCard } from "@/components/SubscriptionCard";
 import { CheckCircle, XCircle } from "lucide-react";
 import { AnalyticsEvents, trackConversion, trackEvent } from "@/lib/analytics/posthog";
-import { PRICING_CONFIG } from "@/lib/config/pricing";
+import { PRICING_CONFIG, TIER_METADATA, UI_CONFIG } from "@/lib/config/pricing";
 import { useUserTier } from "@/hooks/useUserTier";
 
 export default function AccountPage() {
@@ -38,10 +38,10 @@ export default function AccountPage() {
         type: "error",
         text: "Checkout canceled. You can upgrade anytime from the pricing page.",
       });
-      // Clear URL parameters after 5 seconds
+      // Clear URL parameters after timeout
       setTimeout(() => {
         router.replace("/account");
-      }, 5000);
+      }, UI_CONFIG.REDIRECT_TIMEOUT_MS);
     }
   }, [searchParams, router]);
 
@@ -56,43 +56,30 @@ export default function AccountPage() {
       });
 
       // Track conversion with actual tier price
-      const tierPrices: Record<string, number> = {
-        starter: PRICING_CONFIG.starter.price,
-        pro: PRICING_CONFIG.pro.price,
-        team: PRICING_CONFIG.team.price,
-        enterprise: PRICING_CONFIG.team.price,
-      };
+      const tierPrice = userTier === "starter" ? PRICING_CONFIG.starter.price
+        : userTier === "pro" ? PRICING_CONFIG.pro.price
+        : PRICING_CONFIG.team.price;
+
       trackConversion(
         "subscription_purchase",
-        tierPrices[userTier] || 0,
+        tierPrice,
         {
           tier: userTier,
         }
       );
 
-      // Dynamic success message based on tier
-      const tierNames = {
-        starter: "Starter",
-        pro: "Pro",
-        team: "Team",
-        enterprise: "Team",
-      };
-      const tierMessages = {
-        starter: "Your 30 monthly scans are now active.",
-        pro: "Your 150 monthly scans are now active.",
-        team: "Your 1000 monthly scans and API access are now active.",
-        enterprise: "Your 1000 monthly scans and API access are now active.",
-      };
+      // Get tier metadata from centralized configuration
+      const tierMeta = TIER_METADATA[userTier];
 
       setMessage({
         type: "success",
-        text: `🎉 Subscription successful! Welcome to ${tierNames[userTier]}! ${tierMessages[userTier]}`,
+        text: `🎉 Subscription successful! Welcome to ${tierMeta.name}! ${tierMeta.successMessage}`,
       });
 
-      // Clear URL parameters after 5 seconds
+      // Clear URL parameters after timeout
       setTimeout(() => {
         router.replace("/account");
-      }, 5000);
+      }, UI_CONFIG.REDIRECT_TIMEOUT_MS);
     }
   }, [searchParams, userTier, loadingTier, router]);
 
