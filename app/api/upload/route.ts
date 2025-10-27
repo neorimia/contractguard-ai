@@ -36,7 +36,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         { 
           error: "Invalid file type",
-          message: `Please upload a valid image file (${IMAGE_UPLOAD_CONSTANTS.ACCEPTED_TYPES.join(", ")})`
+          message: `Please upload a valid image file (${IMAGE_UPLOAD_CONSTANTS.ACCEPTED_IMAGE_TYPES.join(", ")})`
         },
         { status: 400 }
       );

@@ -1,3 +1,4 @@
+import React from "react";
 import "@testing-library/jest-dom";
 import { cleanup } from "@testing-library/react";
 import { afterEach, vi } from "vitest";
@@ -25,7 +26,8 @@ vi.mock("next/navigation", () => ({
 vi.mock("next/image", () => ({
   default: (props: any) => {
     // eslint-disable-next-line jsx-a11y/alt-text
-    return <img {...props} />;
+    // @ts-ignore - JSX in test setup
+    return React.createElement("img", props);
   },
 }));
 

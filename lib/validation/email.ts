@@ -10,7 +10,8 @@ import { z } from "zod";
  * Comprehensive email validation regex
  * Based on RFC 5322 standard with practical limitations
  */
-const EMAIL_REGEX = /^[a-zA-Z0-9.!#$%&'*+\/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$/;
+const EMAIL_REGEX =
+  /^[a-zA-Z0-9.!#$%&'*+\/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$/;
 
 /**
  * Zod schema for email validation
@@ -55,7 +56,7 @@ export function validateEmail(email: string): {
     if (error instanceof z.ZodError) {
       return {
         valid: false,
-        error: error.errors[0]?.message || "Invalid email address",
+        error: error.issues[0]?.message || "Invalid email address",
       };
     }
     return { valid: false, error: "Invalid email address" };
