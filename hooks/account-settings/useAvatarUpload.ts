@@ -16,10 +16,9 @@ export interface UseAvatarUploadReturn {
 
 /**
  * Custom hook for handling avatar/profile image uploads
- *
- * TODO: Replace base64 upload with direct CDN upload
- * Current implementation stores ~2.7MB in state for a 2MB image (33% overhead)
- * Recommended: Use /api/upload endpoint with FormData to upload to CDN/S3
+ * 
+ * Uses /api/upload endpoint for CDN-based uploads
+ * Replaces the old base64 conversion method with proper API calls
  *
  * @param options - Configuration options for upload behavior
  * @returns Upload state and handler function
@@ -63,44 +62,38 @@ export function useAvatarUpload(options: UseAvatarUploadOptions = {}): UseAvatar
     }
 
     try {
-      // Convert file to base64 (temporary solution)
-      const reader = new FileReader();
+      // Upload to API endpoint using FormData
+      const formData = new FormData();
+      formData.append("file", file);
 
-      reader.onloadend = () => {
-        const base64String = reader.result as string;
-        setImageError(false); // Reset image error state
-        setUploadingImage(false);
+      const response = await fetch("/api/upload", {
+        method: "POST",
+        body: formData,
+      });
 
-        if (onSuccess) {
-          onSuccess(base64String);
-        }
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || "Upload failed");
+      }
 
-        if (setMessage) {
-          setMessage({
-            type: "success",
-            text: "Image uploaded successfully! Don't forget to save changes.",
-          });
-        }
-      };
+      const data = await response.json();
+      setImageError(false); // Reset image error state
+      setUploadingImage(false);
+ 
+      if (onSuccess) {
+        onSuccess(data.url);
+      }
 
-      reader.onerror = () => {
-        setUploadingImage(false);
-        const errorMessage = "Failed to read image file. Please try again.";
-
-        if (onError) {
-          onError(errorMessage);
-        }
-
-        if (setMessage) {
-          setMessage({ type: "error", text: errorMessage });
-        }
-      };
-
-      reader.readAsDataURL(file);
+      if (setMessage) {
+        setMessage({
+          type: "success",
+          text: "Image uploaded successfully! Don't forget to save changes.",
+        });
+      }
     } catch (error) {
       console.error("Upload error:", error);
       setUploadingImage(false);
-      const errorMessage = "Failed to upload image. Please try again.";
+      const errorMessage = error instanceof Error ? error.message : "Failed to upload image. Please try again.";
 
       if (onError) {
         onError(errorMessage);
