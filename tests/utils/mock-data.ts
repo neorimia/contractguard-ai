@@ -9,9 +9,11 @@ import type {
 export const mockSubscription: SubscriptionData = {
   id: "sub_test123",
   status: "active",
+  tier: "pro",
   currentPeriodStart: new Date("2025-01-01").toISOString(),
   currentPeriodEnd: new Date("2025-02-01").toISOString(),
   cancelAtPeriodEnd: false,
+  canceledAt: null,
   interval: "month",
   amount: 2900,
   currency: "usd",
@@ -25,10 +27,13 @@ export const mockCanceledSubscription: SubscriptionData = {
 
 export const mockPaymentMethod: PaymentMethodData = {
   id: "pm_test123",
-  brand: "visa",
-  last4: "4242",
-  expMonth: 12,
-  expYear: 2025,
+  type: "card",
+  card: {
+    brand: "visa",
+    last4: "4242",
+    expMonth: 12,
+    expYear: 2025,
+  },
 };
 
 export const mockInvoices: InvoiceData[] = [
@@ -38,7 +43,9 @@ export const mockInvoices: InvoiceData[] = [
     created: new Date("2025-01-01").toISOString(),
     status: "paid",
     amountPaid: 2900,
+    currency: "usd",
     description: "Pro Plan - Monthly",
+    hostedInvoiceUrl: "https://billing.stripe.com/invoice/test1",
     invoicePdf: "https://billing.stripe.com/invoice/test1.pdf",
   },
   {
@@ -47,7 +54,9 @@ export const mockInvoices: InvoiceData[] = [
     created: new Date("2024-12-01").toISOString(),
     status: "paid",
     amountPaid: 2900,
+    currency: "usd",
     description: "Pro Plan - Monthly",
+    hostedInvoiceUrl: "https://billing.stripe.com/invoice/test2",
     invoicePdf: "https://billing.stripe.com/invoice/test2.pdf",
   },
 ];
@@ -59,17 +68,23 @@ export const mockInstantCredits: InstantCreditsData = {
   recentPurchases: [
     {
       id: "pur_test1",
+      type: "instant_credits",
       credits: 10,
       amount: 990,
+      currency: "usd",
       status: "completed",
       createdAt: new Date("2025-01-15").toISOString(),
+      completedAt: new Date("2025-01-15").toISOString(),
     },
     {
       id: "pur_test2",
+      type: "instant_credits",
       credits: 20,
       amount: 1980,
+      currency: "usd",
       status: "completed",
       createdAt: new Date("2025-01-10").toISOString(),
+      completedAt: new Date("2025-01-10").toISOString(),
     },
   ],
 };
@@ -81,6 +96,7 @@ export const mockUsage: UsageData = {
     limit: 100,
     resetAt: new Date("2025-02-01").toISOString(),
   },
+  tier: "pro",
 };
 
 export const mockUnlimitedUsage: UsageData = {
@@ -90,6 +106,7 @@ export const mockUnlimitedUsage: UsageData = {
     limit: 999999,
     resetAt: new Date("2025-02-01").toISOString(),
   },
+  tier: "team",
 };
 
 export const mockBillingResponse = {
