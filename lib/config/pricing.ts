@@ -6,6 +6,8 @@
  * - Starter Subscription (monthly recurring)
  * - Pro Subscription (monthly recurring)
  * - Team/API Plan (monthly recurring with API access)
+ *
+ * Includes tier metadata for consistent display across the application.
  */
 
 export const PRICING_CONFIG = {
@@ -165,3 +167,49 @@ export function calculateSavings(packageIndex: number): number | null {
   const fullPrice = singlePrice * pkg.credits;
   return fullPrice - pkg.price;
 }
+
+/**
+ * Tier Metadata Configuration
+ *
+ * Centralized tier display information for consistent UI across the application.
+ * Used in account pages, subscription flows, and success messages.
+ */
+export const TIER_METADATA = {
+  free: {
+    name: "Free",
+    displayName: "Free Tier",
+    successMessage: "3 scans per day",
+  },
+  starter: {
+    name: "Starter",
+    displayName: "Starter Plan",
+    successMessage: `Your ${PRICING_CONFIG.starter.monthlyCredits} monthly scans are now active.`,
+  },
+  pro: {
+    name: "Pro",
+    displayName: "Pro Plan",
+    successMessage: `Your ${PRICING_CONFIG.pro.monthlyCredits} monthly scans are now active.`,
+  },
+  team: {
+    name: "Team",
+    displayName: "Team Plan",
+    successMessage: `Your ${PRICING_CONFIG.team.monthlyCredits} monthly scans and API access are now active.`,
+  },
+  enterprise: {
+    name: "Team",
+    displayName: "Team Plan",
+    successMessage: `Your ${PRICING_CONFIG.team.monthlyCredits} monthly scans and API access are now active.`,
+  },
+} as const;
+
+/**
+ * UI Configuration Constants
+ *
+ * Timing and behavior constants for consistent UX across the application.
+ */
+export const UI_CONFIG = {
+  /** Redirect timeout after successful/canceled checkout (milliseconds) */
+  REDIRECT_TIMEOUT_MS: 5000,
+  /** Default loading timeout for async operations (milliseconds) */
+  LOADING_TIMEOUT_MS: 30000,
+} as const;

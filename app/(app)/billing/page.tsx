@@ -20,6 +20,7 @@ import { InvoiceList } from "./components/InvoiceList";
 import { InstantCreditsCard } from "./components/InstantCreditsCard";
 import { UsageStats } from "./components/UsageStats";
 import { CancelModal } from "./components/CancelModal";
+import { BillingSkeleton } from "./components/BillingSkeleton";
 
 // Security: Validate URLs are from trusted domains
 const TRUSTED_DOMAINS = [
@@ -42,11 +43,25 @@ export default function BillingPage() {
   const router = useRouter();
 
   // Fetch data using custom hooks
-  const { subscription, paymentMethod, tier, refetch: refetchBilling } = useBillingData();
-  const { tier: userTier } = useUserTier();
-  const { invoices } = useInvoices({ limit: 10 });
-  const { usage } = useUsage();
-  const { credits } = useInstantCredits();
+  const {
+    subscription,
+    paymentMethod,
+    tier,
+    isLoading: isLoadingBilling,
+    refetch: refetchBilling,
+  } = useBillingData();
+  const { tier: userTier, isLoading: isLoadingTier } = useUserTier();
+  const { invoices, isLoading: isLoadingInvoices } = useInvoices({ limit: 10 });
+  const { usage, isLoading: isLoadingUsage } = useUsage();
+  const { credits, isLoading: isLoadingCredits } = useInstantCredits();
+
+  // Combined loading state
+  const isLoading =
+    isLoadingBilling ||
+    isLoadingTier ||
+    isLoadingInvoices ||
+    isLoadingUsage ||
+    isLoadingCredits;
 
   // Local state
   const [loadingPortal, setLoadingPortal] = useState(false);
@@ -200,65 +215,73 @@ export default function BillingPage() {
             </p>
           </div>
 
-          {/* Messages */}
-          {message && (
-            <div
-              role="alert"
-              aria-live="polite"
-              className={`mb-6 p-4 rounded-lg border flex items-start gap-3 ${
-                message.type === "success"
-                  ? "bg-green-50 dark:bg-green-950/20 border-green-200 dark:border-green-900/50 text-green-800 dark:text-green-200"
-                  : "bg-red-50 dark:bg-red-950/20 border-red-200 dark:border-red-900/50 text-red-800 dark:text-red-200"
-              }`}
-            >
-              {message.type === "success" ? (
-                <CheckCircle
-                  className="h-5 w-5 flex-shrink-0 mt-0.5"
-                  aria-hidden="true"
-                />
-              ) : (
-                <XCircle
-                  className="h-5 w-5 flex-shrink-0 mt-0.5"
-                  aria-hidden="true"
-                />
+          {/* Loading Skeleton */}
+          {isLoading && <BillingSkeleton />}
+
+          {/* Actual Content */}
+          {!isLoading && (
+            <>
+              {/* Messages */}
+              {message && (
+                <div
+                  role="alert"
+                  aria-live="polite"
+                  className={`mb-6 p-4 rounded-lg border flex items-start gap-3 ${
+                    message.type === "success"
+                      ? "bg-green-50 dark:bg-green-950/20 border-green-200 dark:border-green-900/50 text-green-800 dark:text-green-200"
+                      : "bg-red-50 dark:bg-red-950/20 border-red-200 dark:border-red-900/50 text-red-800 dark:text-red-200"
+                  }`}
+                >
+                  {message.type === "success" ? (
+                    <CheckCircle
+                      className="h-5 w-5 flex-shrink-0 mt-0.5"
+                      aria-hidden="true"
+                    />
+                  ) : (
+                    <XCircle
+                      className="h-5 w-5 flex-shrink-0 mt-0.5"
+                      aria-hidden="true"
+                    />
+                  )}
+                  <p className="text-sm">{message.text}</p>
+                </div>
               )}
-              <p className="text-sm">{message.text}</p>
-            </div>
+
+              {/* Grid Layout */}
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                {/* Left Column - Main Content */}
+                <div className="lg:col-span-2 space-y-6">
+                  {/* Subscription Overview */}
+                  <SubscriptionCard
+                    subscription={subscription}
+                    userTier={userTier}
+                    onCancelClick={() => setShowCancelModal(true)}
+                    onReactivate={handleReactivate}
+                    loadingReactivate={loadingReactivate}
+                  />
+
+                  {/* Instant Credits */}
+                  <InstantCreditsCard credits={credits} />
+
+                  {/* Billing History */}
+                  <InvoiceList invoices={invoices} />
+                </div>
+
+                {/* Right Column - Sidebar */}
+                <div className="space-y-6">
+                  {/* Payment Method */}
+                  <PaymentMethodCard
+                    paymentMethod={paymentMethod}
+                    onManagePayment={handleManagePayment}
+                    loading={loadingPortal}
+                  />
+
+                  {/* Usage Stats */}
+                  <UsageStats usage={usage} />
+                </div>
+              </div>
+            </>
           )}
-
-          {/* Grid Layout */}
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            {/* Left Column - Main Content */}
-            <div className="lg:col-span-2 space-y-6">
-              {/* Subscription Overview */}
-              <SubscriptionCard
-                subscription={subscription}
-                userTier={userTier}
-                onCancelClick={() => setShowCancelModal(true)}
-                onReactivate={handleReactivate}
-                loadingReactivate={loadingReactivate}
-              />
-
-              {/* Instant Credits */}
-              <InstantCreditsCard credits={credits} />
-
-              {/* Billing History */}
-              <InvoiceList invoices={invoices} />
-            </div>
-
-            {/* Right Column - Sidebar */}
-            <div className="space-y-6">
-              {/* Payment Method */}
-              <PaymentMethodCard
-                paymentMethod={paymentMethod}
-                onManagePayment={handleManagePayment}
-                loading={loadingPortal}
-              />
-
-              {/* Usage Stats */}
-              <UsageStats usage={usage} />
-            </div>
-          </div>
         </div>
       </section>
 
