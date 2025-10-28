@@ -1,5 +1,6 @@
 import HeroSection from "@/components/HeroSection";
 import Feature from "@/components/Feature";
+import HowItWorks from "@/components/HowItWorks";
 import FAQSection from "@/components/FAQSection";
 import type { Metadata } from "next";
 import { siteConfig } from "@/config/site";
@@ -51,7 +52,12 @@ const faqData = [
   {
     question: "Is ContractGuard AI free to use?",
     answer:
-      "Yes! We offer a free tier with 3 scans per day. For unlimited scans and advanced features, we have a Pro tier at $29/month.",
+      "Yes! We offer a completely free tier with 3 scans per day no signup or credit card required. For unlimited scans and advanced features, we have a Pro tier at $29/month.",
+  },
+  {
+    question: "Do I need to create an account to scan contracts?",
+    answer:
+      "No! You can start scanning contracts immediately without creating an account. Our free tier allows 3 scans per day with no registration required. Create an account only if you want to upgrade to unlimited scans.",
   },
   {
     question: "What types of scams can it detect?",
@@ -89,6 +95,7 @@ export default function Home() {
       <JsonLd data={faqPageLd(faqData)} />
       <HeroSection />
       <Feature />
+      <HowItWorks />
       <PricingSectionHybridClient />
       <FAQSection />
     </>

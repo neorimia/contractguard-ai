@@ -128,9 +128,11 @@ Recommendation: ❌ AVOID
 
 ### Freemium Strategy
 
-- **Free Tier:** 3 scans/day, viral growth engine
-- **Pro Tier:** $29/month, revenue generation
-- **Enterprise:** Custom pricing, high-value contracts
+- **Free Tier:** 3 scans/day (90/month), viral growth engine
+- **Instant Credits:** $4.99-$14.99 (pay-per-scan, no signup)
+- **Starter:** $14/month (30 scans/month), entry point
+- **Pro:** $29/month (150 scans/month), main revenue
+- **Team:** $99/month (1000 scans + API), high-value customers
 
 ### Revenue Streams
 

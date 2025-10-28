@@ -214,15 +214,16 @@
 
 ### Payment & Monetization: 100%
 
-| Feature                        | Status      | Implementation           |
-| ------------------------------ | ----------- | ------------------------ |
-| Stripe Integration             | ✅ Complete | Full checkout + webhooks |
-| Instant Credits ($4.99-$14.99) | ✅ Complete | One-time purchases       |
-| Pro Subscription ($29/mo)      | ✅ Complete | Recurring billing        |
-| Team Subscription ($99/mo)     | ✅ Complete | Multi-user plans         |
-| Guest Checkout                 | ✅ Complete | Purchase without account |
-| Webhook Handlers               | ✅ Complete | All payment events       |
-| Subscription Management        | ✅ Complete | Stripe customer portal   |
+| Feature                        | Status      | Implementation                   |
+| ------------------------------ | ----------- | -------------------------------- |
+| Stripe Integration             | ✅ Complete | Full checkout + webhooks         |
+| Instant Credits ($4.99-$14.99) | ✅ Complete | One-time purchases (1/3/5 scans) |
+| Starter Subscription ($14/mo)  | ✅ Complete | 30 scans/month                   |
+| Pro Subscription ($29/mo)      | ✅ Complete | 150 scans/month                  |
+| Team Subscription ($99/mo)     | ✅ Complete | 1000 scans + API access          |
+| Guest Checkout                 | ✅ Complete | Purchase without account         |
+| Webhook Handlers               | ✅ Complete | All payment events               |
+| Subscription Management        | ✅ Complete | Stripe customer portal           |
 
 ### Analytics & Admin: 100%
 
@@ -394,9 +395,10 @@
 
 ### Payment Processing (100%)
 
-- ✅ Instant report purchases ($4.99, $9.99, $14.99)
-- ✅ Pro subscription ($29/month)
-- ✅ Team subscription ($99/month)
+- ✅ Instant report purchases ($4.99/1, $9.99/3, $14.99/5 scans)
+- ✅ Starter subscription ($14/month - 30 scans)
+- ✅ Pro subscription ($29/month - 150 scans)
+- ✅ Team subscription ($99/month - 1000 scans + API)
 - ✅ Guest checkout (no account required)
 - ✅ Stripe webhook handling
 - ✅ Purchase tracking in database

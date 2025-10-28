@@ -607,19 +607,20 @@ Scan overview updates:
 ### Product Decisions
 
 1. **Pricing:**
-   - Instant: $4.99, $9.99, $14.99 (confirmed)
-   - Pro: $29/month (confirmed)
-   - Team: $99/month (confirmed)
+   - Instant: $4.99 (1 scan), $9.99 (3 scans - popular), $14.99 (5 scans)
+   - Starter: $14/month (30 scans/month)
+   - Pro: $29/month (150 scans/month)
+   - Team: $99/month (1000 scans/month + API access)
 
 2. **Free Tier:**
    - Anonymous: 3 scans total (lifetime)
    - Soft: 3 scans/day (same as full account)
-   - Free account: 3 scans/day
+   - Free account: 3 scans/day (90 scans/month)
 
 3. **Access Priority:**
-   - Pro/Team → Unlimited
-   - Instant credits → Deduct per scan
-   - Free tier → 3/day with reset
+   - Pro/Team → Monthly credits (150/1000 scans)
+   - Instant credits → Deduct per scan (guest + authenticated)
+   - Free tier → 3/day with reset (90/month)
 
 ---
 

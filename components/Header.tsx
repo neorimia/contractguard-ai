@@ -145,10 +145,10 @@ export function Header() {
               </Link>
               {/* Desktop Navigation */}
               <nav className="hidden md:flex items-center gap-6">
-                {["Features", "Pricing", "FAQ"].map((item) => (
+                {["Features", "How It Works", "Pricing", "FAQ"].map((item) => (
                   <Link
                     key={item}
-                    href={`/${item.toLowerCase()}`}
+                    href={`/${item.toLowerCase().replace(/\s+/g, "-")}`}
                     className="text-sm font-medium text-black/80 dark:text-white/90 hover:text-black dark:hover:text-white transition-colors"
                     aria-label={item}
                   >
@@ -339,10 +339,10 @@ export function Header() {
           {isMobileMenuOpen && (
             <div className="md:hidden py-4 border-t border-black/5 dark:border-white/5">
               <nav className="flex flex-col gap-3">
-                {["Features", "Pricing", "FAQ"].map((item) => (
+                {["Features", "How It Works", "Pricing", "FAQ"].map((item) => (
                   <Link
                     key={item}
-                    href={`/${item.toLowerCase()}`}
+                    href={`/${item.toLowerCase().replace(/\s+/g, "-")}`}
                     className="text-sm font-medium text-black dark:text-white hover:text-blue-400 dark:hover:text-blue-600 transition-colors px-2 py-1.5 rounded-md hover:bg-gray-800 dark:hover:bg-gray-100"
                     onClick={() => setIsMobileMenuOpen(false)}
                   >

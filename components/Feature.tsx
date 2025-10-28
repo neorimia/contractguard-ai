@@ -81,8 +81,12 @@ export default function FeaturesSection() {
                 className="flex-1 bg-black dark:bg-white text-white dark:text-black"
                 onClick={() => handleScanContract()}
               >
-                Try it now
+                Try it now free
               </Button>
+              <p className="text-sm text-black/60 dark:text-white/60 mt-2 text-left">
+                <span className="font-medium">No signup required</span> • Scan
+                up to 3 contracts daily
+              </p>
             </div>
           </motion.div>
         </div>
