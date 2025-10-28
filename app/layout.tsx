@@ -104,8 +104,32 @@ export const metadata: Metadata = {
     },
   },
   icons: [
-    { rel: "icon", url: "/favicon.ico" },
-    { rel: "apple-touch-icon", url: "/apple-icon.png" },
+    {
+      rel: "icon",
+      url: "/favicon.ico",
+      sizes: "16x16 32x32",
+      type: "image/x-icon",
+    },
+    { rel: "icon", url: "/favicon.svg", sizes: "any", type: "image/svg+xml" },
+    {
+      rel: "icon",
+      url: "/favicon-32x32.png",
+      sizes: "32x32",
+      type: "image/png",
+    },
+    {
+      rel: "apple-touch-icon",
+      url: "/apple-touch-icon.png",
+      sizes: "180x180",
+      type: "image/png",
+    },
+    {
+      rel: "apple-touch-icon",
+      url: "/apple-icon.png",
+      sizes: "180x180",
+      type: "image/png",
+    },
+    { rel: "mask-icon", url: "/favicon.svg", color: "#000000" },
   ],
   manifest: "/site.webmanifest",
   other: {
@@ -113,6 +137,7 @@ export const metadata: Metadata = {
     "msapplication-TileColor": "#000000",
     "apple-mobile-web-app-capable": "yes",
     "apple-mobile-web-app-status-bar-style": "black-translucent",
+    "apple-mobile-web-app-title": "ContractGuard",
     "format-detection": "telephone=no",
     "mobile-web-app-capable": "yes",
   },
