@@ -66,6 +66,7 @@ export async function POST(req: NextRequest) {
   try {
     // Test Stripe connection early
     if (!process.env.STRIPE_SECRET_KEY) {
+      console.error("STRIPE_SECRET_KEY is missing");
       return NextResponse.json(
         {
           error: "Payment configuration error",
@@ -73,6 +74,23 @@ export async function POST(req: NextRequest) {
         },
         { status: 500 }
       );
+    }
+
+    // Log current environment configuration (only the env var names, not values)
+    const requiredEnvVars = [
+      "STRIPE_SECRET_KEY",
+      "STRIPE_PRICE_INSTANT_1",
+      "STRIPE_PRICE_INSTANT_3",
+      "STRIPE_PRICE_INSTANT_5",
+    ];
+
+    const missingEnvVars = requiredEnvVars.filter((varName) => {
+      const value = process.env[varName];
+      return !value || value.trim() === "";
+    });
+
+    if (missingEnvVars.length > 0) {
+      console.error("Missing Stripe configuration variables:", missingEnvVars);
     }
 
     const body = await req.json();
@@ -100,10 +118,23 @@ export async function POST(req: NextRequest) {
 
     // Validate price ID is configured
     if (!pkg.stripePriceId || pkg.stripePriceId.trim() === "") {
+      console.error("Stripe price ID missing for package:", {
+        packageIndex,
+        credits: pkg.credits,
+        price: pkg.price,
+        requiredEnvVar: `STRIPE_PRICE_INSTANT_${pkg.credits}`,
+        stripePriceId: pkg.stripePriceId,
+      });
+
       return NextResponse.json(
         {
           error: "Package not configured",
           details: `The ${pkg.credits}-credit package is not properly configured. Please contact support.`,
+          packageInfo: {
+            credits: pkg.credits,
+            price: pkg.price,
+            missingEnvVar: `STRIPE_PRICE_INSTANT_${pkg.credits}`,
+          },
         },
         { status: 500 }
       );
