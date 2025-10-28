@@ -69,9 +69,21 @@ export function CryptoScanInterface() {
 
   // Extract commonly used state values for cleaner code
   const { address, chain, selectedAI } = state.form;
-  const { loading, error, showLimitDrawer, showSoftSignupPrompt, showUpgradeModal, showReportUpgradeModal } = state.ui;
+  const {
+    loading,
+    error,
+    showLimitDrawer,
+    showSoftSignupPrompt,
+    showUpgradeModal,
+    showReportUpgradeModal,
+  } = state.ui;
   const { result, reportAccess, limitError, upgradeData } = state.data;
-  const { userAccessStatus, anonymousScansPerformed, anonymousSessionId, scanMetadata } = state.access;
+  const {
+    userAccessStatus,
+    anonymousScansPerformed,
+    anonymousSessionId,
+    scanMetadata,
+  } = state.access;
 
   const user = useUser();
   const resultsRef = useRef<HTMLDivElement>(null);
@@ -130,7 +142,10 @@ export function CryptoScanInterface() {
 
   const analyzeContract = async () => {
     if (!address.trim()) {
-      dispatch({ type: "SET_ERROR", payload: "Please enter a contract address" });
+      dispatch({
+        type: "SET_ERROR",
+        payload: "Please enter a contract address",
+      });
       return;
     }
 
@@ -143,7 +158,8 @@ export function CryptoScanInterface() {
       if (!/^0x[a-fA-F0-9]{40}$/.test(trimmedAddress)) {
         dispatch({
           type: "SET_ERROR",
-          payload: "Invalid EVM contract address format (must be 0x followed by 40 hex characters)",
+          payload:
+            "Invalid EVM contract address format (must be 0x followed by 40 hex characters)",
         });
         return;
       }
@@ -153,7 +169,8 @@ export function CryptoScanInterface() {
       if (!base58Regex.test(trimmedAddress)) {
         dispatch({
           type: "SET_ERROR",
-          payload: "Invalid Solana address format (must be base58 encoded, 32-44 characters)",
+          payload:
+            "Invalid Solana address format (must be base58 encoded, 32-44 characters)",
         });
         return;
       }
@@ -330,11 +347,17 @@ export function CryptoScanInterface() {
         // Track anonymous scans performed
         if (metadata.accessType === "anonymous") {
           const scansPerformed = 3 - (metadata.scansRemaining || 0);
-          dispatch({ type: "SET_ANONYMOUS_SCANS_PERFORMED", payload: scansPerformed });
+          dispatch({
+            type: "SET_ANONYMOUS_SCANS_PERFORMED",
+            payload: scansPerformed,
+          });
 
           // Save sessionId for later use (when limit is reached)
           if (metadata.sessionId) {
-            dispatch({ type: "SET_ANONYMOUS_SESSION_ID", payload: metadata.sessionId });
+            dispatch({
+              type: "SET_ANONYMOUS_SESSION_ID",
+              payload: metadata.sessionId,
+            });
           }
 
           // Show soft signup prompt after 1st scan (early capture)
@@ -351,7 +374,8 @@ export function CryptoScanInterface() {
           dispatch({
             type: "UPDATE_USER_ACCESS_STATUS",
             payload: {
-              accessType: updatedAccessType || userAccessStatus?.accessType || "free",
+              accessType:
+                updatedAccessType || userAccessStatus?.accessType || "free",
               scansRemaining: updatedScansRemaining
                 ? parseInt(updatedScansRemaining)
                 : userAccessStatus?.scansRemaining || 0,
@@ -415,7 +439,7 @@ export function CryptoScanInterface() {
       <section className="py-24 sm:py-32 bg-black text-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           {/* Header */}
-          <div className="flex flex-col gap-8 mb-16">
+          <div className="max-w-4xl mx-auto mb-8 flex flex-col gap-8">
             <div className="flex items-center gap-2">
               <div className="flex h-2 w-2 rounded-full bg-white" />
               <span className="text-sm font-medium">
@@ -533,7 +557,9 @@ export function CryptoScanInterface() {
                         {SUPPORTED_CHAINS.map((c) => (
                           <DropdownMenuItem
                             key={c.value}
-                            onClick={() => dispatch({ type: "SET_CHAIN", payload: c.value })}
+                            onClick={() =>
+                              dispatch({ type: "SET_CHAIN", payload: c.value })
+                            }
                             className="text-white hover:bg-neutral-800 cursor-pointer"
                           >
                             <div className="flex items-center gap-3">
@@ -550,7 +576,9 @@ export function CryptoScanInterface() {
                   <div className="hidden sm:block">
                     <Tabs
                       value={chain}
-                      onValueChange={(value) => dispatch({ type: "SET_CHAIN", payload: value })}
+                      onValueChange={(value) =>
+                        dispatch({ type: "SET_CHAIN", payload: value })
+                      }
                       className="w-full"
                     >
                       <TabsList className="grid grid-cols-8 gap-2 bg-transparent h-auto p-0">
@@ -606,13 +634,23 @@ export function CryptoScanInterface() {
                       </DropdownMenuTrigger>
                       <DropdownMenuContent className="w-[calc(100vw-2rem)] sm:w-[300px] bg-neutral-900 border-neutral-800">
                         <DropdownMenuItem
-                          onClick={() => dispatch({ type: "SET_AI_PROVIDER", payload: "chatgpt" })}
+                          onClick={() =>
+                            dispatch({
+                              type: "SET_AI_PROVIDER",
+                              payload: "chatgpt",
+                            })
+                          }
                           className="text-white hover:bg-neutral-800 cursor-pointer"
                         >
                           <span>ChatGPT</span>
                         </DropdownMenuItem>
                         <DropdownMenuItem
-                          onClick={() => dispatch({ type: "SET_AI_PROVIDER", payload: "claude" })}
+                          onClick={() =>
+                            dispatch({
+                              type: "SET_AI_PROVIDER",
+                              payload: "claude",
+                            })
+                          }
                           className="text-white hover:bg-neutral-800 cursor-pointer"
                         >
                           <span>Claude</span>
@@ -647,7 +685,9 @@ export function CryptoScanInterface() {
                     id="address"
                     type="text"
                     value={address}
-                    onChange={(e) => dispatch({ type: "SET_ADDRESS", payload: e.target.value })}
+                    onChange={(e) =>
+                      dispatch({ type: "SET_ADDRESS", payload: e.target.value })
+                    }
                     onKeyPress={handleKeyPress}
                     placeholder={
                       chain === "solana"
@@ -727,7 +767,9 @@ export function CryptoScanInterface() {
       {!user && (anonymousSessionId || scanMetadata?.sessionId) && (
         <SoftSignupPrompt
           isOpen={showSoftSignupPrompt}
-          onClose={() => dispatch({ type: "SET_SHOW_SOFT_SIGNUP_PROMPT", payload: false })}
+          onClose={() =>
+            dispatch({ type: "SET_SHOW_SOFT_SIGNUP_PROMPT", payload: false })
+          }
           scansPerformed={anonymousScansPerformed}
           scansRemaining={scanMetadata?.scansRemaining || 0}
           anonymousSessionId={
@@ -781,7 +823,9 @@ export function CryptoScanInterface() {
       {limitError && (
         <ScanLimitDrawer
           isOpen={showLimitDrawer}
-          onClose={() => dispatch({ type: "SET_SHOW_LIMIT_DRAWER", payload: false })}
+          onClose={() =>
+            dispatch({ type: "SET_SHOW_LIMIT_DRAWER", payload: false })
+          }
           scansRemaining={limitError.scansRemaining}
           resetAt={limitError.resetAt}
           upgradeUrl={limitError.upgradeUrl || "/pricing"}
@@ -795,7 +839,9 @@ export function CryptoScanInterface() {
           email={upgradeData.email}
           accountType="soft"
           scansRemaining={upgradeData.scansRemaining}
-          onClose={() => dispatch({ type: "SET_SHOW_UPGRADE_MODAL", payload: false })}
+          onClose={() =>
+            dispatch({ type: "SET_SHOW_UPGRADE_MODAL", payload: false })
+          }
         />
       )}
 
@@ -805,7 +851,9 @@ export function CryptoScanInterface() {
         reportAccess.accessLevel === "summary" && (
           <ReportUpgradeModal
             open={showReportUpgradeModal}
-            onOpenChange={(open) => dispatch({ type: "SET_SHOW_REPORT_UPGRADE_MODAL", payload: open })}
+            onOpenChange={(open) =>
+              dispatch({ type: "SET_SHOW_REPORT_UPGRADE_MODAL", payload: open })
+            }
             data={reportAccess}
             onSuccess={handleReportUpgradeSuccess}
             onError={handleReportUpgradeError}

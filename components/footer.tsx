@@ -1,12 +1,21 @@
 "use client";
 
 import Link from "next/link";
-import { ArrowRight, Github, Twitter, Linkedin } from "lucide-react";
+import {
+  ArrowRight,
+  Github,
+  Twitter,
+  Linkedin,
+  HelpCircle,
+  BookOpen,
+  Mail,
+} from "lucide-react";
 import { motion } from "motion/react";
 import { Button } from "@/components/ui/button";
 import Image from "next/image";
 import { useTheme } from "next-themes";
 import { useEffect, useState } from "react";
+import { TrustIndicators } from "@/components/TrustBadge";
 
 const footerLinks = [
   {
@@ -17,15 +26,22 @@ const footerLinks = [
       { name: "FAQ", href: "/faq" },
     ],
   },
-  // {
-  //   title: "Company",
-  //   links: [
-  //     { name: "About", href: "/about" },
-  //     { name: "Contact", href: "/contact" },
-  //     { name: "Privacy", href: "/privacy" },
-  //     { name: "Terms", href: "/terms" },
-  //   ],
-  // },
+  {
+    title: "Support",
+    links: [
+      { name: "Help Center", href: "/support" },
+      { name: "Contact Us", href: "mailto:support@contractguard.ai" },
+      { name: "API Docs", href: "/docs" },
+    ],
+  },
+  {
+    title: "Legal",
+    links: [
+      { name: "Privacy Policy", href: "/privacy" },
+      { name: "Terms of Service", href: "/terms" },
+      { name: "Cookie Policy", href: "/cookies" },
+    ],
+  },
 ];
 
 export function Footer() {
@@ -74,13 +90,13 @@ export function Footer() {
             </p>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-1 gap-8 md:gap-12 lg:gap-16">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-8 md:gap-12 lg:gap-16">
             {footerLinks.map((section) => (
               <div key={section.title} className="space-y-3">
-                <h3 className="text-sm font-medium md:text-right text-black dark:text-white">
+                <h3 className="text-sm font-medium text-black dark:text-white">
                   {section.title}
                 </h3>
-                <ul className="space-y-2 flex flex-row gap-2">
+                <ul className="space-y-2">
                   {section.links.map((link) => (
                     <li key={link.name}>
                       <Link
@@ -121,7 +137,7 @@ export function Footer() {
         </div>
 
         <div className="flex flex-col sm:flex-row sm:items-center justify-between mt-8 pt-5 border-t border-black/5 dark:border-white/5 text-xs text-black/50 dark:text-white/50">
-          <div className="flex flex-col gap-2">
+          <div className="flex flex-col gap-3">
             <p>© {currentYear} ContractGuard AI. All rights reserved.</p>
             <p className="flex items-center gap-1">
               Powered by{" "}
@@ -135,25 +151,32 @@ export function Footer() {
               </a>
             </p>
           </div>
-          <div className="flex gap-4 mt-2 sm:mt-0">
-            <Link
-              href="/terms"
-              className="hover:text-black dark:hover:text-white transition-colors"
-            >
-              Terms
-            </Link>
-            <Link
-              href="/privacy"
-              className="hover:text-black dark:hover:text-white transition-colors"
-            >
-              Privacy
-            </Link>
-            <Link
-              href="/cookies"
-              className="hover:text-black dark:hover:text-white transition-colors"
-            >
-              Cookies
-            </Link>
+          <div className="flex flex-col gap-3 mt-4 sm:mt-0">
+            {/* <div className="flex flex-wrap gap-4">
+              <Link
+                href="/terms"
+                className="hover:text-black dark:hover:text-white transition-colors"
+              >
+                Terms
+              </Link>
+              <Link
+                href="/privacy"
+                className="hover:text-black dark:hover:text-white transition-colors"
+              >
+                Privacy
+              </Link>
+              <Link
+                href="/cookies"
+                className="hover:text-black dark:hover:text-white transition-colors"
+              >
+                Cookies
+              </Link>
+            </div> */}
+
+            <TrustIndicators />
+            <p className="text-xs text-black/40 dark:text-white/40">
+              Not financial advice. Always DYOR.
+            </p>
           </div>
         </div>
       </div>

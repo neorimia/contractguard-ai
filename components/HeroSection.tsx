@@ -82,17 +82,20 @@ export default function HeroSection() {
           AI-powered security analysis that detects scams, honeypots, and rug
           pulls. Get instant results in plain English.
         </p>
-        <div className="flex items-center justify-center gap-4 pt-2 sm:pt-4">
+        <div className="flex flex-col items-center justify-center gap-4 pt-2 sm:pt-4">
           <div className="rounded-xl p-1 border dark:border-black/30 border-white/30 dark:hover:border-black/50 hover:border-white/50 transition-all duration-300">
             <Button
               size="lg"
               onClick={() => router.push("/audit")}
               className="h-10 sm:h-13 px-5 sm:px-6 dark:text-white text-black tracking-tight group bg-white/95 dark:bg-black rounded-lg hover:bg-white dark:hover:bg-black transition-all duration-300"
             >
-              SCAN CONTRACT
+              SCAN CONTRACT NOW
               <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
             </Button>
           </div>
+          <p className="text-sm text-white/70 dark:text-black/70 text-center">
+            <span className="font-medium">Free, no card required</span> • Scan up to 3 contracts daily
+          </p>
         </div>
 
         {/* Cards Section with Connector */}
