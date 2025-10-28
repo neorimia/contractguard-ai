@@ -110,8 +110,12 @@ STRIPE_PRICE_INSTANT_3=price_xxx  # 3 reports - $9.99
 STRIPE_PRICE_INSTANT_5=price_xxx  # 5 reports - $14.99
 
 # Subscription Price IDs
-STRIPE_PRICE_PRO_MONTHLY=price_xxx    # Pro Plan - $29/month
-STRIPE_PRICE_TEAM_MONTHLY=price_xxx   # Team Plan - $99/month
+STRIPE_PRICE_STARTER_MONTHLY=price_xxx    # Starter Plan - $14/month
+STRIPE_PRICE_STARTER_YEARLY=price_xxx     # Starter Plan - $134.40/year (20% off)
+STRIPE_PRICE_PRO_MONTHLY=price_xxx        # Pro Plan - $29/month
+STRIPE_PRICE_PRO_YEARLY=price_xxx          # Pro Plan - $278.40/year (20% off)
+STRIPE_PRICE_TEAM_MONTHLY=price_xxx        # Team Plan - $99/month
+STRIPE_PRICE_TEAM_YEARLY=price_xxx         # Team Plan - $950.40/year (20% off)
 ```
 
 - **Purpose**: Process instant reports and subscriptions
