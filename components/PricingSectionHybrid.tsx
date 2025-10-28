@@ -86,6 +86,7 @@ export default function PricingSectionHybrid() {
   const handleSubscription = async (tier: "starter" | "pro" | "team") => {
     trackEvent(AnalyticsEvents.CHECKOUT_INITIATED, {
       tier,
+      billingPeriod,
       userId: user?.id,
       source: "pricing_page",
     });
@@ -101,7 +102,10 @@ export default function PricingSectionHybrid() {
       const response = await fetch("/api/stripe/checkout", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ tier }),
+        body: JSON.stringify({
+          tier,
+          billingPeriod,
+        }),
       });
 
       const data = await response.json();
@@ -109,6 +113,7 @@ export default function PricingSectionHybrid() {
       if (data.status === "error") {
         trackEvent(AnalyticsEvents.CHECKOUT_CANCELED, {
           tier,
+          billingPeriod,
           reason: data.error || "checkout_error",
         });
         alert(data.error || "Failed to create checkout session");
@@ -122,6 +127,7 @@ export default function PricingSectionHybrid() {
       console.error("Subscription checkout error:", error);
       trackEvent(AnalyticsEvents.CHECKOUT_CANCELED, {
         tier,
+        billingPeriod,
         reason: error instanceof Error ? error.message : "Unknown error",
       });
       alert("An error occurred. Please try again.");

@@ -23,7 +23,7 @@ export async function POST(req: NextRequest) {
     if (!stackUser || !stackUser.primaryEmail) {
       return NextResponse.json(
         { error: "Unauthorized", status: "error" },
-        { status: 401 },
+        { status: 401 }
       );
     }
 
@@ -43,12 +43,12 @@ export async function POST(req: NextRequest) {
         {
           displayName: stackUser.displayName || undefined,
           avatarUrl: undefined, // Stack Auth doesn't provide avatarUrl in this context
-        },
+        }
       );
     }
 
     // 3. Parse request body
-    const { priceId, tier } = await req.json();
+    const { priceId, tier, billingPeriod = "monthly" } = await req.json();
 
     // Validate tier - support both 'enterprise' and 'team'
     const normalizedTier = tier === "enterprise" ? "team" : tier;
@@ -56,7 +56,15 @@ export async function POST(req: NextRequest) {
     if (!isValidSubscriptionTier(normalizedTier)) {
       return NextResponse.json(
         { error: "Invalid tier", status: "error" },
-        { status: 400 },
+        { status: 400 }
+      );
+    }
+
+    // Validate billing period
+    if (billingPeriod !== "monthly" && billingPeriod !== "yearly") {
+      return NextResponse.json(
+        { error: "Invalid billing period", status: "error" },
+        { status: 400 }
       );
     }
 
@@ -65,22 +73,34 @@ export async function POST(req: NextRequest) {
     if (!pricingPlan) {
       return NextResponse.json(
         { error: "Invalid pricing plan", status: "error" },
-        { status: 400 },
+        { status: 400 }
       );
     }
     console.log("pricingPlan", pricingPlan);
-    // Map tier to price ID (support custom priceId override)
-    const stripePriceId = priceId || pricingPlan.stripePriceId;
+
+    // Map tier to price ID based on billing period
+    let stripePriceId: string;
+    if (billingPeriod === "yearly" && (pricingPlan as any).stripePriceIdYearly) {
+      stripePriceId = (pricingPlan as any).stripePriceIdYearly;
+    } else {
+      stripePriceId = priceId || pricingPlan.stripePriceId;
+    }
 
     // Validate price ID is not empty
     if (!stripePriceId || stripePriceId.trim() === "") {
+      const missingEnvVar =
+        billingPeriod === "yearly"
+          ? `STRIPE_PRICE_${normalizedTier.toUpperCase()}_YEARLY`
+          : `STRIPE_PRICE_${normalizedTier.toUpperCase()}_MONTHLY`;
+
       return NextResponse.json(
         {
           error: "Subscription not configured",
-          details: `The ${normalizedTier} plan is not properly configured. Please contact support.`,
+          details: `The ${normalizedTier} ${billingPeriod} plan is not properly configured. Please contact support.`,
+          missingEnvVar,
           status: "error",
         },
-        { status: 500 },
+        { status: 500 }
       );
     }
 
@@ -127,7 +147,7 @@ export async function POST(req: NextRequest) {
         details: error.message,
         status: "error",
       },
-      { status: 500 },
+      { status: 500 }
     );
   }
 }

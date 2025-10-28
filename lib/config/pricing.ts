@@ -47,6 +47,7 @@ export const PRICING_CONFIG = {
     type: "subscription" as const,
     price: 14,
     stripePriceId: process.env.STRIPE_PRICE_STARTER_MONTHLY || "",
+    stripePriceIdYearly: process.env.STRIPE_PRICE_STARTER_YEARLY || "",
     interval: "month" as const,
     monthlyCredits: 30,
     extraScanPrice: 0.3,
@@ -65,6 +66,7 @@ export const PRICING_CONFIG = {
     type: "subscription" as const,
     price: 29,
     stripePriceId: process.env.STRIPE_PRICE_PRO_MONTHLY || "",
+    stripePriceIdYearly: process.env.STRIPE_PRICE_PRO_YEARLY || "",
     interval: "month" as const,
     monthlyCredits: 150,
     extraScanPrice: 0.25,
@@ -84,6 +86,7 @@ export const PRICING_CONFIG = {
     type: "subscription" as const,
     price: 99,
     stripePriceId: process.env.STRIPE_PRICE_TEAM_MONTHLY || "",
+    stripePriceIdYearly: process.env.STRIPE_PRICE_TEAM_YEARLY || "",
     interval: "month" as const,
     monthlyCredits: 1000,
     extraScanPrice: 0.1,
@@ -117,10 +120,18 @@ export const PRICING_LIMITS = {
 // Type helpers
 export type PricingTier = keyof typeof PRICING_CONFIG;
 export type InstantPackage = (typeof PRICING_CONFIG.instant.packages)[number];
-export type SubscriptionPlan =
-  | typeof PRICING_CONFIG.starter
-  | typeof PRICING_CONFIG.pro
-  | typeof PRICING_CONFIG.team;
+export type SubscriptionPlan = {
+  id: string;
+  label: string;
+  type: "subscription";
+  price: number;
+  stripePriceId: string;
+  stripePriceIdYearly: string;
+  interval: "month";
+  monthlyCredits: number;
+  extraScanPrice: number;
+  perks: readonly string[];
+};
 
 // Helper functions
 export function getInstantPackageByIndex(index: number): InstantPackage | null {

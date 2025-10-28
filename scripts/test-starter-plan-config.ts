@@ -60,7 +60,7 @@ function testStarterPlanConfiguration() {
   console.log("5️⃣ Checking Environment Variables");
   const requiredEnvVars = [
     "STRIPE_STARTER_MONTHLY",
-    "STRIPE_PRO_MONTHLY",
+    "STRIPE_PRICE_PRO_MONTHLY",
     "STRIPE_TEAM_MONTHLY",
     "STRIPE_ENTERPRISE_MONTHLY",
   ];
