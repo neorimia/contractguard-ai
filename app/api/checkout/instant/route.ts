@@ -229,13 +229,9 @@ export async function POST(req: NextRequest) {
     const siteUrl = baseUrl.startsWith("http") ? baseUrl : `https://${baseUrl}`;
 
     // Determine success URL based on contract address
-    const successUrl = contractAddress
-      ? `${siteUrl}/report/${contractAddress}?chain=${chain}&session_id={CHECKOUT_SESSION_ID}&success=true`
-      : `${siteUrl}/billing?session_id={CHECKOUT_SESSION_ID}&success=true`;
+    const successUrl =  `${siteUrl}/billing?session_id={CHECKOUT_SESSION_ID}&success=true`;
 
-    const cancelUrl = contractAddress
-      ? `${siteUrl}/report/${contractAddress}?chain=${chain}&canceled=true`
-      : `${siteUrl}/pricing?canceled=true`;
+    const cancelUrl =  `${siteUrl}/pricing?canceled=true`;
 
     // For instant purchases, we can use customer_email instead of creating a customer
     // This avoids the Stripe customer creation API call that might be failing
