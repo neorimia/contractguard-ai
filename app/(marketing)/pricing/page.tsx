@@ -1,5 +1,6 @@
 import { PricingSectionHybridClient } from "@/components/PricingSectionHybridClient";
 import PageHero from "@/components/PageHero";
+import { CompactTrustSection } from "@/components/TrustSection";
 import type { Metadata } from "next";
 import { siteConfig } from "@/config/site";
 import JsonLd from "@/components/seo/json-ld";
@@ -187,6 +188,8 @@ export default function PricingPage() {
       />
 
       <PricingSectionHybridClient />
+
+      <CompactTrustSection />
 
       {/* Additional Value Props */}
       <section className="py-16 px-4">

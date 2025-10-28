@@ -2,6 +2,7 @@ import HeroSection from "@/components/HeroSection";
 import Feature from "@/components/Feature";
 import HowItWorks from "@/components/HowItWorks";
 import FAQSection from "@/components/FAQSection";
+import { TrustSection } from "@/components/TrustSection";
 import type { Metadata } from "next";
 import { siteConfig } from "@/config/site";
 import JsonLd from "@/components/seo/json-ld";
@@ -96,6 +97,7 @@ export default function Home() {
       <HeroSection />
       <Feature />
       <HowItWorks />
+      <TrustSection />
       <PricingSectionHybridClient />
       <FAQSection />
     </>

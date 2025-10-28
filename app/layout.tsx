@@ -12,6 +12,10 @@ import { HeaderClient } from "@/components/HeaderClient";
 import { Footer } from "@/components/footer";
 import CookieBanner from "@/components/CookieBanner";
 import { ClientProviders } from "@/components/ClientProviders";
+import {
+  PerformanceMonitor,
+  LoadingOptimizer,
+} from "@/components/PerformanceOptimizer";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -36,6 +40,26 @@ export const metadata: Metadata = {
     "smart contract audit",
     "crypto scam detection",
     "Web3 security",
+    "EVM contract scanner",
+    "contract address analysis",
+    "smart contract vulnerability",
+    "crypto investment protection",
+    "blockchain audit tool",
+    "contract security check",
+    "DeFi risk assessment",
+    "crypto safety scanner",
+    "smart contract review",
+    "blockchain security analysis",
+    "contract verification",
+    "crypto security tool",
+    "smart contract scanner",
+    "honeypot detection tool",
+    "scan EVM chain contract address",
+    "contract security analysis",
+    "crypto scam scanner",
+    "blockchain vulnerability detection",
+    "smart contract security audit",
+    "DeFi security scanner",
   ],
   authors: [{ name: "ContractGuard AI", url: siteConfig.siteUrl.toString() }],
   creator: "ContractGuard AI",
@@ -89,6 +113,9 @@ export const metadata: Metadata = {
     "msapplication-TileColor": "#000000",
     "apple-mobile-web-app-capable": "yes",
     "apple-mobile-web-app-status-bar-style": "black-translucent",
+    "format-detection": "telephone=no",
+    "mobile-web-app-capable": "yes",
+    "apple-touch-fullscreen": "yes",
   },
 };
 
@@ -102,12 +129,27 @@ export default function RootLayout({
       <head>
         <JsonLd data={staticOrganizationLd} />
         <JsonLd data={staticWebsiteLd} />
+        {/* Performance optimizations */}
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link
+          rel="preconnect"
+          href="https://fonts.gstatic.com"
+          crossOrigin="anonymous"
+        />
+        <link rel="dns-prefetch" href="https://api.etherscan.io" />
+        <link rel="dns-prefetch" href="https://eth-mainnet.alchemyapi.io" />
+        <meta
+          name="viewport"
+          content="width=device-width, initial-scale=1, maximum-scale=5, user-scalable=yes"
+        />
       </head>
       <body
         className={`${geistSans.variable} ${geistSans.className} antialiased`}
         suppressHydrationWarning
       >
         <ClientProviders>
+          <PerformanceMonitor />
+          <LoadingOptimizer />
           <main className="relative min-h-screen w-full bg-white dark:bg-black overflow-hidden">
             <div className="relative bg-white/95 dark:bg-black/5 pt-14">
               <HeaderClient />
