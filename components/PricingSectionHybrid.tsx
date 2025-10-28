@@ -154,9 +154,16 @@ export default function PricingSectionHybrid() {
               protection plan
             </span>
           </h2>
-          <p className="text-base sm:text-lg tracking-tight text-black/60 dark:text-white/60 max-w-2xl mx-auto">
-            Pay per scan or subscribe for unlimited access. From one-time audits
-            to professional monitoring — transparent pricing, no surprises.
+          <p className="text-base sm:text-lg tracking-tight text-black/60 dark:text-white/60 max-w-3xl mx-auto">
+            <span className="font-medium text-green-600 dark:text-green-400">
+              Start free with 3 scans daily
+            </span>{" "}
+            no signup required. Pay per scan or subscribe for unlimited access.
+            From one-time audits to professional monitoring{" "}
+            <span className="font-medium text-green-600 dark:text-green-400">
+              transparent pricing
+            </span>
+            , no surprises.
           </p>
 
           {/* Pricing Type Toggle */}
