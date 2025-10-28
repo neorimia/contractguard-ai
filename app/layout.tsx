@@ -115,7 +115,6 @@ export const metadata: Metadata = {
     "apple-mobile-web-app-status-bar-style": "black-translucent",
     "format-detection": "telephone=no",
     "mobile-web-app-capable": "yes",
-    "apple-touch-fullscreen": "yes",
   },
 };
 
