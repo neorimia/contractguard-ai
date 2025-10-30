@@ -80,7 +80,10 @@ export async function POST(req: NextRequest) {
 
     // Map tier to price ID based on billing period
     let stripePriceId: string;
-    if (billingPeriod === "yearly" && (pricingPlan as any).stripePriceIdYearly) {
+    if (
+      billingPeriod === "yearly" &&
+      (pricingPlan as any).stripePriceIdYearly
+    ) {
       stripePriceId = (pricingPlan as any).stripePriceIdYearly;
     } else {
       stripePriceId = priceId || pricingPlan.stripePriceId;
