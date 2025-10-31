@@ -9,6 +9,7 @@
  * - Loading states
  * - Error handling
  * - Chain filtering
+ * - Image URL security validation
  */
 
 import { useState, useEffect, useCallback, useRef } from "react";
@@ -27,6 +28,32 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 import { trackEvent, AnalyticsEvents } from "@/lib/analytics/posthog";
+import { TOKEN_SEARCH_CONFIG } from "@/lib/services/token-search.config";
+
+// Security: Allowlist of trusted image domains
+const TRUSTED_IMAGE_DOMAINS = TOKEN_SEARCH_CONFIG.SECURITY.ALLOWED_IMAGE_DOMAINS;
+
+/**
+ * Validates image URL against trusted domains
+ * Security: Prevents XSS via malicious image URLs
+ */
+function isValidImageUrl(url: string | undefined): boolean {
+  if (!url) return false;
+
+  try {
+    const parsedUrl = new URL(url);
+
+    // Only allow HTTPS
+    if (parsedUrl.protocol !== 'https:') return false;
+
+    // Check if domain is in allowlist
+    return TRUSTED_IMAGE_DOMAINS.some(domain =>
+      parsedUrl.hostname === domain || parsedUrl.hostname.endsWith(`.${domain}`)
+    );
+  } catch {
+    return false;
+  }
+}
 
 export interface TokenSearchResult {
   name: string;
@@ -161,7 +188,7 @@ export function TokenSearchInput({
       // Set new timer
       debounceTimerRef.current = setTimeout(() => {
         performSearch(value);
-      }, 300);
+      }, TOKEN_SEARCH_CONFIG.QUERY.DEBOUNCE_MS);
     },
     [performSearch]
   );
@@ -292,11 +319,12 @@ export function TokenSearchInput({
                       <div className="flex items-center justify-between w-full gap-3">
                         {/* Left: Token info */}
                         <div className="flex items-center gap-3 flex-1 min-w-0">
-                          {result.logoUrl && (
+                          {isValidImageUrl(result.logoUrl) && (
                             <img
                               src={result.logoUrl}
                               alt={result.symbol}
                               className="w-8 h-8 rounded-full flex-shrink-0"
+                              referrerPolicy="no-referrer"
                               onError={(e) => {
                                 // Hide image if it fails to load
                                 (e.target as HTMLImageElement).style.display = "none";

@@ -473,7 +473,7 @@ export function CryptoScanInterface() {
               </h1>
               <p className="text-xl text-neutral-400 max-w-2xl">
                 Detect scams, honeypots, and rug pulls in seconds. Multi-chain
-                support for 8 blockchains including Ethereum, BSC, Polygon,
+                support for 7 blockchains including Ethereum, BSC, Polygon,
                 Arbitrum, Optimism, Base, and Avalanche.
               </p>
             </div>
