@@ -17,6 +17,7 @@ import {
 import { ArrowRight, Loader2, AlertCircle, ChevronDown } from "lucide-react";
 import { CryptoResultsDisplay } from "./CryptoResultsDisplay";
 import { ReportUpgradeModal } from "./ReportUpgradeModal";
+import { TokenSearchInput, TokenSearchResult } from "./TokenSearchInput";
 import { useUser } from "@stackframe/stack";
 import { trackEvent, AnalyticsEvents } from "@/lib/analytics/posthog";
 import { CryptoAudit, RiskFlag } from "@/db/schema";
@@ -401,6 +402,23 @@ export function CryptoScanInterface() {
     }
   };
 
+  // Handle token selection from search
+  const handleTokenSelect = (result: TokenSearchResult) => {
+    // Set address and chain from selected token
+    dispatch({ type: "SET_ADDRESS", payload: result.address });
+    dispatch({ type: "SET_CHAIN", payload: result.chain });
+
+    // Track token search usage
+    trackEvent(AnalyticsEvents.TOKEN_SEARCH_SELECTED, {
+      tokenName: result.name,
+      tokenSymbol: result.symbol,
+      address: result.address,
+      chain: result.chain,
+      userId: user?.id,
+      isAnonymous: !user,
+    });
+  };
+
   // Helper function to determine if AI selector should be shown
   const shouldShowAISelector = (): boolean => {
     if (!userAccessStatus) return false;
@@ -657,6 +675,24 @@ export function CryptoScanInterface() {
                         </DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
+                  </div>
+                )}
+
+                {/* Token Search Input */}
+                {chain !== "solana" && (
+                  <div className="space-y-3">
+                    <Label className="text-white text-sm font-medium">
+                      Search by Token Name
+                    </Label>
+                    <TokenSearchInput
+                      onSelect={handleTokenSelect}
+                      defaultChain={chain}
+                      placeholder="Search token by name (e.g., PEPE, SHIB)"
+                      className="w-full"
+                    />
+                    <p className="text-xs text-neutral-400">
+                      Or enter contract address manually below
+                    </p>
                   </div>
                 )}
 

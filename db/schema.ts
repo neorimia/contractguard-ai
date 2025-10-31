@@ -960,3 +960,37 @@ export type WatchlistSnapshot = typeof watchlistSnapshots.$inferSelect;
 export type NewWatchlistSnapshot = typeof watchlistSnapshots.$inferInsert;
 export type AlertHistory = typeof alertHistory.$inferSelect;
 export type NewAlertHistory = typeof alertHistory.$inferInsert;
+
+// ============================================================================
+// TOKEN SEARCH TABLES - Token metadata caching for search functionality
+// ============================================================================
+
+// Token Metadata - Cached token information for search
+export const tokenMetadata = pgTable(
+  "token_metadata",
+  {
+    id: serial("id").primaryKey(),
+    address: varchar("address", { length: 42 }).notNull(),
+    chain: varchar("chain", { length: 20 }).notNull(),
+    name: varchar("name", { length: 100 }).notNull(),
+    symbol: varchar("symbol", { length: 20 }).notNull(),
+    logoUrl: varchar("logo_url", { length: 500 }),
+    marketCap: numeric("market_cap"),
+    liquidity: varchar("liquidity", { length: 50 }),
+    verified: boolean("verified").default(false),
+    lastUpdated: timestamp("last_updated", { withTimezone: true }).defaultNow(),
+  },
+  (table) => ({
+    uniqueAddressChain: uniqueIndex("token_address_chain_idx").on(
+      table.address,
+      table.chain
+    ),
+    symbolIdx: index("token_symbol_idx").on(table.symbol),
+    nameIdx: index("token_name_idx").on(table.name),
+    marketCapIdx: index("token_market_cap_idx").on(table.marketCap),
+  })
+);
+
+// Type Exports for Token Search
+export type TokenMetadata = typeof tokenMetadata.$inferSelect;
+export type NewTokenMetadata = typeof tokenMetadata.$inferInsert;
