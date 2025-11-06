@@ -7,7 +7,7 @@ export const siteConfig = {
     "AI-powered smart contract security scanner that detects scams, honeypots, and rug pulls in seconds. Get instant analysis in plain English.",
   defaultLocale: "en",
   locales: ["en"],
-  twitterHandle: "@contractguardai",
+  twitterHandle: "@contractGuard_",
   socialImage: "/og.jpg",
   company: {
     name: "Neorimia, Inc.",
@@ -19,7 +19,7 @@ export const siteConfig = {
   },
   contactEmail: "contact@contractguard.ai",
   links: {
-    twitter: "https://twitter.com/contractguardai",
+    twitter: "https://twitter.com/contractGuard_",
     github: "https://github.com/contractguard-ai",
     discord: "https://discord.gg/contractguard",
   },
