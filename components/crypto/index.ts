@@ -25,3 +25,5 @@ export { LiquidityTimelineChart } from "./LiquidityTimelineChart";
 export { ChainSelector } from "./ChainSelector";
 export { ComparisonView, ComparisonTable } from "./ComparisonView";
 export { PDFExportButton } from "./PDFExportButton";
+export { TokenSearchInput } from "./TokenSearchInput";
+export type { TokenSearchResult } from "./TokenSearchInput";

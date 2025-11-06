@@ -90,7 +90,7 @@ export function Footer() {
             </p>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-8 md:gap-12 lg:gap-16">
+          <div className="grid grid-cols-3 gap-8 md:gap-12 lg:gap-16">
             {footerLinks.map((section) => (
               <div key={section.title} className="space-y-3">
                 <h3 className="text-sm font-medium text-black dark:text-white">
@@ -134,6 +134,19 @@ export function Footer() {
               </Button>
             </div>
           </div> */}
+        </div>
+
+        {/* Founder Note */}
+        <div className="mt-8 pt-6 border-t border-black/10 dark:border-white/10">
+          <div className="max-w-2xl">
+            <p className="text-sm tracking-tight text-black/80 dark:text-white/80 leading-relaxed">
+              <span className="font-medium text-black dark:text-white">I got burned once.</span>{" "}
+              I built ContractGuard so you don't. We read code so you don't have to in seconds.
+            </p>
+            <p className="text-xs text-black/40 dark:text-white/40">
+              <span className="font-medium text-black dark:text-white">Gabriel Cruceanu</span>, Founder of ContractGuard AI
+            </p>
+          </div>
         </div>
 
         <div className="flex flex-col sm:flex-row sm:items-center justify-between mt-8 pt-5 border-t border-black/5 dark:border-white/5 text-xs text-black/50 dark:text-white/50">

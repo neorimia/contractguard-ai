@@ -47,14 +47,14 @@ export default function FAQSection() {
   return (
     <section
       id="faq"
-      className="py-16 sm:py-24 bg-black/95 dark:bg-white/95 mx-2 sm:mx-4 mb-4 rounded-2xl overflow-hidden relative"
+      className="py-16 sm:py-24 bg-black/95 dark:bg-white/95 mx-2 sm:mx-4 rounded-2xl overflow-hidden relative"
     >
-      <div className="absolute inset-0 overflow-hidden opacity-10">
+      {/* <div className="absolute inset-0 overflow-hidden opacity-10">
         <div className="absolute -top-24 -right-24 w-96 h-96 rounded-full bg-gradient-to-br from-white/30 to-white/5 dark:from-black/30 dark:to-black/5 blur-3xl" />
         <div className="absolute -bottom-24 -left-24 w-96 h-96 rounded-full bg-gradient-to-tr from-white/30 to-white/5 dark:from-black/30 dark:to-black/5 blur-3xl" />
       </div>
 
-      <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.02)_1px,transparent_1px),linear-gradient(to_right,rgba(255,255,255,0.02)_1px,transparent_1px)] dark:bg-[linear-gradient(rgba(0,0,0,0.02)_1px,transparent_1px),linear-gradient(to_right,rgba(0,0,0,0.02)_1px,transparent_1px)] bg-[size:32px_32px]" />
+      <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.02)_1px,transparent_1px),linear-gradient(to_right,rgba(255,255,255,0.02)_1px,transparent_1px)] dark:bg-[linear-gradient(rgba(0,0,0,0.02)_1px,transparent_1px),linear-gradient(to_right,rgba(0,0,0,0.02)_1px,transparent_1px)] bg-[size:32px_32px]" /> */}
 
       <div className="max-w-3xl mx-auto px-4 sm:px-6 relative">
         <div className="text-center space-y-4 mb-10">
@@ -76,21 +76,6 @@ export default function FAQSection() {
               variant="inverted"
             />
           ))}
-        </div>
-
-        <div className="mt-12 text-center">
-          <h3 className="text-lg font-medium text-white dark:text-black mb-4">
-            Still have questions? Contact our team.
-          </h3>
-          <div className="inline-block">
-            <Button
-              size="sm"
-              className="h-9 px-5 bg-white dark:bg-black text-black dark:text-white rounded-lg border border-white/10 dark:border-black/10 shadow-sm hover:shadow-md hover:bg-white/90 dark:hover:bg-black/90 transition-all duration-200 group"
-            >
-              support@contractguard.ai
-              <ArrowRight className="ml-1.5 h-3.5 w-3.5 transition-transform group-hover:translate-x-1" />
-            </Button>
-          </div>
         </div>
       </div>
     </section>

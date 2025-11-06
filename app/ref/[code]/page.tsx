@@ -109,7 +109,7 @@ export default async function ReferralLandingPage({
         {/* CTA */}
         <div className="mt-10 flex flex-col gap-4 sm:flex-row sm:justify-center">
           <Button size="lg" asChild>
-            <Link href="/sign-up">Get Started Free</Link>
+            <Link href="/sign-in">Get Started Free</Link>
           </Button>
           <Button size="lg" variant="outline" asChild>
             <Link href="/">Learn More</Link>

@@ -213,7 +213,7 @@ export async function POST(req: NextRequest) {
             action: "upgrade_required",
             accountType: "soft",
             scansRemaining: 0,
-            upgradeUrl: "/handler/sign-up",
+            upgradeUrl: "/sign-in",
           },
           {
             status: 403,

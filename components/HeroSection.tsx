@@ -70,31 +70,45 @@ export default function HeroSection() {
 
   return (
     <section className="min-h-[calc(100vh-5.5rem)] flex flex-col justify-center py-6 sm:py-10 bg-black/95 dark:bg-white/95 mx-2 sm:mx-4 mt-1 mb-4 rounded-xl">
+     
       <div className="max-w-6xl mx-auto text-center space-y-6 sm:space-y-8 px-4">
         {/* Main Content (Title, Desc, Buttons) */}
         <h1 className="text-4xl sm:text-6xl md:text-7xl font-semibold tracking-tight text-white dark:text-black">
-          Scan smart contracts{" "}
+          Never get rugged{" "}
           <span className="bg-gradient-to-r from-white to-white/70 dark:from-black dark:to-black/70 bg-clip-text text-transparent">
-            in seconds
+            again.
           </span>
         </h1>
         <p className="text-base sm:text-lg tracking-tight text-white/60 dark:text-black/60 max-w-2xl mx-auto">
-          AI-powered security analysis that detects scams, honeypots, and rug
-          pulls. Get instant results in plain English.
+          AI scans any contract in 10 seconds across 5+ EVM chains with
+          plain-English risk flags so you can decide fast.
         </p>
         <div className="flex flex-col items-center justify-center gap-4 pt-2 sm:pt-4">
-          <div className="rounded-xl p-1 border dark:border-black/30 border-white/30 dark:hover:border-black/50 hover:border-white/50 transition-all duration-300">
-            <Button
-              size="lg"
-              onClick={() => router.push("/audit")}
-              className="h-10 sm:h-13 px-5 sm:px-6 dark:text-white text-black tracking-tight group bg-white/95 dark:bg-black rounded-lg hover:bg-white dark:hover:bg-black transition-all duration-300"
-            >
-              SCAN CONTRACT NOW
-              <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
-            </Button>
+          <div className="flex flex-col md:flex-row gap-3 items-center">
+            <div className="rounded-xl p-1 border dark:border-black/30 border-white/30 dark:hover:border-black/50 hover:border-white/50 transition-all duration-300">
+              <Button
+                size="lg"
+                onClick={() => router.push("/audit")}
+                className="dark:text-white text-black tracking-tight group bg-white/95 dark:bg-black rounded-lg hover:bg-white dark:hover:bg-black transition-all duration-300"
+              >
+                Scan my contract Free
+                {/* <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" /> */}
+              </Button>
+            </div>
+            <div className="rounded-xl p-1 border dark:border-black/30 border-white/30 dark:hover:border-black/50 hover:border-white/50 transition-all duration-300">
+              <Button
+                size="lg"
+                onClick={() => router.push("/how-it-works")}
+                variant="outline"
+                className="text-white dark:text-black tracking-tight group bg-black dark:bg-white/95 rounded-lg dark:hover:bg-white hover:bg-black/90 hover:text-white dark:hover:text-black transition-all duration-300"
+              >
+                See how it works
+              </Button>
+            </div>
           </div>
           <p className="text-sm text-white/70 dark:text-black/70 text-center">
-            <span className="font-medium">Free, no card required</span> • Scan up to 3 contracts daily
+            <span className="font-medium">Free, no card required</span> • Scan
+            up to 3 contracts daily
           </p>
         </div>
 

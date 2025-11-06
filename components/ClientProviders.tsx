@@ -16,8 +16,7 @@ export function ClientProviders({ children }: { children: React.ReactNode }) {
         </Suspense>
         <ThemeProvider
           attribute="class"
-          defaultTheme="system"
-          enableSystem
+          defaultTheme="light"
           disableTransitionOnChange
         >
           <AuthErrorBoundary>{children}</AuthErrorBoundary>

@@ -57,7 +57,7 @@ export async function GET(req: NextRequest) {
     // Redirect to Stack Auth signup with pre-filled email
     // The anonymous session will be migrated after user completes signup
     const redirectUrl = new URL(
-      `${process.env.NEXT_PUBLIC_SITE_URL}/handler/sign-up`
+      `${process.env.NEXT_PUBLIC_SITE_URL}/sign-in`
     );
     redirectUrl.searchParams.set("email", tokenData.email);
     redirectUrl.searchParams.set("soft_signup", "true");
