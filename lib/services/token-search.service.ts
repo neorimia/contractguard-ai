@@ -342,11 +342,29 @@ export class TokenSearchService {
 
       // When chain is specified, fetch significantly more coins to ensure comprehensive results
       // Similar to CoinGecko's chain pages that show all tokens on that chain
-      const INITIAL_FETCH_LIMIT = chain
+      // DEMO MODE FIX: Limit fetches when no API key to avoid rate limits
+      const hasApiKey = !!(process.env.COINGECKO_PRO_API_KEY || process.env.COINGECKO_API_KEY);
+      const DEMO_MODE_LIMIT = 5; // Conservative limit for demo mode to avoid rate limits
+
+      const INITIAL_FETCH_LIMIT = !hasApiKey
+        ? DEMO_MODE_LIMIT
+        : chain
         ? Math.max(TOKEN_SEARCH_CONFIG.QUERY.MAX_RESULTS * 10, 100) // Fetch up to 100 when chain is specified
         : Math.max(TOKEN_SEARCH_CONFIG.QUERY.MAX_RESULTS * 3, 30); // Otherwise fetch 30
 
       const coinsToFetch = searchData.coins.slice(0, INITIAL_FETCH_LIMIT);
+
+      // Log demo mode warning
+      if (!hasApiKey) {
+        logger.warn(
+          {
+            query,
+            chain,
+            limitedTo: DEMO_MODE_LIMIT,
+          },
+          'Running in CoinGecko demo mode - results limited to avoid rate limits'
+        );
+      }
 
       // Create parallel detail fetch promises with proper error handling
       const detailPromises = coinsToFetch.map(async (coin) => {
@@ -394,6 +412,8 @@ export class TokenSearchService {
 
       // Process results and extract token data
       const tokens: TokenSearchResult[] = [];
+      let successfulFetches = 0;
+      let failedFetches = 0;
       const platformMap = TOKEN_SEARCH_CONFIG.CHAINS.PLATFORM_MAP;
       const chainToPlatforms = (TOKEN_SEARCH_CONFIG.CHAINS as any).CHAIN_TO_PLATFORMS;
       const seenTokens = new Set<string>(); // Track (address, chain) to avoid duplicates
@@ -402,7 +422,7 @@ export class TokenSearchService {
       const platformMatchesChain = (platform: string): string | null => {
         const platformKey = platform as keyof typeof platformMap;
         const mappedChain = platformMap[platformKey];
-        
+
         if (!mappedChain || typeof mappedChain !== 'string') return null;
 
         // If no chain filter, include all
@@ -428,8 +448,12 @@ export class TokenSearchService {
       };
 
       for (const result of detailResults) {
-        if (result.status === 'rejected' || !result.value) continue;
+        if (result.status === 'rejected' || !result.value) {
+          failedFetches++;
+          continue;
+        }
 
+        successfulFetches++;
         const detail = result.value;
 
         // Extract contract addresses from platforms (for tokens on multiple chains)
@@ -539,11 +563,21 @@ export class TokenSearchService {
           query,
           chain: chain || 'all',
           coinsFetched: coinsToFetch.length,
+          successfulFetches,
+          failedFetches,
           tokensFound: tokens.length,
           platformMapKeys: Object.keys(platformMap),
+          demoMode: !hasApiKey,
         },
         'CoinGecko search results processed'
       );
+
+      // RATE LIMIT FIX: If all fetches failed and we're in demo mode, throw error to trigger fallback
+      if (tokens.length === 0 && failedFetches > 0 && !hasApiKey) {
+        throw new Error(
+          'CoinGecko demo mode rate limit exceeded. Add COINGECKO_API_KEY to .env.local for full functionality.'
+        );
+      }
 
       // When chain is specified, return more results (like CoinGecko chain pages)
       // Otherwise limit to prevent too many results
@@ -606,10 +640,13 @@ export class TokenSearchService {
       const seenTokens = new Set<string>();
       const normalizedQuery = query?.toLowerCase().trim();
 
+      // DEMO MODE FIX: Reduce pages when no API key
+      const hasApiKey = !!(process.env.COINGECKO_PRO_API_KEY || process.env.COINGECKO_API_KEY);
+
       // Fetch multiple pages of Ethereum ecosystem tokens
       // Using category filter for ethereum-ecosystem and high per_page limit
-      const pagesToFetch = 5; // Fetch up to 5 pages (500 tokens)
-      const perPage = 100;
+      const pagesToFetch = !hasApiKey ? 1 : 5; // Fetch only 1 page in demo mode, 5 pages otherwise
+      const perPage = !hasApiKey ? 10 : 100; // Limit results per page in demo mode
 
       const marketPromises = [];
       for (let page = 1; page <= pagesToFetch; page++) {
@@ -764,12 +801,21 @@ export class TokenSearchService {
           query: normalizedQuery || 'all',
           tokensFound: tokens.length,
           coinsProcessed: coinIds.size,
+          demoMode: !hasApiKey,
         },
         'Ethereum ecosystem search completed'
       );
 
-      // Return up to 100 tokens (comprehensive ecosystem results)
-      return tokens.slice(0, 100);
+      // RATE LIMIT FIX: If no tokens found in demo mode, throw error to trigger fallback
+      if (tokens.length === 0 && !hasApiKey) {
+        throw new Error(
+          'CoinGecko demo mode rate limit exceeded. Add COINGECKO_API_KEY to .env.local for full functionality.'
+        );
+      }
+
+      // Return up to 100 tokens (comprehensive ecosystem results), or 10 in demo mode
+      const resultLimit = !hasApiKey ? 10 : 100;
+      return tokens.slice(0, resultLimit);
     } catch (err) {
       // Handle SDK-specific errors
       if (err instanceof RateLimitError) {
