@@ -11,6 +11,26 @@
  */
 
 export const PRICING_CONFIG = {
+  free: {
+    id: "free",
+    label: "Free",
+    description: "Free tier",
+    type: "one_time" as const,
+    packages: [
+      {
+        credits: 1,
+        price: 0,
+        stripePriceId: process.env.STRIPE_PRICE_FREE || "",
+        savings: null,
+        popular: false,
+        perks: [
+          "1 scan per day",
+          "Summary audit",
+          "Shareable result card",
+        ],
+      },
+    ],
+  },
   instant: {
     id: "instant_report",
     label: "Instant Report",
@@ -23,6 +43,12 @@ export const PRICING_CONFIG = {
         stripePriceId: process.env.STRIPE_PRICE_INSTANT_1 || "",
         savings: null,
         popular: false,
+        perks: [
+          "Full AI security audit",
+          "Detailed risk analysis",
+          "Instant delivery",
+          "Never expires",
+        ],
       },
       {
         credits: 3,
@@ -30,6 +56,12 @@ export const PRICING_CONFIG = {
         stripePriceId: process.env.STRIPE_PRICE_INSTANT_3 || "",
         savings: "33% off",
         popular: true,
+        perks: [
+          "Full AI security audit",
+          "Detailed risk analysis",
+          "Instant delivery",
+          "Never expires",
+        ],
       },
       {
         credits: 5,
@@ -37,6 +69,12 @@ export const PRICING_CONFIG = {
         stripePriceId: process.env.STRIPE_PRICE_INSTANT_5 || "",
         savings: "40% off",
         popular: false,
+        perks: [
+          "Full AI security audit",
+          "Detailed risk analysis",
+          "Instant delivery",
+          "Never expires",
+        ],
       },
     ],
   },

@@ -69,13 +69,10 @@ export function Header() {
     setTheme(theme === "dark" ? "light" : "dark");
   };
 
-  const handleLogin = () => {
+  const handleSignIn = () => {
     router.push("/sign-in");
   };
 
-  const handleSignup = () => {
-    router.push("/sign-up");
-  };
 
   const handleScanContract = () => {
     router.push("/audit");
@@ -289,16 +286,16 @@ export function Header() {
                     size="lg"
                     variant="outline"
                     className="h-7 sm:h-9 px-3 sm:px-4  rounded-lg transition-all duration-300"
-                    onClick={() => handleScanContract()}
+                    onClick={() => handleSignIn()}
                   >
-                    Scan Contract
+                    Sign In
                   </Button>
                   <Button
                     size="lg"
                     className="h-7 sm:h-9 px-3 sm:px-4 text-white dark:text-black tracking-tight group dark:bg-white/95 bg-black rounded-lg dark:hover:bg-white dark:hover:text-black transition-all duration-300"
-                    onClick={() => handleSignup()}
+                    onClick={() => handleScanContract()}
                   >
-                    Sign Up
+                    Scan Contract
                   </Button>
                 </>
               )}
@@ -451,20 +448,20 @@ export function Header() {
                       className="flex-1"
                       onClick={() => {
                         setIsMobileMenuOpen(false);
-                        handleScanContract();
+                          handleSignIn();
                       }}
                     >
-                      Scan Contract
+                      Sign In
                     </Button>
                     <Button
                       size="sm"
                       className="flex-1 bg-black dark:bg-white text-white dark:text-black"
                       onClick={() => {
                         setIsMobileMenuOpen(false);
-                        handleSignup();
+                        handleScanContract();
                       }}
                     >
-                      Sign Up
+                      Scan Contract
                     </Button>
                   </div>
                 )}

@@ -113,15 +113,15 @@ export function TrustSection() {
         {/* Security Indicators */}
         <div className="flex flex-wrap items-center justify-center gap-6 text-sm text-black/60 dark:text-white/60">
           <div className="flex items-center gap-2">
-            <Shield className="h-4 w-4 text-black/60 dark:text-white/60" />
+            <Shield className="h-4 w-4 text-green-600 dark:text-green-400" />
             <span>SSL Encrypted</span>
           </div>
           <div className="flex items-center gap-2">
-            <Lock className="h-4 w-4 text-black/60 dark:text-white/60" />
+            <Lock className="h-4 w-4 text-blue-600 dark:text-blue-400" />
             <span>No Data Storage</span>
           </div>
           <div className="flex items-center gap-2">
-            <Eye className="h-4 w-4 text-black/60 dark:text-white/60" />
+            <Eye className="h-4 w-4 text-purple-600 dark:text-purple-400" />
             <span>Privacy First</span>
           </div>
         </div>
@@ -146,15 +146,15 @@ export function CompactTrustSection() {
           </div>
           <div className="flex flex-wrap items-center gap-4 text-xs text-black/60 dark:text-white/60">
             <div className="flex items-center gap-1">
-              <Shield className="h-3 w-3 text-black/60 dark:text-white/60" />
+              <Shield className="h-3 w-3 text-green-600 dark:text-green-400" />
               <span>SSL Encrypted</span>
             </div>
             <div className="flex items-center gap-1">
-              <Lock className="h-3 w-3 text-black/60 dark:text-white/60" />
+              <Lock className="h-3 w-3 text-blue-600 dark:text-blue-400" />
               <span>No Data Storage</span>
             </div>
             <div className="flex items-center gap-1">
-              <Eye className="h-3 w-3 text-black/60 dark:text-white/60" />
+              <Eye className="h-3 w-3 text-purple-600 dark:text-purple-400" />
               <span>Privacy First</span>
             </div>
           </div>

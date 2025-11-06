@@ -8,6 +8,7 @@ import { siteConfig } from "@/config/site";
 import JsonLd from "@/components/seo/json-ld";
 import { softwareApplicationLd, howToLd, faqPageLd } from "@/lib/seo/jsonld";
 import { PricingSectionHybridClient } from "@/components/PricingSectionHybridClient";
+import { AdditionalHelpSection } from "@/components/AdditionalHelpSection";
 
 export const metadata: Metadata = {
   title: "AI-Powered Smart Contract Security Scanner",
@@ -100,6 +101,7 @@ export default function Home() {
       <TrustSection />
       <PricingSectionHybridClient />
       <FAQSection />
+      <AdditionalHelpSection />
     </>
   );
 }

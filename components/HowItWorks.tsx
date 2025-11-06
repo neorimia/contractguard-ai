@@ -1,6 +1,5 @@
 "use client";
 
-import { motion } from "motion/react";
 import { AlertCircle, ArrowRight, CheckCircle, Zap } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useRouter } from "next/navigation";
@@ -15,9 +14,9 @@ export default function HowItWorks({
   const steps = [
     {
       number: "01",
-      title: "Enter contract address",
+      title: "Paste contract address + pick chain",
       description:
-        "Paste any smart contract address and select the blockchain network",
+        "Enter any smart contract address and select the blockchain network",
       badge: (
         <div className="flex items-center gap-2 text-xs text-green-600 dark:text-green-400">
           <CheckCircle className="h-3 w-3" />
@@ -27,25 +26,25 @@ export default function HowItWorks({
     },
     {
       number: "02",
-      title: "Get instant risk-score",
+      title: "AI scan (10s) → risk score + flags + other insights",
       description:
-        "Receive AI-powered analysis with plain-English flag list in seconds",
+        "Get instant AI-powered analysis with risk score and plain-English flag list and other insights",
       badge: (
         <div className="flex items-center gap-2 text-xs text-yellow-600 dark:text-yellow-400">
           <AlertCircle className="h-3 w-3" />
-          <span className="font-medium">Instant risk-score</span>{" "}
+          <span className="font-medium">Results in 10 seconds</span>
         </div>
       ),
     },
     {
       number: "03",
-      title: "Upgrade for deeper analysis",
+      title: "Share or save your result and set alerts on risky updates",
       description:
-        "Unlock advanced tracking, alerts, and unlimited scans with Pro",
+        "Save your analysis, share with others, or set alerts for contract changes",
       badge: (
         <div className="flex items-center gap-2 text-xs text-blue-600 dark:text-blue-400">
           <Zap className="h-3 w-3" />
-          <span className="font-medium">Unlock unlimited scans</span>{" "}
+          <span className="font-medium">Set alerts & track changes</span>
         </div>
       ),
     },
@@ -54,7 +53,6 @@ export default function HowItWorks({
   return (
     <>
       <section className="py-20 sm:py-32 bg-black/95 dark:bg-white mx-2 sm:mx-4 mb-16 rounded-xl overflow-hidden">
-      
         <div className="max-w-6xl mx-auto px-4">
           {/* Section Header */}
           {!hideTitle && !hideDescription && (
@@ -119,7 +117,7 @@ export default function HowItWorks({
                     className="dark:text-white text-black tracking-tight group bg-white/95 dark:bg-black rounded-lg hover:bg-white dark:hover:bg-black transition-all duration-300"
                   >
                     Start scanning now
-                    <ArrowRight className="ml-2 h-4 w-4" />
+                    {/* <ArrowRight className="ml-2 h-4 w-4" /> */}
                   </Button>
                 </div>
                 <p className="text-sm text-white/60 dark:text-black/60">
@@ -129,7 +127,14 @@ export default function HowItWorks({
               </div>
             </div>
           </div>
-        </div> 
+        </div>
+
+        {/* Legal Footnote */}
+        <div className="mt-8 text-center">
+          <p className="text-xs text-white/50 dark:text-black/50">
+            This analysis is for informational purposes only and does not constitute financial advice.
+          </p>
+        </div>
       </section>
 
       {/* Video Section */}

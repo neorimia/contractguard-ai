@@ -28,8 +28,8 @@ export function StackAuthProvider({ children }: { children: React.ReactNode }) {
       publishableClientKey: publishableKey!,
       tokenStore: "nextjs-cookie", // Use Next.js cookie-based token storage
       urls: {
-        signIn: "/handler/sign-in",
-        signUp: "/handler/sign-up",
+        signIn: "/sign-in",
+        signUp: "/sign-in",
         afterSignIn: "/",
         afterSignUp: "/",
         afterSignOut: "/",
@@ -54,8 +54,8 @@ export function StackAuthProvider({ children }: { children: React.ReactNode }) {
       publishableClientKey: "mock-publishable-key",
       tokenStore: "nextjs-cookie",
       urls: {
-        signIn: "/handler/sign-in",
-        signUp: "/handler/sign-up",
+        signIn: "/sign-in",
+        signUp: "/sign-in",
         afterSignIn: "/",
         afterSignUp: "/",
         afterSignOut: "/",

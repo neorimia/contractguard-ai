@@ -77,8 +77,8 @@ export const metadata: Metadata = {
     images: [
       {
         url: siteConfig.socialImage,
-        width: 1200,
-        height: 630,
+        width: 1280,
+        height: 720,
         alt: siteConfig.siteName,
       },
     ],

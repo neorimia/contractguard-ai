@@ -4,17 +4,21 @@ import { Button } from "@/components/ui/button";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { FeatureCard } from "@/components/FeatureCard";
+import { ChevronDown, ChevronUp } from "lucide-react";
+import { useState } from "react";
 
 const rulesOfThree = [
   {
     number: 1,
     title: "Detect",
-    description: "Honeypots, hidden mints, liquidity traps, and more spotted instantly.",
+    description:
+      "Honeypots, hidden mints, liquidity traps, and more spotted instantly.",
   },
   {
     number: 2,
     title: "Decode",
-    description: "Plain-English explanations you can act on (no technical skills required).",
+    description:
+      "Plain-English explanations you can act on (no technical skills required).",
   },
   {
     number: 3,
@@ -25,6 +29,7 @@ const rulesOfThree = [
 
 export default function FeaturesSection() {
   const router = useRouter();
+  const [isDisclosureOpen, setIsDisclosureOpen] = useState(false);
 
   const handleScanContract = () => {
     router.push("/audit");
@@ -37,13 +42,11 @@ export default function FeaturesSection() {
     >
       <div className="max-w-6xl mx-auto px-4">
         {/* Section Header */}
-        <div
-          className="text-left space-y-4 mb-12 sm:mb-16"
-        >
+        <div className="text-left space-y-4 mb-12">
           <h2 className="text-3xl sm:text-4xl font-semibold tracking-tight text-black dark:text-white">
-            AI-powered security analysis{" "}
+            Outcomes{" "}
             <span className="text-zinc-700/80 dark:text-zinc-300/80 font-semibold tracking-tighter">
-              in seconds
+              you can trust
             </span>
             .
           </h2>
@@ -60,7 +63,6 @@ export default function FeaturesSection() {
               key={rule.number}
               number={rule.number}
               title={rule.title}
-
               showConnector={index < rulesOfThree.length - 1}
               description={rule.description}
             />
@@ -143,40 +145,112 @@ export default function FeaturesSection() {
         </div>
 
         {/* Row Two: Content on left, image on right */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-16">
+        <div className="grid grid-cols-1 gap-6">
           {/* Left: Content */}
           <div className="flex flex-col space-y-6">
-            <h3 className="text-2xl sm:text-3xl font-semibold tracking-tight text-black dark:text-white">
-              Comprehensive security coverage
-            </h3>
-            <p className="text-base tracking-tight text-black/70 dark:text-white/70">
-              Our AI analyzes multiple security vectors including contract code,
-              liquidity patterns, and holder distribution to provide complete
-              risk assessment.
-            </p>
-
+            <div className="text-left space-y-4 mb-12">
+              <h3 className="text-2xl sm:text-3xl font-semibold tracking-tight text-black dark:text-white">
+                Comprehensive security coverage
+              </h3>
+              <p className="text-base tracking-tight text-black/70 dark:text-white/70 mb-">
+                Our AI analyzes multiple security vectors including contract
+                code, liquidity patterns, and holder distribution to provide
+                complete risk assessment.
+              </p>
+            </div>
             {/* Two cards side by side */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-0.5 border border-black/15 dark:border-white/15 rounded-xl p-1">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
               {/* Card 1 */}
-              <div className="rounded-xl border border-black/10 dark:border-white/10 bg-black/[0.02] dark:bg-white/[0.02] p-4 transition-all hover:border-black/15 dark:hover:border-white/15">
+              <div className="rounded-xl border border-black/10 dark:border-white/10 bg-black/[0.02] dark:bg-white/[0.02] p-4 transition-all hover:border-black/15 dark:hover:border-white/15 hover:bg-black/[0.04] dark:hover:bg-white/[0.04]">
                 <h4 className="text-lg font-medium tracking-tight text-black dark:text-white mb-2">
                   Honeypot Detection
                 </h4>
-                <p className="text-sm tracking-tight text-black/60 dark:text-white/60">
-                  Identify contracts that trap users and prevent selling with
-                  advanced pattern recognition.
+                <p className="text-sm tracking-tight text-black/70 dark:text-white/70">
+                  Don't get trapped in a token you can't sell.
                 </p>
               </div>
 
               {/* Card 2 */}
-              <div className="rounded-xl border border-black/10 dark:border-white/10 bg-black/[0.02] dark:bg-white/[0.02] p-4 transition-all hover:border-black/15 dark:hover:border-white/15">
+              <div className="rounded-xl border border-black/10 dark:border-white/10 bg-black/[0.02] dark:bg-white/[0.02] p-4 transition-all hover:border-black/15 dark:hover:border-white/15 hover:bg-black/[0.04] dark:hover:bg-white/[0.04]">
                 <h4 className="text-lg font-medium tracking-tight text-black dark:text-white mb-2">
-                  Rug Pull Analysis
+                  Rug-Pull Analysis
                 </h4>
-                <p className="text-sm tracking-tight text-black/60 dark:text-white/60">
-                  Detect contracts designed to drain liquidity and identify
-                  potential rug pull schemes.
+                <p className="text-sm tracking-tight text-black/70 dark:text-white/70">
+                  Spot code that can drain liquidity before it drains you.
                 </p>
+              </div>
+
+              {/* Card 3 */}
+              <div className="rounded-xl border border-black/10 dark:border-white/10 bg-black/[0.02] dark:bg-white/[0.02] p-4 transition-all hover:border-black/15 dark:hover:border-white/15 hover:bg-black/[0.04] dark:hover:bg-white/[0.04]">
+                <h4 className="text-lg font-medium tracking-tight text-black dark:text-white mb-2">
+                  Scam Signals
+                </h4>
+                <p className="text-sm tracking-tight text-black/70 dark:text-white/70">
+                  Flag impersonations, phishing, and shady deployer histories.
+                </p>
+              </div>
+
+              {/* Card 4 */}
+              <div className="rounded-xl border border-black/10 dark:border-white/10 bg-black/[0.02] dark:bg-white/[0.02] p-4 transition-all hover:border-black/15 dark:hover:border-white/15 hover:bg-black/[0.04] dark:hover:bg-white/[0.04]">
+                <h4 className="text-lg font-medium tracking-tight text-black dark:text-white mb-2">
+                  Plain-English Reports
+                </h4>
+                <p className="text-sm tracking-tight text-black/70 dark:text-white/70">
+                  You'll know exactly why it's risky (or not).
+                </p>
+              </div>
+            </div>
+
+            {/* What we check disclosure */}
+            <div className="rounded-xl border border-black/10 dark:border-white/10 bg-black/[0.02] dark:bg-white/[0.02] p-4 transition-all hover:border-black/15 dark:hover:border-white/15 hover:bg-black/[0.04] dark:hover:bg-white/[0.04]">
+              <h4 className="text-lg font-medium tracking-tight text-black dark:text-white mb-2">
+                What we check
+              </h4>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                <ul className="space-y-2 text-sm tracking-tight text-black/70 dark:text-white/70">
+                  <li>
+                    <p className="text-sm tracking-tight text-black/70 dark:text-white/70">
+                      • Contract source code analysis for malicious functions
+                    </p>
+                  </li>
+                  <li>
+                    <p className="text-sm tracking-tight text-black/70 dark:text-white/70">
+                      • Liquidity pool composition and lock status
+                    </p>
+                  </li>
+                  <li>
+                    <p className="text-sm tracking-tight text-black/70 dark:text-white/70">
+                      • Token holder distribution patterns
+                    </p>
+                  </li>
+                  <li>
+                    <p className="text-sm tracking-tight text-black/70 dark:text-white/70">
+                      • Deployer wallet history and reputation
+                    </p>
+                  </li>
+                </ul>
+                <ul className="space-y-2 text-sm tracking-tight text-black/70 dark:text-white/70">
+                  <li>
+                    <p className="text-sm tracking-tight text-black/70 dark:text-white/70">
+                      • Contract ownership and admin controls
+                    </p>
+                  </li>
+                  <li>
+                    <p className="text-sm tracking-tight text-black/70 dark:text-white/70">
+                      • Transfer restrictions and blacklist functions
+                    </p>
+                  </li>
+                  <li>
+                    <p className="text-sm tracking-tight text-black/70 dark:text-white/70">
+                      • Minting and burning capabilities
+                    </p>
+                  </li>
+                  <li>
+                    <p className="text-sm tracking-tight text-black/70 dark:text-white/70">
+                      • Reentrancy vulnerabilities
+                    </p>
+                  </li>
+                </ul>
               </div>
             </div>
 
@@ -208,18 +282,6 @@ export default function FeaturesSection() {
                 </p>
               </div>
             </div>
-          </div>
-
-          {/* Right: Security Success Demo */}
-          <div className="relative h-full min-h-[300px] rounded-xl overflow-hidden bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 flex items-center justify-center group hover:border-black/15 dark:hover:border-white/15 transition-all duration-300">
-            {/* Security Success Demo */}
-            <Image
-              src="/images/security-success.jpg"
-              alt="Security Success"
-              width={560}
-              height={315}
-              className="object-cover h-full w-full text-center align-middle"
-            />
           </div>
         </div>
       </div>

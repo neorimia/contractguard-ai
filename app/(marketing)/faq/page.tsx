@@ -1,14 +1,9 @@
-import { Geist } from "next/font/google";
 import FAQSection from "@/components/FAQSection";
 import PageHero from "@/components/PageHero";
 import type { Metadata } from "next";
 import { siteConfig } from "@/config/site";
 import JsonLd from "@/components/seo/json-ld";
-
-const geist = Geist({
-  weight: ["400", "600"],
-  subsets: ["latin"],
-});
+import { AdditionalHelpSection } from "@/components/AdditionalHelpSection";
 
 export const metadata: Metadata = {
   title: "FAQ - Frequently Asked Questions About Smart Contract Security",
@@ -163,35 +158,7 @@ export default function FAQPage() {
 
       <FAQSection />
 
-      {/* Additional Help Section */}
-      <section className="py-16 px-4">
-        <div className="max-w-4xl mx-auto">
-          <div className="bg-black/95 dark:bg-white/95 rounded-2xl p-8 sm:p-12 text-center">
-            <h2 className="text-2xl sm:text-3xl font-bold text-white dark:text-black mb-4">
-              Need more help?
-            </h2>
-            <p className="text-white/60 dark:text-black/60 mb-6 max-w-2xl mx-auto">
-              Can't find the answer you're looking for? Our support team is here
-              to help you with any questions about smart contract security
-              analysis.
-            </p>
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-              <a
-                href="mailto:support@contractguard.ai"
-                className="inline-flex items-center justify-center px-6 py-3 bg-white dark:bg-black text-black dark:text-white rounded-lg font-medium hover:bg-white/90 dark:hover:bg-black/90 transition-all"
-              >
-                Email Support
-              </a>
-              <a
-                href="/public"
-                className="inline-flex items-center justify-center px-6 py-3 bg-white/10 dark:bg-black/10 text-white dark:text-black rounded-lg font-medium border border-white/20 dark:border-black/20 hover:bg-white/20 dark:hover:bg-black/20 transition-all"
-              >
-                Scan Contract
-              </a>
-            </div>
-          </div>
-        </div>
-      </section>
+      <AdditionalHelpSection />
     </>
   );
 }

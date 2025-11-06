@@ -8,7 +8,7 @@ export const siteConfig = {
   defaultLocale: "en",
   locales: ["en"],
   twitterHandle: "@contractguardai",
-  socialImage: "/og-default.png",
+  socialImage: "/og.jpg",
   company: {
     name: "Neorimia, Inc.",
     logo: "/logo.svg",
