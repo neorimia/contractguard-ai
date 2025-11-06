@@ -69,7 +69,14 @@ export default function HeroSection() {
   };
 
   return (
-    <section className="min-h-[calc(100vh-5.5rem)] flex flex-col justify-center py-6 sm:py-10 bg-black/95 dark:bg-white/95 mx-2 sm:mx-4 mt-1 mb-4 rounded-xl">
+    <section className="min-h-[calc(100vh-5.5rem)] flex flex-col justify-center py-6 sm:py-10 bg-black/95 dark:bg-white/95 mx-2 sm:mx-4 mt-1 mb-4 rounded-xl relative">
+      <div className="absolute inset-0 overflow-hidden opacity-10">
+        <div className="absolute -top-24 -right-24 w-96 h-96 rounded-full bg-gradient-to-br from-white/30 to-white/5 dark:from-black/30 dark:to-black/5 blur-3xl" />
+        <div className="absolute -bottom-24 -left-24 w-96 h-96 rounded-full bg-gradient-to-tr from-white/30 to-white/5 dark:from-black/30 dark:to-black/5 blur-3xl" />
+      </div>
+
+      <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.02)_1px,transparent_1px),linear-gradient(to_right,rgba(255,255,255,0.02)_1px,transparent_1px)] dark:bg-[linear-gradient(rgba(0,0,0,0.02)_1px,transparent_1px),linear-gradient(to_right,rgba(0,0,0,0.02)_1px,transparent_1px)] bg-[size:32px_32px]" />
+
       <div className="max-w-6xl mx-auto text-center space-y-6 sm:space-y-8 px-4">
         {/* Main Content (Title, Desc, Buttons) */}
         <h1 className="text-4xl sm:text-6xl md:text-7xl font-semibold tracking-tight text-white dark:text-black">
@@ -84,26 +91,27 @@ export default function HeroSection() {
         </p>
         <div className="flex flex-col items-center justify-center gap-4 pt-2 sm:pt-4">
           <div className="flex flex-col md:flex-row gap-3 items-center">
-          <div className="rounded-xl p-1 border dark:border-black/30 border-white/30 dark:hover:border-black/50 hover:border-white/50 transition-all duration-300">
-            <Button
-              size="lg" 
-              onClick={() => router.push("/audit")}
-              className="dark:text-white text-black tracking-tight group bg-white/95 dark:bg-black rounded-lg hover:bg-white dark:hover:bg-black transition-all duration-300"
-            >
-              Scan my contract Free
-              <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
-            </Button>
-           
-          </div>
-          <Button
-              size="lg"
-              onClick={() => router.push("/how-it-works")}
-              variant="outline"
-              className="text-white dark:text-black tracking-tight group bg-black dark:bg-white/95 rounded-lg dark:hover:bg-white hover:bg-black/90 hover:text-white dark:hover:text-black transition-all duration-300"
-            >
-              See how it works
+            <div className="rounded-xl p-1 border dark:border-black/30 border-white/30 dark:hover:border-black/50 hover:border-white/50 transition-all duration-300">
+              <Button
+                size="lg"
+                onClick={() => router.push("/audit")}
+                className="dark:text-white text-black tracking-tight group bg-white/95 dark:bg-black rounded-lg hover:bg-white dark:hover:bg-black transition-all duration-300"
+              >
+                Scan my contract Free
+                {/* <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" /> */}
               </Button>
             </div>
+            <div className="rounded-xl p-1 border dark:border-black/30 border-white/30 dark:hover:border-black/50 hover:border-white/50 transition-all duration-300">
+              <Button
+                size="lg"
+                onClick={() => router.push("/how-it-works")}
+                variant="outline"
+                className="text-white dark:text-black tracking-tight group bg-black dark:bg-white/95 rounded-lg dark:hover:bg-white hover:bg-black/90 hover:text-white dark:hover:text-black transition-all duration-300"
+              >
+                See how it works
+              </Button>
+            </div>
+          </div>
           <p className="text-sm text-white/70 dark:text-black/70 text-center">
             <span className="font-medium">Free, no card required</span> • Scan
             up to 3 contracts daily

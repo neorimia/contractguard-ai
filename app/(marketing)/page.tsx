@@ -96,7 +96,7 @@ export default function Home() {
       <JsonLd data={faqPageLd(faqData)} />
       <HeroSection />
       <Feature />
-      <HowItWorks />
+      <HowItWorks hideTitle={false} hideDescription={false} />
       <TrustSection />
       <PricingSectionHybridClient />
       <FAQSection />

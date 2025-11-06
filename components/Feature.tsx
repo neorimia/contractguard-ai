@@ -1,23 +1,30 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { motion } from "motion/react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
+import { FeatureCard } from "@/components/FeatureCard";
+
+const rulesOfThree = [
+  {
+    number: 1,
+    title: "Detect",
+    description: "Honeypots, hidden mints, liquidity traps, and more spotted instantly.",
+  },
+  {
+    number: 2,
+    title: "Decode",
+    description: "Plain-English explanations you can act on (no technical skills required).",
+  },
+  {
+    number: 3,
+    title: "Decide",
+    description: "Clear risk score and next steps before you deploy capital.",
+  },
+];
 
 export default function FeaturesSection() {
   const router = useRouter();
-
-  // Clean, consistent animation settings
-  const fadeIn = {
-    initial: { opacity: 0, y: 20 },
-    whileInView: { opacity: 1, y: 0 },
-    viewport: { once: true },
-    transition: {
-      duration: 0.5,
-      ease: [0.25, 0.1, 0.25, 1] as [number, number, number, number],
-    },
-  };
 
   const handleScanContract = () => {
     router.push("/audit");
@@ -30,7 +37,9 @@ export default function FeaturesSection() {
     >
       <div className="max-w-6xl mx-auto px-4">
         {/* Section Header */}
-        <div className="text-left space-y-4 mb-12 sm:mb-16">
+        <div
+          className="text-left space-y-4 mb-12 sm:mb-16"
+        >
           <h2 className="text-3xl sm:text-4xl font-semibold tracking-tight text-black dark:text-white">
             AI-powered security analysis{" "}
             <span className="text-zinc-700/80 dark:text-zinc-300/80 font-semibold tracking-tighter">
@@ -41,6 +50,54 @@ export default function FeaturesSection() {
           <p className="text-base sm:text-lg tracking-tight text-black/60 dark:text-white/60 max-w-2xl">
             Get instant, plain English security analysis that detects scams,
             honeypots, and rug pulls before you invest.
+          </p>
+        </div>
+
+        {/* Rule of 3: Detect · Decode · Decide */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+          {rulesOfThree.map((rule, index) => (
+            <FeatureCard
+              key={rule.number}
+              number={rule.number}
+              title={rule.title}
+
+              showConnector={index < rulesOfThree.length - 1}
+              description={rule.description}
+            />
+          ))}
+        </div>
+
+        {/* Before/After Strip */}
+        <div className="mb-16">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 border border-black/10 dark:border-white/10 rounded-xl p-6 sm:p-8 bg-black/[0.02] dark:bg-white/[0.02] hover:border-black/15 dark:hover:border-white/15 hover:bg-black/[0.04] dark:hover:bg-white/[0.04]">
+            {/* Before */}
+            <div className="space-y-3">
+              <div className="flex items-center gap-2 mb-2">
+                <div className="w-2 h-2 rounded-full bg-red-500"></div>
+                <h3 className="text-sm font-semibold uppercase tracking-wider text-black/60 dark:text-white/60">
+                  Before
+                </h3>
+              </div>
+              <p className="text-base tracking-tight text-black/70 dark:text-white/70">
+                Guessing, Telegram hype, code you can't read, "I hope."
+              </p>
+            </div>
+
+            {/* After */}
+            <div className="space-y-3">
+              <div className="flex items-center gap-2 mb-2">
+                <div className="w-2 h-2 rounded-full bg-green-500"></div>
+                <h3 className="text-sm font-semibold uppercase tracking-wider text-black/60 dark:text-white/60">
+                  After
+                </h3>
+              </div>
+              <p className="text-base tracking-tight text-black/70 dark:text-white/70">
+                Instant red flags, plain-English reasoning, confident trades.
+              </p>
+            </div>
+          </div>
+          <p className="text-center mt-6 text-sm font-medium tracking-tight text-black/80 dark:text-white/80">
+            We don't sell audits. We sell confidence.
           </p>
         </div>
 
