@@ -47,7 +47,8 @@ export default function HowItWorks({
   };
 
   return (
-    <section className="py-20 sm:py-32 bg-black dark:bg-white mx-2 sm:mx-4 mb-4 rounded-xl overflow-hidden">
+    <>
+    <section className="py-20 sm:py-32 bg-black/95 dark:bg-white mx-2 sm:mx-4 mb-4 rounded-xl overflow-hidden">
       <div className="max-w-6xl mx-auto px-4">
         {/* Section Header */}
         {!hideTitle ||
@@ -166,5 +167,20 @@ export default function HowItWorks({
         </motion.div>
       </div>
     </section>
+    
+
+    {/* Video Section */} 
+    <div
+      className="max-w-6xl mx-auto mb-16 rounded-xl overflow-hidden bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 aspect-video"
+    >
+      <iframe
+        src="https://www.youtube.com/embed/SnVPMHxKSv8"
+        title="ContractGuard AI Demo"
+        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+        allowFullScreen
+        className="w-full h-full"
+      />
+    </div>
+    </>
   );
 }

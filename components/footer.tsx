@@ -90,7 +90,7 @@ export function Footer() {
             </p>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-8 md:gap-12 lg:gap-16">
+          <div className="grid grid-cols-3 gap-8 md:gap-12 lg:gap-16">
             {footerLinks.map((section) => (
               <div key={section.title} className="space-y-3">
                 <h3 className="text-sm font-medium text-black dark:text-white">

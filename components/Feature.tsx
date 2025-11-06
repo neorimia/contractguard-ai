@@ -30,7 +30,7 @@ export default function FeaturesSection() {
     >
       <div className="max-w-6xl mx-auto px-4">
         {/* Section Header */}
-        <motion.div {...fadeIn} className="text-left space-y-4 mb-12 sm:mb-16">
+        <div className="text-left space-y-4 mb-12 sm:mb-16">
           <h2 className="text-3xl sm:text-4xl font-semibold tracking-tight text-black dark:text-white">
             AI-powered security analysis{" "}
             <span className="text-zinc-700/80 dark:text-zinc-300/80 font-semibold tracking-tighter">
@@ -42,15 +42,12 @@ export default function FeaturesSection() {
             Get instant, plain English security analysis that detects scams,
             honeypots, and rug pulls before you invest.
           </p>
-        </motion.div>
+        </div>
 
         {/* Row One: Image on left, content on right */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-16">
           {/* Left: Security Analysis Demo */}
-          <motion.div
-            {...fadeIn}
-            className="relative h-full min-h-[300px] rounded-xl overflow-hidden bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 flex items-center justify-center group hover:border-black/15 dark:hover:border-white/15 transition-all duration-300"
-          >
+          <div className="relative h-full min-h-[300px] rounded-xl overflow-hidden bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 flex items-center justify-center group hover:border-black/15 dark:hover:border-white/15 transition-all duration-300">
             {/* Security Analysis Demo */}
             <Image
               src="/images/security-analysis.jpg"
@@ -59,13 +56,10 @@ export default function FeaturesSection() {
               height={315}
               className="object-center object-cover block h-full w-full"
             />
-          </motion.div>
+          </div>
 
           {/* Right: Content */}
-          <motion.div
-            {...fadeIn}
-            className="flex flex-col justify-center space-y-6"
-          >
+          <div className="flex flex-col justify-center space-y-6">
             <h3 className="text-2xl sm:text-3xl font-semibold tracking-tight text-black dark:text-white">
               Instant security analysis
             </h3>
@@ -88,13 +82,13 @@ export default function FeaturesSection() {
                 up to 3 contracts daily
               </p>
             </div>
-          </motion.div>
+          </div>
         </div>
 
         {/* Row Two: Content on left, image on right */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-16">
           {/* Left: Content */}
-          <motion.div {...fadeIn} className="flex flex-col space-y-6">
+          <div className="flex flex-col space-y-6">
             <h3 className="text-2xl sm:text-3xl font-semibold tracking-tight text-black dark:text-white">
               Comprehensive security coverage
             </h3>
@@ -157,13 +151,10 @@ export default function FeaturesSection() {
                 </p>
               </div>
             </div>
-          </motion.div>
+          </div>
 
           {/* Right: Security Success Demo */}
-          <motion.div
-            {...fadeIn}
-            className="relative h-full min-h-[300px] rounded-xl overflow-hidden bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 flex items-center justify-center group hover:border-black/15 dark:hover:border-white/15 transition-all duration-300"
-          >
+          <div className="relative h-full min-h-[300px] rounded-xl overflow-hidden bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 flex items-center justify-center group hover:border-black/15 dark:hover:border-white/15 transition-all duration-300">
             {/* Security Success Demo */}
             <Image
               src="/images/security-success.jpg"
@@ -172,7 +163,7 @@ export default function FeaturesSection() {
               height={315}
               className="object-cover h-full w-full text-center align-middle"
             />
-          </motion.div>
+          </div>
         </div>
       </div>
     </section>
