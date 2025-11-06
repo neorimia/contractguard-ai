@@ -11,21 +11,35 @@ import pino from 'pino';
 // Determine if we're in development mode
 const isDevelopment = process.env.NODE_ENV !== 'production';
 
+// Check if we're in Next.js runtime (worker threads don't work well in Next.js)
+// Next.js API routes run in a bundled environment where worker threads fail
+const isNextJsRuntime =
+  typeof process !== 'undefined' &&
+  (process.env.NEXT_RUNTIME ||
+    process.env.NEXT_PUBLIC_SITE_URL ||
+    // Check if we're in a Next.js build output
+    (typeof __dirname !== 'undefined' &&
+      __dirname.includes('.next/server')));
+
 // Configure Pino logger
+// Note: pino-pretty uses worker threads which don't work in Next.js
+// For Next.js, we'll use simple JSON output even in development
 export const logger = pino({
   level: process.env.LOG_LEVEL || (isDevelopment ? 'debug' : 'info'),
 
-  // Pretty print in development for readability
-  transport: isDevelopment
-    ? {
-        target: 'pino-pretty',
-        options: {
-          colorize: true,
-          translateTime: 'HH:MM:ss',
-          ignore: 'pid,hostname',
-        },
-      }
-    : undefined,
+  // Only use pino-pretty in non-Next.js environments
+  // Next.js has issues with worker threads used by pino-pretty
+  transport:
+    isDevelopment && !isNextJsRuntime
+      ? {
+          target: 'pino-pretty',
+          options: {
+            colorize: true,
+            translateTime: 'HH:MM:ss',
+            ignore: 'pid,hostname',
+          },
+        }
+      : undefined,
 
   // Base fields for all logs
   base: {
@@ -41,6 +55,17 @@ export const logger = pino({
     err: pino.stdSerializers.err,
     error: pino.stdSerializers.err,
   },
+
+  // In Next.js development, still make output readable
+  ...(isDevelopment && isNextJsRuntime
+    ? {
+        formatters: {
+          level: (label: string) => {
+            return { level: label };
+          },
+        },
+      }
+    : {}),
 });
 
 /**

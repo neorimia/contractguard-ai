@@ -11,8 +11,6 @@ import { createLogger, getRequestContext } from '@/lib/logger';
 
 const logger = createLogger({ api: 'token-search' });
 
-export const runtime = 'edge';
-
 /**
  * Standard error response format
  */

@@ -681,20 +681,23 @@ export function CryptoScanInterface() {
                 {/* Token Search Input */}
                 {chain !== "solana" && (
                   <div className="space-y-3">
-                    <Label className="text-white text-sm font-medium">
-                      Search by Token Name
-                    </Label>
+                    <div>
+                      <Label className="text-white text-sm font-medium">
+                        Search by Token Name
+                      </Label>
+                    </div>
                     <TokenSearchInput
                       onSelect={handleTokenSelect}
                       defaultChain={chain}
                       placeholder="Search token by name (e.g., PEPE, SHIB)"
                       className="w-full"
                     />
-                    <p className="text-xs text-neutral-400">
-                      Or enter contract address manually below
-                    </p>
                   </div>
                 )}
+
+                <p className="text-xs text-neutral-400">
+                  Or enter contract address manually below
+                </p>
 
                 {/* Address Input */}
                 <div className="space-y-3">

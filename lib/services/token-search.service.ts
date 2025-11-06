@@ -12,6 +12,12 @@ import {
   logExternalAPI,
   logPerformance,
 } from '../logger';
+import {
+  coingeckoClient,
+  Coingecko,
+  RateLimitError,
+  APIError,
+} from './coingecko.client';
 
 const logger = createLogger({ service: 'token-search' });
 
@@ -32,29 +38,9 @@ export interface TokenSearchResponse {
   cached: boolean;
 }
 
-interface CoinGeckoSearchResult {
-  coins: Array<{
-    id: string;
-    name: string;
-    symbol: string;
-    thumb: string;
-    market_cap_rank: number;
-  }>;
-}
-
-interface CoinGeckoCoinDetail {
-  id: string;
-  symbol: string;
-  name: string;
-  image?: { small?: string };
-  platforms?: Record<string, string>;
-  market_data?: {
-    market_cap?: { usd?: number };
-  };
-}
+// CoinGecko types are now imported from the SDK
 
 export class TokenSearchService {
-  private coingeckoApiKey?: string;
   private moralisApiKey?: string;
 
   // In-flight request deduplication map
@@ -68,7 +54,6 @@ export class TokenSearchService {
   private static dexScreenerBreaker: CircuitBreaker<any[], any> | null = null;
 
   constructor() {
-    this.coingeckoApiKey = process.env.COINGECKO_API_KEY;
     this.moralisApiKey = process.env.MORALIS_API_KEY;
 
     // Initialize circuit breakers (singleton pattern)
@@ -326,102 +311,502 @@ export class TokenSearchService {
 
   /**
    * Search CoinGecko API with parallel detail fetches
-   * INTERNAL METHOD: Contains actual fetch logic, called by circuit breaker
+   * INTERNAL METHOD: Contains actual SDK logic, called by circuit breaker
    * PERFORMANCE OPTIMIZATION: Parallelizes coin detail fetches (5s → <1s)
+   * Uses official @coingecko/coingecko-typescript SDK with proper error handling
    */
   private async searchCoinGeckoInternal(
     query: string,
     chain?: string
   ): Promise<TokenSearchResult[]> {
-    const searchUrl = `https://api.coingecko.com/api/v3/search?query=${encodeURIComponent(
-      query
-    )}`;
-
-    const headers: HeadersInit = {
-      Accept: 'application/json',
-    };
-
-    if (this.coingeckoApiKey) {
-      headers['x-cg-pro-api-key'] = this.coingeckoApiKey;
-    }
-
-    const response = await fetch(searchUrl, {
-      headers,
-      signal: AbortSignal.timeout(TOKEN_SEARCH_CONFIG.API.COINGECKO_TIMEOUT),
-    });
-
-    if (!response.ok) {
-      throw new Error(`CoinGecko API error: ${response.status}`);
-    }
-
-    const data: CoinGeckoSearchResult = await response.json();
-
-    // Fetch detailed info in parallel (not sequentially)
-    const coinsToFetch = data.coins.slice(
-      0,
-      TOKEN_SEARCH_CONFIG.QUERY.MAX_RESULTS
-    );
-
-    // Create parallel fetch promises with proper error handling
-    const detailPromises = coinsToFetch.map(async (coin) => {
-      try {
-        const detailUrl = `https://api.coingecko.com/api/v3/coins/${coin.id}`;
-        const detailResponse = await fetch(detailUrl, {
-          headers,
-          signal: AbortSignal.timeout(
-            TOKEN_SEARCH_CONFIG.API.COINGECKO_TIMEOUT
-          ),
-        });
-
-        if (!detailResponse.ok) return null;
-
-        const detail: CoinGeckoCoinDetail = await detailResponse.json();
-        return detail;
-      } catch (error) {
-        console.warn(`Error fetching details for ${coin.id}:`, error);
-        return null;
+    try {
+      // For chain-specific searches (e.g., Ethereum ecosystem), use Markets API to get
+      // comprehensive token list filtered by platform, then filter by query
+      // This matches CoinGecko's ecosystem pages like https://www.coingecko.com/en/categories/ethereum-ecosystem
+      if (chain === 'ethereum') {
+        return await this.searchEthereumEcosystem(query);
       }
-    });
 
-    // Execute all fetches in parallel (max 5 concurrent to avoid rate limits)
-    const detailResults = await Promise.allSettled(detailPromises);
+      // For other chains or general searches, use the standard search approach
+      // Search for coins using SDK
+      const searchParams: Coingecko.Search.SearchGetParams = {
+        query: query,
+      };
 
-    // Process results and extract token data
-    const tokens: TokenSearchResult[] = [];
-    const platformMap = TOKEN_SEARCH_CONFIG.CHAINS.PLATFORM_MAP;
+      const searchData = await coingeckoClient.search.get(searchParams);
 
-    for (const result of detailResults) {
-      if (result.status === 'rejected' || !result.value) continue;
+      // Type guard for the response
+      if (!searchData || !searchData.coins || !Array.isArray(searchData.coins)) {
+        return [];
+      }
 
-      const detail = result.value;
+      // When chain is specified, fetch significantly more coins to ensure comprehensive results
+      // Similar to CoinGecko's chain pages that show all tokens on that chain
+      const INITIAL_FETCH_LIMIT = chain
+        ? Math.max(TOKEN_SEARCH_CONFIG.QUERY.MAX_RESULTS * 10, 100) // Fetch up to 100 when chain is specified
+        : Math.max(TOKEN_SEARCH_CONFIG.QUERY.MAX_RESULTS * 3, 30); // Otherwise fetch 30
 
-      // Extract contract addresses from platforms
-      if (detail.platforms) {
-        for (const [platform, address] of Object.entries(detail.platforms)) {
-          if (!address) continue;
+      const coinsToFetch = searchData.coins.slice(0, INITIAL_FETCH_LIMIT);
 
-          const mappedChain = platformMap[
-            platform as keyof typeof platformMap
-          ];
-          if (!mappedChain) continue;
+      // Create parallel detail fetch promises with proper error handling
+      const detailPromises = coinsToFetch.map(async (coin) => {
+        if (!coin.id) return null;
 
-          // Filter by chain if specified
-          if (chain && mappedChain !== chain) continue;
+        try {
+          const detail = await coingeckoClient.coins.getID(coin.id);
+          return detail;
+        } catch (err) {
+          // Handle SDK-specific errors
+          if (err instanceof RateLimitError) {
+            logger.warn(
+              {
+                coinId: coin.id,
+                query,
+              },
+              'CoinGecko rate limit error fetching coin details'
+            );
+          } else if (err instanceof APIError) {
+            logger.warn(
+              {
+                coinId: coin.id,
+                query,
+                error: err.name,
+                status: err.status,
+              },
+              'CoinGecko API error fetching coin details'
+            );
+          } else {
+            logger.warn(
+              {
+                error: err instanceof Error ? err : new Error(String(err)),
+                coinId: coin.id,
+                query,
+              },
+              'Unexpected error fetching coin details'
+            );
+          }
+          return null;
+        }
+      });
 
-          tokens.push({
-            name: detail.name,
-            symbol: detail.symbol.toUpperCase(),
-            address: address.toLowerCase(),
-            chain: mappedChain,
-            logoUrl: detail.image?.small,
-            marketCap: detail.market_data?.market_cap?.usd,
-            verified: true,
-          });
+      // Execute all fetches in parallel
+      const detailResults = await Promise.allSettled(detailPromises);
+
+      // Process results and extract token data
+      const tokens: TokenSearchResult[] = [];
+      const platformMap = TOKEN_SEARCH_CONFIG.CHAINS.PLATFORM_MAP;
+      const chainToPlatforms = (TOKEN_SEARCH_CONFIG.CHAINS as any).CHAIN_TO_PLATFORMS;
+      const seenTokens = new Set<string>(); // Track (address, chain) to avoid duplicates
+
+      // Helper function to check if a platform matches the specified chain
+      const platformMatchesChain = (platform: string): string | null => {
+        const platformKey = platform as keyof typeof platformMap;
+        const mappedChain = platformMap[platformKey];
+        
+        if (!mappedChain || typeof mappedChain !== 'string') return null;
+
+        // If no chain filter, include all
+        if (!chain) return mappedChain;
+
+        // Check if this platform matches the requested chain
+        const chainKey = chain as keyof typeof chainToPlatforms;
+        const allowedPlatforms = chainToPlatforms[chainKey];
+        if (!allowedPlatforms) return null;
+
+        const normalizedPlatform = platform.toLowerCase();
+        const platformArray = allowedPlatforms as readonly string[];
+        if (platformArray.includes(normalizedPlatform)) {
+          return mappedChain;
+        }
+
+        // Also check direct mapping
+        if (mappedChain === chain) {
+          return mappedChain;
+        }
+
+        return null;
+      };
+
+      for (const result of detailResults) {
+        if (result.status === 'rejected' || !result.value) continue;
+
+        const detail = result.value;
+
+        // Extract contract addresses from platforms (for tokens on multiple chains)
+        if (detail.platforms && Object.keys(detail.platforms).length > 0) {
+          for (const [platform, address] of Object.entries(detail.platforms)) {
+            if (!address || typeof address !== 'string') continue;
+
+            const mappedChain = platformMatchesChain(platform);
+            if (!mappedChain) continue;
+
+            const tokenKey = `${address.toLowerCase()}:${mappedChain}`;
+            if (seenTokens.has(tokenKey)) continue;
+            seenTokens.add(tokenKey);
+
+            tokens.push({
+              name: detail.name || '',
+              symbol: (detail.symbol || '').toUpperCase(),
+              address: address.toLowerCase(),
+              chain: mappedChain,
+              logoUrl: detail.image?.small,
+              marketCap: detail.market_data?.market_cap?.usd,
+              verified: true,
+            });
+          }
+        } else if (detail.asset_platform_id) {
+          // Handle native tokens (ETH, BNB, etc.) that don't have platform entries
+          // but have an asset_platform_id indicating their native chain
+          const assetPlatform = detail.asset_platform_id.toLowerCase();
+          
+          // Map asset_platform_id to our chain format
+          let mappedChain: string | undefined;
+          
+          if (assetPlatform === 'ethereum') {
+            mappedChain = 'ethereum';
+          } else if (assetPlatform === 'binance-smart-chain' || assetPlatform === 'bsc') {
+            mappedChain = 'bsc';
+          } else if (assetPlatform === 'polygon-pos' || assetPlatform === 'polygon') {
+            mappedChain = 'polygon';
+          } else if (assetPlatform === 'base') {
+            mappedChain = 'base';
+          } else if (assetPlatform === 'arbitrum-one' || assetPlatform === 'arbitrum') {
+            mappedChain = 'arbitrum';
+          } else if (assetPlatform === 'optimistic-ethereum' || assetPlatform === 'optimism') {
+            mappedChain = 'optimism';
+          } else if (assetPlatform === 'avalanche') {
+            mappedChain = 'avalanche';
+          }
+
+          if (mappedChain) {
+            // Filter by chain if specified
+            if (chain && mappedChain !== chain) continue;
+
+            // For native tokens, use a special address format or the coin ID
+            // Note: Native tokens don't have contract addresses, so we'll skip them
+            // unless the user specifically wants to handle them differently
+            // For now, we'll include them with the coin ID as a placeholder
+            const tokenKey = `${detail.id}:${mappedChain}`;
+            if (seenTokens.has(tokenKey)) continue;
+            seenTokens.add(tokenKey);
+
+            // Skip native tokens without contract addresses for now
+            // These would need special handling in the frontend
+            // But let's include wrapped versions if they exist
+            continue;
+          }
+        }
+
+        // Also check detail_platforms (more detailed platform info)
+        // This is important as some tokens only have data in detail_platforms
+        if (detail.detail_platforms) {
+          for (const [platform, platformInfo] of Object.entries(
+            detail.detail_platforms
+          )) {
+            if (!platformInfo || typeof platformInfo !== 'object') continue;
+
+            const contractAddress =
+              'contract_address' in platformInfo &&
+              typeof platformInfo.contract_address === 'string'
+                ? platformInfo.contract_address
+                : null;
+
+            if (!contractAddress) continue;
+
+            const mappedChain = platformMatchesChain(platform);
+            if (!mappedChain) continue;
+
+            const tokenKey = `${contractAddress.toLowerCase()}:${mappedChain}`;
+            if (seenTokens.has(tokenKey)) continue;
+            seenTokens.add(tokenKey);
+
+            tokens.push({
+              name: detail.name || '',
+              symbol: (detail.symbol || '').toUpperCase(),
+              address: contractAddress.toLowerCase(),
+              chain: mappedChain,
+              logoUrl: detail.image?.small,
+              marketCap: detail.market_data?.market_cap?.usd,
+              verified: true,
+            });
+          }
         }
       }
-    }
 
-    return tokens;
+      // Log search results for debugging
+      logger.info(
+        {
+          query,
+          chain: chain || 'all',
+          coinsFetched: coinsToFetch.length,
+          tokensFound: tokens.length,
+          platformMapKeys: Object.keys(platformMap),
+        },
+        'CoinGecko search results processed'
+      );
+
+      // When chain is specified, return more results (like CoinGecko chain pages)
+      // Otherwise limit to prevent too many results
+      const resultLimit = chain
+        ? TOKEN_SEARCH_CONFIG.QUERY.MAX_RESULTS * 5 // Up to 50 tokens when chain specified
+        : TOKEN_SEARCH_CONFIG.QUERY.MAX_RESULTS * 2; // Otherwise 20
+
+      return tokens.slice(0, resultLimit);
+    } catch (err) {
+      // Handle SDK-specific errors at the search level
+      if (err instanceof RateLimitError) {
+        logger.error(
+          {
+            query,
+            chain,
+          },
+          'CoinGecko rate limit exceeded during search'
+        );
+        throw new Error('CoinGecko rate limit exceeded. Please try again later.');
+      } else if (err instanceof APIError) {
+        logger.error(
+          {
+            query,
+            chain,
+            error: err.name,
+            status: err.status,
+          },
+          `CoinGecko API error during search: ${err.name} (Status: ${err.status})`
+        );
+        throw new Error(
+          `CoinGecko API error: ${err.name} (Status: ${err.status})`
+        );
+      } else {
+        // Unexpected error
+        logger.error(
+          {
+            error: err instanceof Error ? err : new Error(String(err)),
+            query,
+            chain,
+          },
+          'Unexpected error during CoinGecko search'
+        );
+        throw err instanceof Error
+          ? err
+          : new Error('An unexpected error occurred during search');
+      }
+    }
+  }
+
+  /**
+   * Search Ethereum ecosystem - fetches all Ethereum tokens from Markets API
+   * Similar to CoinGecko's Ethereum ecosystem category page
+   * Returns tokens with Ethereum contract addresses, filtered by query if provided
+   */
+  private async searchEthereumEcosystem(
+    query?: string
+  ): Promise<TokenSearchResult[]> {
+    try {
+      const tokens: TokenSearchResult[] = [];
+      const seenTokens = new Set<string>();
+      const normalizedQuery = query?.toLowerCase().trim();
+
+      // Fetch multiple pages of Ethereum ecosystem tokens
+      // Using category filter for ethereum-ecosystem and high per_page limit
+      const pagesToFetch = 5; // Fetch up to 5 pages (500 tokens)
+      const perPage = 100;
+
+      const marketPromises = [];
+      for (let page = 1; page <= pagesToFetch; page++) {
+        const marketParams: Coingecko.Coins.Markets.MarketGetParams = {
+          vs_currency: 'usd',
+          category: 'ethereum-ecosystem',
+          per_page: perPage,
+          page: page,
+          order: 'market_cap_desc',
+          include_tokens: 'all', // Include all tokens, not just top ones
+        };
+
+        marketPromises.push(
+          coingeckoClient.coins.markets.get(marketParams).catch((err) => {
+            logger.warn(
+              {
+                error: err instanceof Error ? err : new Error(String(err)),
+                page,
+              },
+              'Error fetching Ethereum ecosystem markets page'
+            );
+            return [];
+          })
+        );
+      }
+
+      // Execute all page fetches in parallel
+      const marketResults = await Promise.allSettled(marketPromises);
+
+      // Collect all coin IDs from markets
+      const coinIds = new Set<string>();
+      for (const result of marketResults) {
+        if (result.status === 'fulfilled' && Array.isArray(result.value)) {
+          for (const market of result.value) {
+            if (market.id) {
+              // If query provided, filter by name/symbol match
+              if (normalizedQuery) {
+                const nameMatch =
+                  market.name?.toLowerCase().includes(normalizedQuery);
+                const symbolMatch =
+                  market.symbol?.toLowerCase().includes(normalizedQuery);
+                if (!nameMatch && !symbolMatch) {
+                  continue;
+                }
+              }
+              coinIds.add(market.id);
+            }
+          }
+        }
+      }
+
+      // If no query or no matches from markets, also try search API
+      if (normalizedQuery && coinIds.size === 0) {
+        try {
+          const searchParams: Coingecko.Search.SearchGetParams = {
+            query: normalizedQuery,
+          };
+          const searchData = await coingeckoClient.search.get(searchParams);
+          if (searchData?.coins) {
+            for (const coin of searchData.coins.slice(0, 100)) {
+              if (coin.id) coinIds.add(coin.id);
+            }
+          }
+        } catch (err) {
+          logger.warn(
+            {
+              error: err instanceof Error ? err : new Error(String(err)),
+            },
+            'Error in Ethereum ecosystem search fallback'
+          );
+        }
+      }
+
+      // Fetch detailed info for all coins in parallel
+      const detailPromises = Array.from(coinIds).map(async (coinId) => {
+        try {
+          const detail = await coingeckoClient.coins.getID(coinId);
+          return detail;
+        } catch (err) {
+          logger.warn(
+            {
+              error: err instanceof Error ? err : new Error(String(err)),
+              coinId,
+            },
+            'Error fetching Ethereum token details'
+          );
+          return null;
+        }
+      });
+
+      const detailResults = await Promise.allSettled(detailPromises);
+
+      // Extract tokens with Ethereum contract addresses
+      for (const result of detailResults) {
+        if (result.status === 'rejected' || !result.value) continue;
+
+        const detail = result.value;
+
+        // Check platforms for Ethereum addresses
+        if (detail.platforms?.ethereum) {
+          const address = detail.platforms.ethereum;
+          if (address && typeof address === 'string') {
+            const tokenKey = `${address.toLowerCase()}:ethereum`;
+            if (seenTokens.has(tokenKey)) continue;
+            seenTokens.add(tokenKey);
+
+            tokens.push({
+              name: detail.name || '',
+              symbol: (detail.symbol || '').toUpperCase(),
+              address: address.toLowerCase(),
+              chain: 'ethereum',
+              logoUrl: detail.image?.small,
+              marketCap: detail.market_data?.market_cap?.usd,
+              verified: true,
+            });
+          }
+        }
+
+        // Also check detail_platforms
+        if (detail.detail_platforms?.ethereum) {
+          const platformInfo = detail.detail_platforms.ethereum;
+          if (
+            platformInfo &&
+            typeof platformInfo === 'object' &&
+            'contract_address' in platformInfo
+          ) {
+            const address =
+              typeof platformInfo.contract_address === 'string'
+                ? platformInfo.contract_address
+                : null;
+            if (address) {
+              const tokenKey = `${address.toLowerCase()}:ethereum`;
+              if (seenTokens.has(tokenKey)) continue;
+              seenTokens.add(tokenKey);
+
+              tokens.push({
+                name: detail.name || '',
+                symbol: (detail.symbol || '').toUpperCase(),
+                address: address.toLowerCase(),
+                chain: 'ethereum',
+                logoUrl: detail.image?.small,
+                marketCap: detail.market_data?.market_cap?.usd,
+                verified: true,
+              });
+            }
+          }
+        }
+      }
+
+      logger.info(
+        {
+          query: normalizedQuery || 'all',
+          tokensFound: tokens.length,
+          coinsProcessed: coinIds.size,
+        },
+        'Ethereum ecosystem search completed'
+      );
+
+      // Return up to 100 tokens (comprehensive ecosystem results)
+      return tokens.slice(0, 100);
+    } catch (err) {
+      // Handle SDK-specific errors
+      if (err instanceof RateLimitError) {
+        logger.error(
+          {
+            query,
+          },
+          'CoinGecko rate limit exceeded during Ethereum ecosystem search'
+        );
+        throw new Error(
+          'CoinGecko rate limit exceeded. Please try again later.'
+        );
+      } else if (err instanceof APIError) {
+        logger.error(
+          {
+            query,
+            error: err.name,
+            status: err.status,
+          },
+          `CoinGecko API error during Ethereum ecosystem search: ${err.name} (Status: ${err.status})`
+        );
+        throw new Error(
+          `CoinGecko API error: ${err.name} (Status: ${err.status})`
+        );
+      } else {
+        logger.error(
+          {
+            error: err instanceof Error ? err : new Error(String(err)),
+            query,
+          },
+          'Unexpected error during Ethereum ecosystem search'
+        );
+        throw err instanceof Error
+          ? err
+          : new Error('An unexpected error occurred during search');
+      }
+    }
   }
 
   /**
@@ -465,7 +850,7 @@ export class TokenSearchService {
       return [];
     }
 
-    const chainMap = TOKEN_SEARCH_CONFIG.CHAINS.DEXSCREENER_MAP;
+    const chainMap = (TOKEN_SEARCH_CONFIG.CHAINS as any).DEXSCREENER_MAP;
 
     const tokens: TokenSearchResult[] = [];
     const seen = new Set<string>();
@@ -523,7 +908,7 @@ export class TokenSearchService {
     tokens: TokenSearchResult[],
     query: string
   ): TokenSearchResult[] {
-    const weights = TOKEN_SEARCH_CONFIG.RANKING;
+    const weights = (TOKEN_SEARCH_CONFIG as any).RANKING;
 
     const scored = tokens.map((token) => {
       let score = 0;

@@ -160,19 +160,19 @@ export function Header() {
 
             {/* Right section: Theme Toggle and Auth Buttons */}
             <div className="hidden md:flex items-center gap-3">
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={handleToggleTheme}
-                aria-label="Toggle theme"
-                className="text-black dark:text-white hover:text-black dark:hover:text-white transition-colors hover:bg-black/15 dark:hover:bg-white/15 rounded-lg"
-              >
-                {theme === "dark" ? (
-                  <Sun className="h-5 w-5" />
-                ) : (
-                  <Moon className="h-5 w-5" />
-                )}
-              </Button>
+              {/*<Button*/}
+              {/*  variant="ghost"*/}
+              {/*  size="icon"*/}
+              {/*  onClick={handleToggleTheme}*/}
+              {/*  aria-label="Toggle theme"*/}
+              {/*  className="text-black dark:text-white hover:text-black dark:hover:text-white transition-colors hover:bg-black/15 dark:hover:bg-white/15 rounded-lg"*/}
+              {/*>*/}
+              {/*  {theme === "dark" ? (*/}
+              {/*    <Sun className="h-5 w-5" />*/}
+              {/*  ) : (*/}
+              {/*    <Moon className="h-5 w-5" />*/}
+              {/*  )}*/}
+              {/*</Button>*/}
 
               {user ? (
                 // Logged in - Show user profile and scan button
@@ -306,19 +306,19 @@ export function Header() {
 
             {/* Mobile Menu Button */}
             <div className="flex md:hidden items-center gap-2">
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={handleToggleTheme}
-                aria-label="Toggle theme"
-                className="text-black dark:text-white hover:text-blue-400 dark:hover:text-blue-600 transition-colors"
-              >
-                {theme === "dark" ? (
-                  <Sun className="h-5 w-5" />
-                ) : (
-                  <Moon className="h-5 w-5" />
-                )}
-              </Button>
+              {/*<Button*/}
+              {/*  variant="ghost"*/}
+              {/*  size="icon"*/}
+              {/*  onClick={handleToggleTheme}*/}
+              {/*  aria-label="Toggle theme"*/}
+              {/*  className="text-black dark:text-white hover:text-blue-400 dark:hover:text-blue-600 transition-colors"*/}
+              {/*>*/}
+              {/*  {theme === "dark" ? (*/}
+              {/*    <Sun className="h-5 w-5" />*/}
+              {/*  ) : (*/}
+              {/*    <Moon className="h-5 w-5" />*/}
+              {/*  )}*/}
+              {/*</Button>*/}
               <button
                 type="button"
                 className="p-2 text-black dark:text-white hover:bg-gray-800 dark:hover:bg-gray-100 rounded-md transition-colors"

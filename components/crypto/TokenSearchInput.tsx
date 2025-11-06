@@ -23,7 +23,11 @@ import {
   CommandItem,
   CommandList,
 } from "@/components/ui/command";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
@@ -31,7 +35,8 @@ import { trackEvent, AnalyticsEvents } from "@/lib/analytics/posthog";
 import { TOKEN_SEARCH_CONFIG } from "@/lib/services/token-search.config";
 
 // Security: Allowlist of trusted image domains
-const TRUSTED_IMAGE_DOMAINS = TOKEN_SEARCH_CONFIG.SECURITY.ALLOWED_IMAGE_DOMAINS;
+const TRUSTED_IMAGE_DOMAINS =
+  TOKEN_SEARCH_CONFIG.SECURITY.ALLOWED_IMAGE_DOMAINS;
 
 /**
  * Validates image URL against trusted domains
@@ -44,11 +49,13 @@ function isValidImageUrl(url: string | undefined): boolean {
     const parsedUrl = new URL(url);
 
     // Only allow HTTPS
-    if (parsedUrl.protocol !== 'https:') return false;
+    if (parsedUrl.protocol !== "https:") return false;
 
     // Check if domain is in allowlist
-    return TRUSTED_IMAGE_DOMAINS.some(domain =>
-      parsedUrl.hostname === domain || parsedUrl.hostname.endsWith(`.${domain}`)
+    return TRUSTED_IMAGE_DOMAINS.some(
+      (domain) =>
+        parsedUrl.hostname === domain ||
+        parsedUrl.hostname.endsWith(`.${domain}`),
     );
   } catch {
     return false;
@@ -121,14 +128,17 @@ export function TokenSearchInput({
           params.append("chain", defaultChain);
         }
 
-        const response = await fetch(`/api/tokens/search?${params.toString()}`, {
-          signal: abortControllerRef.current.signal,
-        });
+        const response = await fetch(
+          `/api/tokens/search?${params.toString()}`,
+          {
+            signal: abortControllerRef.current.signal,
+          },
+        );
 
         if (!response.ok) {
           const errorData = await response.json().catch(() => ({}));
           throw new Error(
-            errorData.error || `Search failed with status ${response.status}`
+            errorData.error || `Search failed with status ${response.status}`,
           );
         }
 
@@ -172,7 +182,7 @@ export function TokenSearchInput({
         setLoading(false);
       }
     },
-    [defaultChain]
+    [defaultChain],
   );
 
   // Handle input change with debouncing
@@ -190,7 +200,7 @@ export function TokenSearchInput({
         performSearch(value);
       }, TOKEN_SEARCH_CONFIG.QUERY.DEBOUNCE_MS);
     },
-    [performSearch]
+    [performSearch],
   );
 
   // Handle token selection
@@ -201,7 +211,7 @@ export function TokenSearchInput({
       setQuery("");
       setResults([]);
     },
-    [onSelect]
+    [onSelect],
   );
 
   // Cleanup on unmount
@@ -240,7 +250,9 @@ export function TokenSearchInput({
       optimism: { label: "OP", icon: "🔴" },
       avalanche: { label: "AVAX", icon: "🔺" },
     };
-    return chains[chain.toLowerCase()] || { label: chain.toUpperCase(), icon: "🔗" };
+    return (
+      chains[chain.toLowerCase()] || { label: chain.toUpperCase(), icon: "🔗" }
+    );
   };
 
   return (
@@ -252,7 +264,11 @@ export function TokenSearchInput({
             value={query}
             onChange={(e) => handleInputChange(e.target.value)}
             placeholder={placeholder}
-            className="pl-9 pr-9"
+            className="pl-9 pr-9
+                  bg-neutral-950 border-neutral-800 text-white
+                  placeholder:text-neutral-500 font-mono
+                  focus-visible:ring-white focus-visible:ring-1
+                  h-12"
             onFocus={() => {
               if (results.length > 0) setOpen(true);
             }}
@@ -327,12 +343,15 @@ export function TokenSearchInput({
                               referrerPolicy="no-referrer"
                               onError={(e) => {
                                 // Hide image if it fails to load
-                                (e.target as HTMLImageElement).style.display = "none";
+                                (e.target as HTMLImageElement).style.display =
+                                  "none";
                               }}
                             />
                           )}
                           <div className="min-w-0 flex-1">
-                            <div className="font-medium truncate">{result.name}</div>
+                            <div className="font-medium truncate">
+                              {result.name}
+                            </div>
                             <div className="text-sm text-muted-foreground truncate">
                               {result.symbol} • {result.address.slice(0, 6)}...
                               {result.address.slice(-4)}

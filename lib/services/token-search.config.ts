@@ -43,8 +43,20 @@ export const TOKEN_SEARCH_CONFIG = {
       'polygon-pos': 'polygon',
       base: 'base',
       arbitrum: 'arbitrum',
+      'arbitrum-one': 'arbitrum',
       optimism: 'optimism',
+      'optimistic-ethereum': 'optimism',
       avalanche: 'avalanche',
+    } as const,
+    // Reverse map: our chain name -> CoinGecko platform names
+    CHAIN_TO_PLATFORMS: {
+      ethereum: ['ethereum'],
+      bsc: ['binance-smart-chain', 'bsc'],
+      polygon: ['polygon-pos', 'polygon'],
+      base: ['base'],
+      arbitrum: ['arbitrum', 'arbitrum-one'],
+      optimism: ['optimism', 'optimistic-ethereum'],
+      avalanche: ['avalanche'],
     } as const,
     DEXSCREENER_MAP: {
       ethereum: 'ethereum',

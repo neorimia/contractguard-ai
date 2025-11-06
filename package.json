@@ -34,6 +34,7 @@
         "seed:referrals": "tsx scripts/seed-referral-leaderboard.ts"
     },
     "dependencies": {
+        "@coingecko/coingecko-typescript": "^2.2.0",
         "@neondatabase/serverless": "^1.0.2",
         "@number-flow/react": "^0.5.9",
         "@radix-ui/react-dialog": "^1.1.15",
