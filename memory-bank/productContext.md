@@ -280,6 +280,24 @@ Recommendation: ❌ AVOID
 - **Error Handling:** Clear error messages, retry options
 - **Responsiveness:** Works on all screen sizes
 
+### Microcopy Guidelines
+
+**Tone:** Confident, crypto-native, not corporate. Keep the "plain English" promise front-and-center.
+
+**Examples:**
+- **Empty State:** "No scans yet. Paste a contract and let AI hunt the red flags."
+- **Loading:** "Analyzing code… checking liquidity… hunting honeypots 👀"
+- **Safe:** "✅ All clear. No honeypot patterns found. Liquidity looks healthy."
+- **Risky:** "⚠️ Rug-pull likely. 2 functions can drain funds. Read why →"
+- **Errors:** "That doesn't look like a valid address on this chain. Choose the right chain and try again."
+
+**Principles:**
+1. Plain English first - avoid technical jargon when possible
+2. Crypto-native language that resonates with traders
+3. Confident and direct about findings
+4. Not corporate - conversational and authentic
+5. Action-oriented - tell users what to do next
+
 ### Security Standards
 
 - **Data Protection:** GDPR compliance, data encryption

@@ -6,7 +6,7 @@ export const stackServerApp = new StackServerApp({
   tokenStore: "nextjs-cookie",
   urls: {
     signIn: "/sign-in",
-    signUp: "/sign-up",
+    signUp: "/sign-in",
     afterSignIn: "/audit",
     afterSignUp: "/audit",
     afterSignOut: "/",

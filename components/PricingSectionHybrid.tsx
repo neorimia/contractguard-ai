@@ -1,35 +1,28 @@
 /**
  * Hybrid Pricing Section
  *
- * Tabbed pricing interface combining instant credits and subscriptions
+ * Jobs-style pricing with three tiers: Free, Instant Credits, and Pro
  */
 
 "use client";
 
-import { motion } from "motion/react";
 import { useState } from "react";
 import { useUser } from "@stackframe/stack";
 import { useRouter } from "next/navigation";
+import { Check, Loader2 } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { trackEvent, AnalyticsEvents } from "@/lib/analytics/posthog";
 import { PRICING_CONFIG } from "@/lib/config/pricing";
 import { PriceCard } from "@/components/PriceCard";
+import { motion } from "framer-motion";
 
 export default function PricingSectionHybrid() {
   const [billingPeriod, setBillingPeriod] = useState<"monthly" | "yearly">(
     "monthly"
   );
   const [loadingTier, setLoadingTier] = useState<string | null>(null);
-  const [selectedTab, setSelectedTab] = useState<"instant" | "subscription">(
-    "instant"
-  );
   const user = useUser();
   const router = useRouter();
-
-  // Shared transition settings
-  const sharedTransition = {
-    duration: 0.3,
-    ease: [0.22, 1, 0.36, 1] as [number, number, number, number],
-  };
 
   // Handle instant purchase
   const handleInstantPurchase = async (packageIndex: number) => {
@@ -84,6 +77,8 @@ export default function PricingSectionHybrid() {
 
   // Handle subscription upgrade
   const handleSubscription = async (tier: "starter" | "pro" | "team") => {
+    const billingPeriod = "monthly"; // Simplified to monthly-only pricing
+
     trackEvent(AnalyticsEvents.CHECKOUT_INITIATED, {
       tier,
       billingPeriod,
@@ -136,280 +131,138 @@ export default function PricingSectionHybrid() {
     }
   };
 
+  const handleFreeStart = () => {
+    router.push("/audit");
+  };
+
   const yearlyDiscount = 20;
 
   return (
     <section
       id="pricing"
-      className="py-20 sm:py-32 bg-white dark:bg-black mx-2 sm:mx-4 mb-4 rounded-xl overflow-hidden relative"
+      className="py-20 sm:py-32 bg-white dark:bg-black mx-2 sm:mx-4 mb-4 rounded-xl overflow-hidden"
     >
-      {/* Background patterns */}
-      <div className="absolute inset-0 overflow-hidden opacity-20">
-        <div className="absolute -top-24 -right-24 w-96 h-96 rounded-full bg-black/5 dark:bg-white/5 blur-3xl" />
-        <div className="absolute -bottom-24 -left-24 w-96 h-96 rounded-full bg-black/5 dark:bg-white/5 blur-3xl" />
-      </div>
-
-      <div className="absolute inset-0 bg-[linear-gradient(rgba(0,0,0,0.01)_1px,transparent_1px),linear-gradient(to_right,rgba(0,0,0,0.01)_1px,transparent_1px)] dark:bg-[linear-gradient(rgba(255,255,255,0.01)_1px,transparent_1px),linear-gradient(to_right,rgba(255,255,255,0.01)_1px,transparent_1px)] bg-[size:40px_40px]" />
-
-      <div className="max-w-7xl mx-auto px-4 relative">
+      <div className="max-w-6xl mx-auto px-4">
         {/* Section Header */}
-        <div className="text-center space-y-6 mb-10">
-          <h2 className="text-4xl sm:text-5xl font-semibold tracking-tight text-black dark:text-white">
-            Choose your{" "}
-            <span className="bg-gradient-to-r from-black to-black/70 dark:from-white dark:to-white/70 bg-clip-text text-transparent">
-              protection plan
+        <div className="text-left space-y-4 mb-12">
+          <h2 className="text-3xl sm:text-4xl font-semibold tracking-tight text-black dark:text-white">
+            Pricing that fits your{" "}
+            <span className="text-zinc-700/80 dark:text-zinc-300/80 font-semibold tracking-tighter">
+               needs
             </span>
+            .
           </h2>
-          <p className="text-base sm:text-lg tracking-tight text-black/60 dark:text-white/60 max-w-3xl mx-auto">
-            <span className="font-medium text-green-600 dark:text-green-400">
-              Start free with 3 scans daily
-            </span>{" "}
-            no signup required. Pay per scan or subscribe for unlimited access.
-            From one-time audits to professional monitoring{" "}
-            <span className="font-medium text-green-600 dark:text-green-400">
-              transparent pricing
-            </span>
-            , no surprises.
+          <p className="text-base sm:text-lg tracking-tight text-black/60 dark:text-white/60 max-w-2xl">
+            Start free, pay per scan, or subscribe for unlimited protection.
           </p>
+        </div>
 
-          {/* Pricing Type Toggle */}
-          <div className="flex justify-center mb-8">
-            <div className="relative inline-flex items-center p-1 backdrop-blur-sm border border-black/10 dark:border-white/10 bg-black/[0.02] dark:bg-white/[0.02] rounded-xl">
-              <button
-                type="button"
-                onClick={() => setSelectedTab("instant")}
-                className={`relative z-10 px-6 py-2 text-sm font-medium rounded-lg transition-all duration-300 ${
-                  selectedTab === "instant"
-                    ? "text-white dark:text-black"
-                    : "text-black/60 dark:text-white/60 hover:text-black/80 dark:hover:text-white/80"
-                }`}
-              >
-                Instant Credits
-              </button>
-              <button
-                type="button"
-                onClick={() => setSelectedTab("subscription")}
-                className={`relative z-10 px-6 py-2 text-sm font-medium rounded-lg transition-all duration-300 ${
-                  selectedTab === "subscription"
-                    ? "text-white dark:text-black"
-                    : "text-black/60 dark:text-white/60 hover:text-black/80 dark:hover:text-white/80"
-                }`}
-              >
-                Subscriptions
-              </button>
+        {/* Billing Toggle */}
+        <div className="flex justify-center mb-6">
+          <div className="relative inline-flex items-center p-1 backdrop-blur-sm border border-black/10 dark:border-white/10 bg-black/[0.02] dark:bg-white/[0.02] rounded-xl">
+            <button
+              type="button"
+              onClick={() => setBillingPeriod("monthly")}
+              className={`relative z-10 px-4 py-2 text-sm font-medium rounded-lg transition-all duration-300 ${
+                billingPeriod === "monthly"
+                  ? "text-white dark:text-black"
+                  : "text-black/60 dark:text-white/60 hover:text-black/80 dark:hover:text-white/80"
+              }`}
+            >
+              Monthly
+            </button>
+            <button
+              type="button"
+              onClick={() => setBillingPeriod("yearly")}
+              className={`relative z-10 px-4 py-2 text-sm font-medium rounded-lg transition-all duration-300 ${
+                billingPeriod === "yearly"
+                  ? "text-white dark:text-black"
+                  : "text-black/60 dark:text-white/60 hover:text-black/80 dark:hover:text-white/80"
+              }`}
+            >
+              Yearly
+              <span className="absolute -top-2 -right-2 text-[10px] font-medium px-1.5 py-0.5 rounded-full bg-green-100 text-green-700 border border-green-200">
+                {yearlyDiscount}% off
+              </span>
+            </button>
 
-              <motion.div
-                className="absolute inset-0 z-0 rounded-lg bg-black dark:bg-white"
-                initial={false}
-                animate={{
-                  x: selectedTab === "instant" ? 0 : "100%",
-                  width: "50%",
-                }}
-                transition={{
-                  type: "spring",
-                  stiffness: 300,
-                  damping: 30,
-                }}
-              />
-            </div>
+            <motion.div
+              className="absolute inset-0 z-0 rounded-lg bg-black dark:bg-white"
+              initial={false}
+              animate={{
+                x: billingPeriod === "monthly" ? 0 : "100%",
+                width: "50%",
+              }}
+              transition={{
+                type: "spring",
+                stiffness: 300,
+                damping: 30,
+              }}
+            />
           </div>
+        </div>
 
-          {/* Instant Credits Section */}
-          {selectedTab === "instant" && (
-            <div key="instant-content">
-              <div className="text-center mb-6">
-                <p className="text-sm text-black/60 dark:text-white/60">
-                  One-time payment • Credits never expire
-                </p>
-              </div>
+        {/* Three Tiers Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          {/* Free Tier */}
+          <PriceCard
+            key={`free`}
+            isPopular={PRICING_CONFIG.free.packages[0].popular}
+            animationDelay={1 * 0.1}
+            credits={PRICING_CONFIG.free.packages[0].credits}
+            savings={PRICING_CONFIG.free.packages[0].savings}
+            price={PRICING_CONFIG.free.packages[0].price}
+            perks={PRICING_CONFIG.free.packages[0].perks}
+            buttonText="Start Free"
+            onButtonClick={handleFreeStart}
+            buttonLoading={loadingTier === `free`}
+            buttonDisabled={loadingTier !== null}
+          />
 
-              <div className="max-w-6xl mx-auto p-4 sm:p-6 rounded-xl relative backdrop-blur-sm border border-dashed border-black/10 dark:border-white/10 bg-black/[0.01] dark:bg-white/[0.01]">
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6">
-                  {PRICING_CONFIG.instant.packages.map((pkg, index) => (
-                    <PriceCard
-                      key={`instant-${index}`}
-                      isPopular={pkg.popular}
-                      animationDelay={index * 0.1}
-                      credits={pkg.credits}
-                      savings={pkg.savings}
-                      price={pkg.price}
-                      subPrice={{
-                        value: pkg.price / pkg.credits,
-                        label: "per report",
-                      }}
-                      perks={[
-                        "Full AI security audit",
-                        "Detailed risk analysis",
-                        "Instant delivery",
-                        "Never expires",
-                      ]}
-                      buttonText={user ? "Buy Now" : "Sign in to Buy"}
-                      buttonLoading={loadingTier === `instant_${index}`}
-                      onButtonClick={() => handleInstantPurchase(index)}
-                      buttonDisabled={loadingTier !== null}
-                    />
-                  ))}
-                </div>
-              </div>
-            </div>
-          )}
+          {/* Instant Credits */}
+          <PriceCard
+            key={`instant-1`}
+            isPopular={billingPeriod === "monthly"}
+            animationDelay={2 * 0.1}
+            credits={PRICING_CONFIG.instant.packages[1].credits}
+            price={PRICING_CONFIG.instant.packages[1].price}
+            subPrice={{
+              value:
+                PRICING_CONFIG.instant.packages[1].price /
+                PRICING_CONFIG.instant.packages[1].credits, 
+              label: "per report",
+            }}
+            perks={PRICING_CONFIG.instant.packages[1].perks}
+            buttonText={user ? "Buy Now" : "Sign in to Buy"}
+            buttonLoading={loadingTier === `instant_1`}
+            onButtonClick={() => handleInstantPurchase(1)}
+            buttonDisabled={loadingTier !== null}
+          />
 
-          {/* Subscriptions Section */}
-          {selectedTab === "subscription" && (
-            <div key="subscription-content">
-              {/* Billing Toggle */}
-              <div className="flex justify-center mb-6">
-                <div className="relative inline-flex items-center p-1 backdrop-blur-sm border border-black/10 dark:border-white/10 bg-black/[0.02] dark:bg-white/[0.02] rounded-xl">
-                  <button
-                    type="button"
-                    onClick={() => setBillingPeriod("monthly")}
-                    className={`relative z-10 px-4 py-2 text-sm font-medium rounded-lg transition-all duration-300 ${
-                      billingPeriod === "monthly"
-                        ? "text-white dark:text-black"
-                        : "text-black/60 dark:text-white/60 hover:text-black/80 dark:hover:text-white/80"
-                    }`}
-                  >
-                    Monthly
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setBillingPeriod("yearly")}
-                    className={`relative z-10 px-4 py-2 text-sm font-medium rounded-lg transition-all duration-300 ${
-                      billingPeriod === "yearly"
-                        ? "text-white dark:text-black"
-                        : "text-black/60 dark:text-white/60 hover:text-black/80 dark:hover:text-white/80"
-                    }`}
-                  >
-                    Yearly
-                    <span className="absolute -top-2 -right-2 text-[10px] font-medium px-1.5 py-0.5 rounded-full bg-green-100 text-green-700 border border-green-200">
-                      {yearlyDiscount}% off
-                    </span>
-                  </button>
-
-                  <motion.div
-                    className="absolute inset-0 z-0 rounded-lg bg-black dark:bg-white"
-                    initial={false}
-                    animate={{
-                      x: billingPeriod === "monthly" ? 0 : "100%",
-                      width: "50%",
-                    }}
-                    transition={{
-                      type: "spring",
-                      stiffness: 300,
-                      damping: 30,
-                    }}
-                  />
-                </div>
-              </div>
-
-              <div className="max-w-6xl mx-auto p-4 sm:p-6 rounded-xl relative backdrop-blur-sm border  border-black/10 dark:border-white/10 bg-black/[0.01] dark:bg-white/[0.01]">
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                  {/* Starter Plan */}
-                  <PriceCard
-                    key="starter"
-                    isPopular={false}
-                    animationDelay={0}
-                    title={PRICING_CONFIG.starter.label}
-                    description="For starters and casual traders"
-                    price={
-                      billingPeriod === "monthly"
-                        ? PRICING_CONFIG.starter.price
-                        : PRICING_CONFIG.starter.price * 12 * 0.8
-                    }
-                    priceLabel={`/${billingPeriod === "monthly" ? "month" : "year"}`}
-                    saveNote={
-                      billingPeriod === "yearly"
-                        ? `Billed annually • Save $${(PRICING_CONFIG.starter.price * 12 * 0.2).toFixed(2)}/year`
-                        : undefined
-                    }
-                    perks={PRICING_CONFIG.starter.perks}
-                    buttonText={
-                      user ? "Subscribe to Starter" : "Sign in to Subscribe"
-                    }
-                    buttonLoading={loadingTier === "starter"}
-                    onButtonClick={() => handleSubscription("starter")}
-                    buttonDisabled={loadingTier !== null}
-                  />
-                  {/* Pro Plan */}
-                  <PriceCard
-                    key="pro"
-                    isPopular={true}
-                    animationDelay={0}
-                    title={PRICING_CONFIG.pro.label}
-                    description="For active traders and pro users"
-                    price={
-                      billingPeriod === "monthly"
-                        ? PRICING_CONFIG.pro.price
-                        : PRICING_CONFIG.pro.price * 12 * 0.8
-                    }
-                    priceLabel={`/${billingPeriod === "monthly" ? "month" : "year"}`}
-                    saveNote={
-                      billingPeriod === "yearly"
-                        ? `Billed annually • Save $${(PRICING_CONFIG.pro.price * 12 * 0.2).toFixed(2)}/year`
-                        : undefined
-                    }
-                    perks={PRICING_CONFIG.pro.perks}
-                    buttonText={
-                      user ? "Subscribe to Pro" : "Sign in to Subscribe"
-                    }
-                    buttonLoading={loadingTier === "pro"}
-                    onButtonClick={() => handleSubscription("pro")}
-                    buttonDisabled={loadingTier !== null}
-                  />
-
-                  {/* Team/API Plan */}
-                  {/*<PriceCard*/}
-                  {/*  key="team"*/}
-                  {/*  isPopular={false}*/}
-                  {/*  animationDelay={0.1}*/}
-                  {/*  title={PRICING_CONFIG.team.label}*/}
-                  {/*  description="For teams and API integrations"*/}
-                  {/*  price={*/}
-                  {/*    billingPeriod === "monthly"*/}
-                  {/*      ? PRICING_CONFIG.team.price*/}
-                  {/*      : PRICING_CONFIG.team.price * 12 * 0.8*/}
-                  {/*  }*/}
-                  {/*  priceLabel={`/${billingPeriod === "monthly" ? "month" : "year"}`}*/}
-                  {/*  saveNote={*/}
-                  {/*    billingPeriod === "yearly"*/}
-                  {/*      ? `Billed annually • Save $${(PRICING_CONFIG.team.price * 12 * 0.2).toFixed(2)}/year`*/}
-                  {/*      : undefined*/}
-                  {/*  }*/}
-                  {/*  perks={PRICING_CONFIG.team.perks}*/}
-                  {/*  buttonText={*/}
-                  {/*    user ? "Subscribe to Team" : "Sign in to Subscribe"*/}
-                  {/*  }*/}
-                  {/*  buttonLoading={loadingTier === "team"}*/}
-                  {/*  onButtonClick={() => handleSubscription("team")}*/}
-                  {/*  buttonDisabled={loadingTier !== null}*/}
-                  {/*/>  */}
-                  <PriceCard
-                    key="team"
-                    isPopular={false}
-                    animationDelay={0.1}
-                    title={PRICING_CONFIG.team.label}
-                    description="For teams and API integrations"
-                    price={
-                      billingPeriod === "monthly"
-                        ? PRICING_CONFIG.team.price
-                        : PRICING_CONFIG.team.price * 12 * 0.8
-                    }
-                    priceLabel={`/${billingPeriod === "monthly" ? "month" : "year"}`}
-                    saveNote={
-                      billingPeriod === "yearly"
-                        ? `Billed annually • Save $${(PRICING_CONFIG.team.price * 12 * 0.2).toFixed(2)}/year`
-                        : undefined
-                    }
-                    perks={PRICING_CONFIG.team.perks}
-                    buttonText={"Not available now"}
-                    buttonLoading={loadingTier === "team"}
-                    onButtonClick={() => handleSubscription("team")}
-                    buttonDisabled={true}
-                  />
-                </div>
-              </div>
-            </div>
-          )}
+          {/* Pro Tier */}
+          <PriceCard
+            key="pro"
+            isPopular={billingPeriod === "yearly"}
+            animationDelay={0}
+            title={PRICING_CONFIG.pro.label}
+            description="For active traders and pro users"
+            price={
+              billingPeriod === "monthly"
+                ? PRICING_CONFIG.pro.price
+                : PRICING_CONFIG.pro.price * 12 * 0.8
+            }
+            priceLabel={`/${billingPeriod === "monthly" ? "month" : "year"}`}
+            saveNote={
+              billingPeriod === "yearly"
+                ? `Billed annually • Save $${(PRICING_CONFIG.pro.price * 12 * 0.2).toFixed(2)}/year`
+                : undefined
+            }
+            perks={PRICING_CONFIG.pro.perks}
+            buttonText={user ? "Subscribe to Pro" : "Sign in to Subscribe"}
+            buttonLoading={loadingTier === "pro"}
+            onButtonClick={() => handleSubscription("pro")}
+            buttonDisabled={loadingTier !== null}
+          />
         </div>
       </div>
     </section>

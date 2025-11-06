@@ -104,6 +104,12 @@ export const AnalyticsEvents = {
   CRYPTO_RESULT_SHARED: "crypto_result_shared",
   CRYPTO_FLAG_EXPANDED: "crypto_flag_expanded",
   CRYPTO_CHAIN_SWITCHED: "crypto_chain_switched",
+
+  // Token search events
+  TOKEN_SEARCH_STARTED: "token_search_started",
+  TOKEN_SEARCH_COMPLETED: "token_search_completed",
+  TOKEN_SEARCH_SELECTED: "token_search_selected",
+  TOKEN_SEARCH_FAILED: "token_search_failed",
 } as const;
 
 // Track custom event

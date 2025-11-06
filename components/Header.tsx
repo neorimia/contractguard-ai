@@ -69,12 +69,8 @@ export function Header() {
     setTheme(theme === "dark" ? "light" : "dark");
   };
 
-  const handleLogin = () => {
+  const handleSignIn = () => {
     router.push("/sign-in");
-  };
-
-  const handleSignup = () => {
-    router.push("/sign-up");
   };
 
   const handleScanContract = () => {
@@ -160,19 +156,19 @@ export function Header() {
 
             {/* Right section: Theme Toggle and Auth Buttons */}
             <div className="hidden md:flex items-center gap-3">
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={handleToggleTheme}
-                aria-label="Toggle theme"
-                className="text-black dark:text-white hover:text-black dark:hover:text-white transition-colors hover:bg-black/15 dark:hover:bg-white/15 rounded-lg"
-              >
-                {theme === "dark" ? (
-                  <Sun className="h-5 w-5" />
-                ) : (
-                  <Moon className="h-5 w-5" />
-                )}
-              </Button>
+              {/*<Button*/}
+              {/*  variant="ghost"*/}
+              {/*  size="icon"*/}
+              {/*  onClick={handleToggleTheme}*/}
+              {/*  aria-label="Toggle theme"*/}
+              {/*  className="text-black dark:text-white hover:text-black dark:hover:text-white transition-colors hover:bg-black/15 dark:hover:bg-white/15 rounded-lg"*/}
+              {/*>*/}
+              {/*  {theme === "dark" ? (*/}
+              {/*    <Sun className="h-5 w-5" />*/}
+              {/*  ) : (*/}
+              {/*    <Moon className="h-5 w-5" />*/}
+              {/*  )}*/}
+              {/*</Button>*/}
 
               {user ? (
                 // Logged in - Show user profile and scan button
@@ -289,16 +285,16 @@ export function Header() {
                     size="lg"
                     variant="outline"
                     className="h-7 sm:h-9 px-3 sm:px-4  rounded-lg transition-all duration-300"
-                    onClick={() => handleScanContract()}
+                    onClick={() => handleSignIn()}
                   >
-                    Scan Contract
+                    Sign In
                   </Button>
                   <Button
                     size="lg"
                     className="h-7 sm:h-9 px-3 sm:px-4 text-white dark:text-black tracking-tight group dark:bg-white/95 bg-black rounded-lg dark:hover:bg-white dark:hover:text-black transition-all duration-300"
-                    onClick={() => handleSignup()}
+                    onClick={() => handleScanContract()}
                   >
-                    Sign Up
+                    Scan Contract
                   </Button>
                 </>
               )}
@@ -306,19 +302,19 @@ export function Header() {
 
             {/* Mobile Menu Button */}
             <div className="flex md:hidden items-center gap-2">
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={handleToggleTheme}
-                aria-label="Toggle theme"
-                className="text-black dark:text-white hover:text-blue-400 dark:hover:text-blue-600 transition-colors"
-              >
-                {theme === "dark" ? (
-                  <Sun className="h-5 w-5" />
-                ) : (
-                  <Moon className="h-5 w-5" />
-                )}
-              </Button>
+              {/*<Button*/}
+              {/*  variant="ghost"*/}
+              {/*  size="icon"*/}
+              {/*  onClick={handleToggleTheme}*/}
+              {/*  aria-label="Toggle theme"*/}
+              {/*  className="text-black dark:text-white hover:text-blue-400 dark:hover:text-blue-600 transition-colors"*/}
+              {/*>*/}
+              {/*  {theme === "dark" ? (*/}
+              {/*    <Sun className="h-5 w-5" />*/}
+              {/*  ) : (*/}
+              {/*    <Moon className="h-5 w-5" />*/}
+              {/*  )}*/}
+              {/*</Button>*/}
               <button
                 type="button"
                 className="p-2 text-black dark:text-white hover:bg-gray-800 dark:hover:bg-gray-100 rounded-md transition-colors"
@@ -451,20 +447,20 @@ export function Header() {
                       className="flex-1"
                       onClick={() => {
                         setIsMobileMenuOpen(false);
-                        handleScanContract();
+                        handleSignIn();
                       }}
                     >
-                      Scan Contract
+                      Sign In
                     </Button>
                     <Button
                       size="sm"
                       className="flex-1 bg-black dark:bg-white text-white dark:text-black"
                       onClick={() => {
                         setIsMobileMenuOpen(false);
-                        handleSignup();
+                        handleScanContract();
                       }}
                     >
-                      Sign Up
+                      Scan Contract
                     </Button>
                   </div>
                 )}

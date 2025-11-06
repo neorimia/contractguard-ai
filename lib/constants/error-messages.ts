@@ -58,7 +58,7 @@ export const ERROR_MESSAGES = {
     severity: 'warning' as const,
     details: {
       reason: "You've reached the free tier limit for soft accounts",
-      upgradeUrl: '/handler/sign-up',
+      upgradeUrl: '/sign-in',
     },
   } as ErrorTemplate,
 
@@ -68,7 +68,7 @@ export const ERROR_MESSAGES = {
     action: 'signup_required' as const,
     severity: 'warning' as const,
     details: {
-      upgradeUrl: '/handler/sign-up',
+      upgradeUrl: '/sign-in',
     },
   } as ErrorTemplate,
 

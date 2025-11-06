@@ -174,7 +174,7 @@ export default function PricingSection() {
   // Handle free tier - redirect to sign up or homepage
   const handleFreeTier = () => {
     if (!user) {
-      router.push("/sign-up");
+      router.push("/sign-in");
     } else {
       router.push("/");
     }

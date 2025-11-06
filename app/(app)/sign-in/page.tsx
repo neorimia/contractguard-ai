@@ -2,8 +2,7 @@
 
 import { SignIn } from "@stackframe/stack";
 import Image from "next/image";
-import Link from "next/link";
-import { TooltipProvider } from "@/components/ui/tooltip";
+import { CustomMagicLinkSignIn } from "@/components/auth/CustomMagicLinkSignIn";
 
 export default function LoginPage() {
   return (
@@ -27,16 +26,7 @@ export default function LoginPage() {
         </div>
 
         {/* Content overlay */}
-        <div className="relative z-10 text-center  text-white space-y-6 max-w-md">
-          {/* Logo/Brand */}
-          {/*<div className="mb-8">*/}
-          {/*  <Link href="/">*/}
-          {/*    <h1 className="text-4xl font-bold tracking-tighter cursor-pointer hover:opacity-90 transition-opacity">*/}
-          {/*      🛡️ ContractGuard AI*/}
-          {/*    </h1>*/}
-          {/*  </Link>*/}
-          {/*</div>*/}
-
+        <div className="relative z-10 text-center text-white space-y-6 max-w-md">
           {/* Main Title */}
           {/*<h2 className="text-3xl font-semibold leading-tight tracking-tighter">*/}
           {/*  Secure your crypto investments with AI-powered contract analysis.*/}
@@ -50,11 +40,9 @@ export default function LoginPage() {
         </div>
       </div>
 
-      {/* Right side - Stack Auth Sign In */}
+      {/* Right side - Custom Magic Link Sign In */}
       <div className="flex flex-col justify-center items-center p-12">
-        <TooltipProvider>
-          <SignIn firstTab={"magic-link"} />
-        </TooltipProvider>
+        <CustomMagicLinkSignIn />
       </div>
     </div>
   );
