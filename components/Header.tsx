@@ -73,7 +73,6 @@ export function Header() {
     router.push("/sign-in");
   };
 
-
   const handleScanContract = () => {
     router.push("/audit");
   };
@@ -448,7 +447,7 @@ export function Header() {
                       className="flex-1"
                       onClick={() => {
                         setIsMobileMenuOpen(false);
-                          handleSignIn();
+                        handleSignIn();
                       }}
                     >
                       Sign In
