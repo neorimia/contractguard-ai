@@ -679,7 +679,7 @@ export function CryptoScanInterface() {
                 )}
 
                 {/* Token Search Input */}
-                {chain !== "solana" && (
+                {/* {chain !== "solana" && (
                   <div className="space-y-3">
                     <div>
                       <Label className="text-white text-sm font-medium">
@@ -697,7 +697,7 @@ export function CryptoScanInterface() {
 
                 <p className="text-xs text-neutral-400">
                   Or enter contract address manually below
-                </p>
+                </p> */}
 
                 {/* Address Input */}
                 <div className="space-y-3">
