@@ -153,9 +153,9 @@ export function Footer() {
           <div className="flex flex-col gap-3">
             <p>© {currentYear} ContractGuard AI. All rights reserved.</p>
             <p className="flex items-center gap-1">
-              Powered by{" "}
+              Built & maintained by{" "}
               <a
-                href="https://neorimia.com"
+                href="https://neorimia.ro"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="font-medium hover:text-black dark:hover:text-white transition-colors underline underline-offset-2"
